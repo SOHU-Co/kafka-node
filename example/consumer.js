@@ -3,19 +3,10 @@
 var Consumer = require('../lib/consumer');
 var Producer = require('../lib/producer');
 
-var consumer = new Consumer('localhost-t', 'localhost', 9092, 't-topic', [0]);
+var consumer = new Consumer([{topic: '10i-0'}, {topic: '11'}]);
 consumer.on('message', function (messages) {
-    console.log('hihihihi',messages);
+    console.log(messages.length);
 });
-
-/*
-var producer = new Producer('test-client','localhost',9092, 't-topic');
-setInterval(function () {
-producer.send('hello world',function (data) {
-    console.log('send success....');
-});
-
-}, 100);
-*/
-
-//consumer.metadataForTopic()
+consumer.on('error', function (err) {
+    console.log('--------->',err);
+})
