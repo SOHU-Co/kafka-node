@@ -20,10 +20,13 @@ function createMsg() {
     }
     return ret +  dictionary.slice(n1);
 }
-for (var i=0; i<2000; i++) {
+producer.on('ready', function () {
+for (var i=0; i<20; i++) {
 producer.send([ 
-    {topic: '1pp676707878oen0', message: 'fdf'}
+    {topic: 'cooltopic', message: 'hhhhhfdf'}
 ],function (err,data) {
     if (err) console.log(err);
 });
 }
+});
+
