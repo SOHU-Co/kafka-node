@@ -22,8 +22,8 @@ function createMsg() {
 }
 for (var i=0; i<2000; i++) {
 producer.send([ 
-    {topic: '10i-0', message: 'fdf'}
-],function (data) {
-    //console.log(data);
+    {topic: '1pp676707878oen0', message: 'fdf'}
+],function (err,data) {
+    if (err) console.log(err);
 });
 }
