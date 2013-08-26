@@ -21,9 +21,10 @@ function createMsg() {
     return ret +  dictionary.slice(n1);
 }
 producer.on('ready', function () {
+console.log('ready')
 for (var i=0; i<20; i++) {
 producer.send([ 
-    {topic: 'cooltopic', message: 'hhhhhfdf'}
+    {topic: 'topic', message: 'hhhhhfdf'}
 ],function (err,data) {
     if (err) console.log(err);
 });
