@@ -20,6 +20,7 @@ function createMsg() {
     }
     return ret +  dictionary.slice(n1);
 }
+producer.on('ready', function () {
 for (var i=0; i<20; i++) {
 producer.send([ 
     {topic: 'cooltopic', message: 'hhhhhfdf'}
@@ -27,3 +28,5 @@ producer.send([
     if (err) console.log(err);
 });
 }
+});
+
