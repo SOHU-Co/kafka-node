@@ -8,7 +8,7 @@
         "binary": "~0.3.0",
         "async": "~0.2.9",
         "buffer-crc32": "~0.2.1",
-        "zookeeper": "*",
+        "node-zookeeper-client": "*",
         "line-by-line": "~0.1.1"
     }
 }
