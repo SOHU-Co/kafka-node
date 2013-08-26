@@ -8,5 +8,5 @@ consumer.on('message', function (messages) {
     console.log(messages.length);
 });
 consumer.on('error', function (err) {
-    console.log('--------->',err);
+    //console.log('--------->',err);
 })
