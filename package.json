@@ -1,13 +1,14 @@
 {
-  "name": "kafka-node",
-  "version": "0.0.0",
-  "private": true,
-  "dependencies": {
-    "underscore": "~1.5.1",
-    "buffermaker": "0.0.11",
-    "binary": "~0.3.0",
-    "async": "~0.2.9",
-    "buffer-crc32": "~0.2.1",
-    "line-by-line": "~0.1.1"
-  }
+    "name": "kafka-node",
+    "version": "0.0.0",
+    "private": true,
+    "dependencies": {
+        "underscore": "~1.5.1",
+        "buffermaker": "0.0.11",
+        "binary": "~0.3.0",
+        "async": "~0.2.9",
+        "buffer-crc32": "~0.2.1",
+        "zookeeper": "*",
+        "line-by-line": "~0.1.1"
+    }
 }
