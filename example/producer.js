@@ -22,12 +22,12 @@ function createMsg() {
 }
 producer.on('ready', function () {
 console.log('i am ready');
-   // for (var i = 0; i < 20; i++) {
+    for (var i = 0; i < 20; i++) {
         producer.send([
-            {topic: 'cooltopic' + 7, message: 'topic-new' + 1 + 'coolmessage' }
+            {topic: 'topic', message: 'woo fuck you' + 1 + 'coolmessage' }
         ], function (err, data) {
             if (err) console.log(err);
         });
-   // }
+    }
 });
 
