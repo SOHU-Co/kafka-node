@@ -2,7 +2,7 @@ var Producer = require('../lib/producer')
     , config = require('./config.json')
     , lineByLineReader = require('line-by-line');
 
-var producer = new Producer()
+var producer = new Producer(config.zookeeper.host)
     , total = config.topicNum * config.msgNum
     , count = 0;
 

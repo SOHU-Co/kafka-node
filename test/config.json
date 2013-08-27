@@ -1,6 +1,6 @@
 {
-    "clientOptions": {
-        "host": "192.168.105.223"
+    "zookeeper": {
+        "host": "10.16.1.218"
     },
     "topicNum": 150,
     "msgNum": 512,
