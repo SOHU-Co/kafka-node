@@ -1,0 +1,8 @@
+{
+    "clientOptions": {
+        "host": "192.168.105.223"
+    },
+    "topicNum": 150,
+    "msgNum": 512,
+    "dataSource": "data.txt"
+}
