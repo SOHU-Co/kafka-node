@@ -22,7 +22,7 @@ function createMsg() {
 }
 producer.on('ready', function () {
 console.log('i am ready');
-    for (var i = 0; i < 20; i++) {
+    for (var i = 0; i < 2; i++) {
         producer.send([
             {topic: 'topic', message: 'woo fuck you' + 1 + 'coolmessage' }
         ], function (err, data) {
