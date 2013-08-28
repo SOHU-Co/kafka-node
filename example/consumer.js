@@ -10,3 +10,7 @@ consumer.on('message', function (messages) {
 consumer.on('error', function (err) {
     //console.log('--------->',err);
 })
+
+consumer.createTopics(['nnnnnn', 'mmm8'],false, function (err,resp) {
+    console.log(resp);
+});
