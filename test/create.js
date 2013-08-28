@@ -2,9 +2,9 @@ var Producer = require('../lib/producer')
     , util = require('./util.js')
     , config = require('./config.json');
 
-var producer = new Producer('10.16.1.218:2181/kafka0.8')
+var producer = new Producer(config.zookeeper)
     , start = 0
-    , total = 15000
+    , total = config.topicNum
     , end = total + start
     , topics = []
     , topicsLength = 1
