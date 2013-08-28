@@ -9,8 +9,8 @@ function createTopics() {
     });
 }
 
+var consumer = new Consumer([{topic: 'topic7'}]);
 function addTopics() {
-    var consumer = new Consumer([{topic: 'topic7'}]);
     //consumer.on('error', function (err) { console.log(err) });
     consumer.on('message', function (msg) { console.log(msg) });
 
@@ -24,6 +24,14 @@ function addTopics() {
     );
 }
 
+function removeTopics() {
+    consumer.removeTopics(['topic3', 'topic4'], function (err, data) {
+        console.log(data);
+    }); 
+}
+
 addTopics();
+
+setTimeout(removeTopics, 5000);
 
 //createTopics();
