@@ -1,7 +1,5 @@
 {
-    "zookeeper": {
-        "host": "10.16.1.218"
-    },
+    "zookeeper": "10.16.1.218:2181/kafka0.8",
     "topicNum": 150,
     "msgNum": 512,
     "dataSource": "data.txt"
