@@ -27,6 +27,7 @@ console.log('i am ready');
             {topic: 'topic', message: 'woo fuck you' + 1 + 'coolmessage' }
         ], function (err, data) {
             if (err) console.log(err);
+            console.log(data);
         });
     }
 });
