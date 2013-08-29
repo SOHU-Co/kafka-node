@@ -1,4 +1,5 @@
-var Producer = require('../lib/producer');
+var kafka = require('../kafka'),
+    Producer = kafka.Producer;
 
 var producer = new Producer();
 
@@ -21,14 +22,12 @@ function createMsg() {
     return ret + dictionary.slice(n1);
 }
 producer.on('ready', function () {
-console.log('i am ready');
     for (var i = 0; i < 5; i++) {
         producer.send([
-            {topic: 'topic4', message: 'woo fuck you' + 1 + 'coolmessage' }
+            {topic: 'topic74', message: '777777777777777' + 1 + 'coolmessage' }
         ], function (err, data) {
             if (err) console.log(err);
             console.log(data);
         });
     }
 });
-

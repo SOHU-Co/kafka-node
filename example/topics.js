@@ -30,8 +30,16 @@ function removeTopics() {
     }); 
 }
 
+function exit() {
+    consumer.commit(function (err, data) {
+        console.log(data);
+        process.exit();
+    });
+}
+
 addTopics();
 
-setTimeout(removeTopics, 5000);
+//setTimeout(removeTopics, 5000);
+setTimeout(exit, 15000);
 
 //createTopics();
