@@ -41,6 +41,7 @@ Example:
 
 ### createTopics(topics, async, cb)
 This method is used to create topics in kafka server, only work when kafka server set `auto.create.topics.enable` true, our client simply send a metadata request to let server auto crate topics. when `async` set false, this method not return util all topics are created, otherwise return immediately.
+
 * `topics`: **Array**,array of topics
 * `async`: **Boolean**,async or sync
 * `cb`: **Function**,the callback
@@ -95,8 +96,10 @@ Example:
 ```
 
 ### on('error', function (err) {})
+
 ### addTopics(topics, cb)
 Add topics to current consumer, if any topic to be added not exists, return error
+
 * `topics`, **Array**, array of topics to add
 * `cb`, **Function**,the callback
 Example:
@@ -118,6 +121,7 @@ Example:
 
 ### commit(cb)
 Commit current offset of current topics manually, this method should be called when a consumer leaves
+
 * `cb`, **Function**, the callback
 Example:
 
