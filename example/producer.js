@@ -24,7 +24,7 @@ function createMsg() {
 producer.on('ready', function () {
     for (var i = 0; i < 5; i++) {
         producer.send([
-            {topic: 'topic74', message: '777777777777777' + 1 + 'coolmessage' }
+            {topic: 'topic82', message: '777777777777777' + 1 + 'coolmessage' }
         ], function (err, data) {
             if (err) console.log(err);
             console.log(data);
