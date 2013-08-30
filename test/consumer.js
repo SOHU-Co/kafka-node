@@ -10,19 +10,18 @@ var consumer = new Consumer([], config.zookeeper)
     , count = 0;
 
 function onMessage(data) {
-//    if (!(++count % step)) {
-    console.log('msg count:', ++count);
-    if (count > 1) {
-        console.log(data.topic, data.message.length);
+    if (!(++count % step)) {
+        console.log('msg count:', count);
     }
-//    }
     if (count == total) {
         console.log('complete!');
 //        process.exit()
     }
 }
 consumer.on('message', onMessage);
-consumer.on('error', function (err) { console.log(err) })
+consumer.on('error', function (err) {
+    console.log(err)
+});
 
 function subTopics() {
     consumer.addTopics(topics, function () {
@@ -36,7 +35,7 @@ function subTopics() {
 }
 
 // test script
-for (var i = 0; i < 400; i++) {
+for (var i = 0; i < config.topicNum; i++) {
     topics.push({topic: util.md5(i.toString()), autoCommit: false});
     /*
      if (!(i % step)) {
