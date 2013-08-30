@@ -3,7 +3,7 @@
 var Consumer = require('../lib/consumer');
 var Producer = require('../lib/producer');
 
-var consumer = new Consumer([{topic: 'topic82'}]);
+var consumer = new Consumer([{topic: 'topic3'}]);
 consumer.on('message', function (messages) {
     console.log(messages.toString());
 });

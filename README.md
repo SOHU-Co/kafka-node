@@ -18,19 +18,20 @@ This is nodejs client for Kafka-0.8 with zookeeper integration
 ``` js
     {
        topic: 'topicName',
-       message: 'message body',
+       messages: ['message body'],// multi messages should be a array, single message can be just a string
        partition: '0', //default 0
     }
 ```
 
 * `cb`: **Function**, the callback
+
 Example:
 
 ``` js
     var producer = new require('./kafka').Producer(),
         payloads = [
-            { topic: 'topic1', message: 'hi', partition: 0 },
-            { topic: 'topic2', message: 'hello' }
+            { topic: 'topic1', messages: 'hi', partition: 0 },
+            { topic: 'topic2', messages: ['hello', 'world'] }
         ];
     producer.on('ready', function () {
         producer.send(payloads, function (err, data) {
@@ -45,6 +46,7 @@ This method is used to create topics in kafka server, only work when kafka serve
 * `topics`: **Array**,array of topics
 * `async`: **Boolean**,async or sync
 * `cb`: **Function**,the callback
+
 Example:
 
 ``` js
@@ -73,6 +75,7 @@ Example:
 
 * `groupId`: *String*, consumet group id, deafult `kafka-node-group`
 * `clientId`: This is a user supplied identifier for the client application, default `kafka-node-client`
+
 Example:
 
 ``` js
@@ -87,6 +90,7 @@ Example:
 
 ### on('message', onMessage);
 * `onMessage`: **Function**, callback when new message comes
+
 Example:
 
 ``` js
@@ -102,6 +106,7 @@ Add topics to current consumer, if any topic to be added not exists, return erro
 
 * `topics`, **Array**, array of topics to add
 * `cb`, **Function**,the callback
+
 Example:
 
 ``` js
@@ -112,6 +117,7 @@ Example:
 ### removeTopics(topics, cb)
 * `topics`, **Array**, array of topics to remove 
 * `cb`, **Function**,the callback
+
 Example:
 
 ``` js
@@ -123,6 +129,7 @@ Example:
 Commit current offset of current topics manually, this method should be called when a consumer leaves
 
 * `cb`, **Function**, the callback
+
 Example:
 
 ``` js
