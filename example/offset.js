@@ -4,6 +4,6 @@ var Consumer = require('../lib/consumer');
 
 var consumer = new Consumer([{topic: 'topic'}]);
 
-consumer.fetchOffset(function (err, data) {
+consumer.fetchOffset([{topic: 'topic'}], function (err, data) {
     console.log('offset', data);
 });
