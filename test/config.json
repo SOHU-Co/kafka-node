@@ -1,6 +1,6 @@
 {
     "zookeeper": "localhost:2181/kafka0.8",
-    "topicNum": 8000,
+    "topicNum": 4000,
     "msgNum": 8,
     "dataSource": "data.txt"
 }
