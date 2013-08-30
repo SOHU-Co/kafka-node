@@ -12,7 +12,7 @@ producer.on('ready', function () {
         var topic = line.slice(0, line.indexOf(' '));
         var msg = line.slice(line.indexOf(' ') + 1);
         producer.send([
-            {topic: topic, message: msg}
+            {topic: topic, messages: msg}
         ], function (err, data) {
             if (err) console.log(err);
             if (++count == total) {
