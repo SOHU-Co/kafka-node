@@ -1,76 +1,45 @@
-'use strict';
+var Consumer = require('../lib/consumer')
+    , util = require('./util.js')
+    , config = require('./config.json');
 
-var Consumer = require('../lib/consumer'),
-    Producer = require('../lib/producer'),
-    Client = require('../lib/client');
-    
-var letters = 'abcdefghijklmnopqrstuvwxyz',
-    upcaseLetters = letters.toUpperCase(),
-    numbers = '1234567890';
+var consumer = new Consumer([], config.zookeeper)
+    , total = config.topicNum * config.msgNum
+    , topics = []
+    , step = 7999
+    , firstTopics = true
+    , count = 0;
 
-var dictionary = letters + upcaseLetters + numbers;
-
-function createMsg() {
-    var digit = 2048 + Math.floor(Math.random()*2048);  
-    var charsNum = dictionary.length;
-    var n = Math.floor(digit/charsNum);
-    var n1 = digit%charsNum;
-
-console.log(digit, n, n1)
-    var ret = ''
-    for(var i=0;i<n;i++) {
-        ret += dictionary;
+function onMessage(message) {
+//    if (!(++count % step)) {
+    console.log('msg count:', ++count);
+//    }
+    if (count == total) {
+        console.log('complete!');
+//        process.exit()
     }
-    return ret +  dictionary.slice(n1);
 }
+consumer.on('message', onMessage);
 
-var repeat = 5000,
-    msgsPerTopic = 512,
-    messages = [];
-
-var client = new Client('localhost', 9092);
-var producer = new Producer('producer', 'localhost', 9092, 'hello-topic');
-
-// send
-function batchSend() {
-    var messages = []
-    for(var i=0; i< 512; i++) {
-        messages.push(createMsg());
-    }
-    producer.send(messages, function (data) {
-        console.log('batch', data);
+function subTopics() {
+    consumer.addTopics(topics, function () {
+        if (firstTopics) {
+            firstTopics = false;
+            consumer.fetch();
+            console.log('fetch start!')
+        }
     });
+    topics = [];
 }
 
-var count = 0;
-function fake() {
-    count ++;
-    var msg = createMsg();
-    //console.log(msg);
-    producer.send([count+''], function () {
-        
-    });
-
-    if (count < 512) {
-        process.nextTick(function () {
-            eachSend();
-        }); 
-    }
+// test script
+for (var i = 0; i < 4000; i++) {
+    topics.push({topic: util.md5(i.toString()), autoCommit: false});
+    /*
+     if (!(i % step)) {
+     subTopics()
+     }
+     */
 }
 
-function eachSend() {
-    for(var i=0; i<512; i++) {
-        producer.send([createMsg()], function() {});
-    }
-}
+topics.length && subTopics();
 
-function fetch() {
-    var consumer = new Consumer('umer', 'localhost', 9092, 'magictopic');
-    consumer.on('message', function (data) {
-        var msg = data[0] || '';
-        console.log('------------------------------>', msg);
-    });
-}
-
-//eachSend();
-fetch();

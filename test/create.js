@@ -7,26 +7,31 @@ var producer = new Producer(config.zookeeper)
     , total = config.topicNum
     , end = total + start
     , topics = []
-    , topicsLength = 1
+    , step = 500
     , count = 0;
+
+function createTopics() {
+    producer.createTopics(
+        topics,
+        false,
+        function () {
+            count += step;
+            console.log('created:', count);
+            if (count >= total) {
+                console.log('complete! created:', total);
+                process.exit();
+            }
+        }
+    );
+
+    topics = []
+}
 
 producer.on('ready', function () {
     for (var i = start; i < end; i++) {
         topics.push(util.md5(i.toString()));
-        if (!(topics.length % topicsLength) || count == total) {
-            producer.createTopics(
-                topics,
-                false,
-                function (err, data) {
-                    count += topicsLength;
-                    console.log('created:', count);
-                    if (count >= total) {
-                        console.log('complete! created:', total);
-                        process.exit();
-                    }
-                });
-            topics = []
-        }
+        !(topics.length % step) && createTopics()
     }
+    topics.length && createTopics()
 });
 
