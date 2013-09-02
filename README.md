@@ -3,13 +3,19 @@ Kafka node client
 
 This is nodejs client for Kafka-0.8 with zookeeper integration
 # API
-## Producer
-### Producer(connectionString, clientId)
-* `connectionString`: zookeeper connection string, default `localhost:2181`
+## Client
+### Client(connectionString, clientId)
+* `connectionString`: zookeeper connection string, default `localhost:2181/kafka0.8`
 * `clientId`: This is a user supplied identifier for the client application, default `kafka-node-client`
 
+## Producer
+### Producer(client)
+* `client`: client which keep connect with kafka server.
 ``` js
-    var producer = new require('./kafka').Producer();
+    var kafka = require('kafka'),
+        Producer = kafka.Producer,
+        client = new kafka.Client(),
+        producer = new Producer(client);
 ```
 
 ### send(payloads, cb)
@@ -28,7 +34,10 @@ This is nodejs client for Kafka-0.8 with zookeeper integration
 Example:
 
 ``` js
-    var producer = new require('./kafka').Producer(),
+    var kafka = require('kafka'),
+        Producer = kafka.Producer,
+        client = new kafka.Client(),
+        producer = new Producer(client),
         payloads = [
             { topic: 'topic1', messages: 'hi', partition: 0 },
             { topic: 'topic2', messages: ['hello', 'world'] }
@@ -50,7 +59,10 @@ This method is used to create topics in kafka server, only work when kafka serve
 Example:
 
 ``` js
-    var producer = new require('./kafka').Producer();
+    var kafka = require('kafka'),
+        Producer = kafka.Producer,
+        client = new kafka.Client(),
+        producer = new Producer(client);
     // Create topics sync
     producer.createTopics(['t','t1'],false, function (err, data) {
         console.log(data);
@@ -61,7 +73,8 @@ Example:
 ```
 
 ## Consumer
-### Consumer(payloads, connectionString, goupId, clientId)
+### Consumer(client, payloads, connectionString, goupId, clientId)
+* `client`: client which keep connect with kafka server.
 * `payloads`: **Array**,array of `FetchRequest`, `FetchRequest` is a JSON object like:
 
 ``` js
@@ -79,8 +92,11 @@ Example:
 Example:
 
 ``` js
-    var Consumer = require('./kafka').Consumer,
+    var kafka = require('kafka'),
+        Consumer = kafka.Consumer,
+        client = new kafka.Client(),
         consumer = new Consumer(
+            client,
             [
                 { topic: 't', partition: 0 }, { topic: 't1', partition: 1 }
             ],
