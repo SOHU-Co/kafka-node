@@ -73,7 +73,7 @@ Example:
 ```
 
 ## Consumer
-### Consumer(client, payloads, connectionString, goupId, clientId)
+### Consumer(client, payloads, goupId)
 * `client`: client which keep connect with kafka server.
 * `payloads`: **Array**,array of `FetchRequest`, `FetchRequest` is a JSON object like:
 
@@ -87,7 +87,6 @@ Example:
 ```
 
 * `groupId`: *String*, consumet group id, deafult `kafka-node-group`
-* `clientId`: This is a user supplied identifier for the client application, default `kafka-node-client`
 
 Example:
 
