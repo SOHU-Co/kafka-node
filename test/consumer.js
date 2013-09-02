@@ -5,11 +5,11 @@ var Consumer = require('../lib/consumer')
 var consumer = new Consumer([], config.zookeeper)
     , total = config.topicNum * config.msgNum
     , topics = []
-    , step = 7999
+    , step = 100
     , firstTopics = true
     , count = 0;
 
-function onMessage(data) {
+function onMessage() {
     if (!(++count % step)) {
         console.log('msg count:', count);
     }
@@ -37,11 +37,7 @@ function subTopics() {
 // test script
 for (var i = 0; i < config.topicNum; i++) {
     topics.push({topic: util.md5(i.toString()), autoCommit: false});
-    /*
-     if (!(i % step)) {
-     subTopics()
-     }
-     */
+    !(i % step) && subTopics()
 }
 
 topics.length && subTopics();
