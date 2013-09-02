@@ -12,7 +12,7 @@ function appendData(i) {
 }
 for (var i = 0; i < total; i++) {
     var topic = util.md5(Math.floor(Math.random() * config.topicNum).toString());
-    var str = util.randomString(2048 + Math.random() * 2048);
+    var str = util.randomString(32);
     buffer += topic + ' ' + str + '\n';
     !(i % 10000) && appendData(i)
 }
