@@ -12,7 +12,7 @@ var consumer = new Consumer(client, [{topic: 'topic3', autoCommit: false}])
     , count = 0;
 
 function onMessage(message) {
-    if (!(++count % step)) {
+    if (!(++count % step) || message.topic === 'topic3') {
         //console.log('msg count:', count);
         console.log(message.topic, message.offset)
     }
