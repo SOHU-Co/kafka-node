@@ -2,6 +2,7 @@
     "name": "kafka-node",
     "version": "0.0.0",
     "private": true,
+    "main": "kafka.js",
     "dependencies": {
         "underscore": "~1.5.1",
         "buffermaker": "0.0.11",
