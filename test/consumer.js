@@ -16,11 +16,11 @@ function onMessage(message) {
         //console.log('msg count:', count);
         console.log(message.topic, message.offset)
     }
-    if (count == total*2) {
+    if (count == total) {
         console.log('complete!');
         //process.exit()
     }
-    if (count > total*2) {
+    if (count > total) {
        //console.log(message.offset)
     }
 }
