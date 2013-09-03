@@ -1,7 +1,9 @@
 var kafka = require('../kafka'),
-    Producer = kafka.Producer;
+    Producer = kafka.Producer,
+    Client = kafka.Client,
+    client = new Client();
 
-var producer = new Producer();
+var producer = new Producer(client);
 
 var letters = 'abcdefghijklmnopqrstuvwxyz',
     upcaseLetters = letters.toUpperCase(),

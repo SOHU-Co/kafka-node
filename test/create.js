@@ -1,8 +1,11 @@
 var Producer = require('../lib/producer')
+    , Client = require('../lib/client')
     , util = require('./util.js')
     , config = require('./config.json');
 
-var producer = new Producer(config.zookeeper)
+
+var client = new Client(config.zookeeper)
+    , producer = new Producer(client)
     , start = 0
     , total = config.topicNum
     , end = total + start

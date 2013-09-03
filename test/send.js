@@ -1,8 +1,10 @@
 var Producer = require('../lib/producer')
+    , Client = require('../lib/client')
     , config = require('./config.json')
     , lineByLineReader = require('line-by-line');
 
-var producer = new Producer(config.zookeeper)
+var client = new Client(config.zookeeper)
+    , producer = new Producer(client)
     , total = config.topicNum * config.msgNum
     , count = 0;
 

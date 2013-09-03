@@ -1,8 +1,10 @@
 var Consumer = require('../lib/consumer')
+    , Client = require('../lib/client')
     , util = require('./util.js')
-    , config = require('./config.json');
+    , config = require('./config.json')
+    , client = new Client(config.zookeeper);
 
-var consumer = new Consumer([{topic: 'topic3', autoCommit: false}], config.zookeeper)
+var consumer = new Consumer(client, [{topic: 'topic3', autoCommit: false}])
     , total = config.topicNum * config.msgNum
     , topics = []
     , step = 100
@@ -19,7 +21,7 @@ function onMessage(message) {
         //process.exit()
     }
     if (count > total*2) {
-       console.log(message.offset)
+       //console.log(message.offset)
     }
 }
 consumer.on('message', onMessage);
