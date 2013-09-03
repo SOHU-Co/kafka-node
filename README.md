@@ -11,6 +11,7 @@ This is nodejs client for Kafka-0.8 with zookeeper integration
 ## Producer
 ### Producer(client)
 * `client`: client which keep connect with kafka server.
+
 ``` js
     var kafka = require('kafka'),
         Producer = kafka.Producer,
@@ -50,7 +51,7 @@ Example:
 ```
 
 ### createTopics(topics, async, cb)
-This method is used to create topics in kafka server, only work when kafka server set `auto.create.topics.enable` true, our client simply send a metadata request to let server auto crate topics. when `async` set false, this method not return util all topics are created, otherwise return immediately.
+This method is used to create topics in kafka server, only work when kafka server set `auto.create.topics.enable` true, our client simply send a metadata request to let server auto crate topics. when `async` set false, this method does not return util all topics are created, otherwise return immediately.
 
 * `topics`: **Array**,array of topics
 * `async`: **Boolean**,async or sync
@@ -64,7 +65,7 @@ Example:
         client = new kafka.Client(),
         producer = new Producer(client);
     // Create topics sync
-    producer.createTopics(['t','t1'],false, function (err, data) {
+    producer.createTopics(['t','t1'], false, function (err, data) {
         console.log(data);
     });
     // Create topics async
@@ -141,7 +142,7 @@ Example:
 ```
 
 ### commit(cb)
-Commit current offset of current topics manually, this method should be called when a consumer leaves
+Commit offset of the current topics manually, this method should be called when a consumer leaves
 
 * `cb`, **Function**, the callback
 
@@ -151,3 +152,5 @@ Example:
 consumer.commit(function(err, data) {
 });
 ```
+### close(force)
+* `force`, **Boolean**, if set true, it force commit current offset before close
