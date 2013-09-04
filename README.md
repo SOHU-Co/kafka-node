@@ -13,21 +13,21 @@ This is nodejs client for Kafka-0.8 with zookeeper integration
 * `client`: client which keep connect with kafka server.
 
 ``` js
-    var kafka = require('kafka'),
-        Producer = kafka.Producer,
-        client = new kafka.Client(),
-        producer = new Producer(client);
+var kafka = require('kafka'),
+    Producer = kafka.Producer,
+    client = new kafka.Client(),
+    producer = new Producer(client);
 ```
 
 ### send(payloads, cb)
 * `payloads`: **Array**,array of `ProduceRequest`, `ProduceRequest` is a JSON object like:
 
 ``` js
-    {
-       topic: 'topicName',
-       messages: ['message body'],// multi messages should be a array, single message can be just a string
-       partition: '0', //default 0
-    }
+{
+   topic: 'topicName',
+   messages: ['message body'],// multi messages should be a array, single message can be just a string
+   partition: '0', //default 0
+}
 ```
 
 * `cb`: **Function**, the callback
@@ -35,19 +35,19 @@ This is nodejs client for Kafka-0.8 with zookeeper integration
 Example:
 
 ``` js
-    var kafka = require('kafka'),
-        Producer = kafka.Producer,
-        client = new kafka.Client(),
-        producer = new Producer(client),
-        payloads = [
-            { topic: 'topic1', messages: 'hi', partition: 0 },
-            { topic: 'topic2', messages: ['hello', 'world'] }
-        ];
-    producer.on('ready', function () {
-        producer.send(payloads, function (err, data) {
-            console.log(data);
-        });
-    })
+var kafka = require('kafka'),
+    Producer = kafka.Producer,
+    client = new kafka.Client(),
+    producer = new Producer(client),
+    payloads = [
+        { topic: 'topic1', messages: 'hi', partition: 0 },
+        { topic: 'topic2', messages: ['hello', 'world'] }
+    ];
+producer.on('ready', function () {
+    producer.send(payloads, function (err, data) {
+        console.log(data);
+    });
+})
 ```
 
 ### createTopics(topics, async, cb)
@@ -60,17 +60,17 @@ This method is used to create topics in kafka server, only work when kafka serve
 Example:
 
 ``` js
-    var kafka = require('kafka'),
-        Producer = kafka.Producer,
-        client = new kafka.Client(),
-        producer = new Producer(client);
-    // Create topics sync
-    producer.createTopics(['t','t1'], false, function (err, data) {
-        console.log(data);
-    });
-    // Create topics async
-    producer.createTopics(['t'], true, function () {err, data});
-    producer.createTopics(['t'], function (err, data) {});// Simply omit 2nd arg
+var kafka = require('kafka'),
+    Producer = kafka.Producer,
+    client = new kafka.Client(),
+    producer = new Producer(client);
+// Create topics sync
+producer.createTopics(['t','t1'], false, function (err, data) {
+    console.log(data);
+});
+// Create topics async
+producer.createTopics(['t'], true, function () {err, data});
+producer.createTopics(['t'], function (err, data) {});// Simply omit 2nd arg
 ```
 
 ## Consumer
@@ -79,12 +79,12 @@ Example:
 * `payloads`: **Array**,array of `FetchRequest`, `FetchRequest` is a JSON object like:
 
 ``` js
-    {
-       topic: 'topicName',
-       partition: '0', //default 0
-       autoCommit: true, //default true
-       commitIntervalMs: 5000 //default 5s
-    }
+{
+   topic: 'topicName',
+   partition: '0', //default 0
+   autoCommit: true, //default true
+   commitIntervalMs: 5000 //default 5s
+}
 ```
 
 * `groupId`: *String*, consumet group id, deafult `kafka-node-group`
@@ -92,16 +92,16 @@ Example:
 Example:
 
 ``` js
-    var kafka = require('kafka'),
-        Consumer = kafka.Consumer,
-        client = new kafka.Client(),
-        consumer = new Consumer(
-            client,
-            [
-                { topic: 't', partition: 0 }, { topic: 't1', partition: 1 }
-            ],
-            'my-group'
-        );
+var kafka = require('kafka'),
+    Consumer = kafka.Consumer,
+    client = new kafka.Client(),
+    consumer = new Consumer(
+        client,
+        [
+            { topic: 't', partition: 0 }, { topic: 't1', partition: 1 }
+        ],
+        'my-group'
+    );
 ```
 
 ### on('message', onMessage);
@@ -110,9 +110,9 @@ Example:
 Example:
 
 ``` js
-    consumer.on('message', function (message) {
-        console.log(message);
-    });
+consumer.on('message', function (message) {
+    console.log(message);
+});
 ```
 
 ### on('error', function (err) {})
@@ -126,8 +126,8 @@ Add topics to current consumer, if any topic to be added not exists, return erro
 Example:
 
 ``` js
-    consumer.addTopics(['t1', 't2'], function (err, added) {
-    });
+consumer.addTopics(['t1', 't2'], function (err, added) {
+});
 ```
 
 ### removeTopics(topics, cb)
@@ -137,8 +137,8 @@ Example:
 Example:
 
 ``` js
-    consumer.removeTopics(['t1', 't2'], function (err, removed) {
-    });
+consumer.removeTopics(['t1', 't2'], function (err, removed) {
+});
 ```
 
 ### commit(cb)
@@ -152,5 +152,12 @@ Example:
 consumer.commit(function(err, data) {
 });
 ```
+
 ### close(force)
-* `force`, **Boolean**, if set true, it force commit current offset before close
+* `force`, **Boolean**, if set true, it force commit current offset before close, default false
+
+Example
+
+```js
+consumer.close(true);
+```

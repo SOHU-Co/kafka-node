@@ -12,9 +12,10 @@ var consumer = new Consumer(client,
 
 consumer.on('message', function (messages) {
     console.log('group0--->',messages.message);
+    consumer
 });
 consumer.on('error', function (err) {
-    //console.log('--------->',err);
+    console.log(err);
 })
 
 setTimeout(function () {
