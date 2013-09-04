@@ -1,7 +1,7 @@
 Kafka node client
 ================
 
-This is nodejs client for Kafka-0.8 with zookeeper integration
+This is a nodejs client for Kafka-0.8 with zookeeper integration.
 # API
 ## Client
 ### Client(connectionString, clientId)
@@ -69,12 +69,12 @@ producer.createTopics(['t','t1'], false, function (err, data) {
     console.log(data);
 });
 // Create topics async
-producer.createTopics(['t'], true, function () {err, data});
+producer.createTopics(['t'], true, function (err, data) {});
 producer.createTopics(['t'], function (err, data) {});// Simply omit 2nd arg
 ```
 
 ## Consumer
-### Consumer(client, payloads, goupId)
+### Consumer(client, payloads, goupId, fetchMaxWaitMs, fetchMinBytes)
 * `client`: client which keep connect with kafka server.
 * `payloads`: **Array**,array of `FetchRequest`, `FetchRequest` is a JSON object like:
 
@@ -87,7 +87,9 @@ producer.createTopics(['t'], function (err, data) {});// Simply omit 2nd arg
 }
 ```
 
-* `groupId`: *String*, consumet group id, deafult `kafka-node-group`
+* `groupId`: *String*, consumer group id, deafult `kafka-node-group`
+* `fetchMaxWaitTime`: *Number*, the max wait time is the maximum amount of time in milliseconds to block waiting if insufficient data is available at the time the request is issued, default 1000ms
+* `fetchMinBytes`: *Number*, this is the minimum number of bytes of messages that must be available to give a response, default 1 byte
 
 Example:
 
