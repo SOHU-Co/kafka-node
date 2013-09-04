@@ -1,17 +1,19 @@
-var Producer = require('../lib/producer'),
-    Consumer = require('../lib/consumer');
+var kafka = require('../kafka');
+var Consumer = kafka.Consumer;
+var Producer = kafka.Producer;
+var Client = kafka.Client;
 
+var client = new Client();
 
 function createTopics() {
-    var producer = new Producer('localhost:2181')
-    producer.createTopics(['t17', 't18', 't19', 't21'],false, function (err, data) {
+    var producer = new Producer(client);
+    producer.createTopics(['topic1', 'topic2', 'topic3', 'topic4'],false, function (err, data) {
         console.log(data);
     });
 }
 
-var consumer = new Consumer([{topic: 'topic7'}]);
 function addTopics() {
-    //consumer.on('error', function (err) { console.log(err) });
+    var consumer = new Consumer(client,[{topic: 'topic7'}]);
     consumer.on('message', function (msg) { console.log(msg) });
 
     consumer.addTopics(
@@ -25,6 +27,7 @@ function addTopics() {
 }
 
 function removeTopics() {
+    var consumer = new Consumer(client,[{topic: 'topic7'},{topic: 'topic3'},{topic: 'topic4'}]);
     consumer.removeTopics(['topic3', 'topic4'], function (err, data) {
         console.log(data);
     }); 
@@ -37,9 +40,8 @@ function exit() {
     });
 }
 
-addTopics();
+//addTopics();
 
 //setTimeout(removeTopics, 5000);
-setTimeout(exit, 15000);
 
-//createTopics();
+createTopics();

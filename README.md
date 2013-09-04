@@ -1,7 +1,13 @@
-Kafka node client
-================
+Kafka-node
+==========
 
-This is a nodejs client for Kafka-0.8 with zookeeper integration.
+Kafka-node is a nodejs client for the latest Kafka-0.8 with zookeeper integration.Zookeeper is does the following jobs:
+* Load broker metadata from zookeeper before we can comucicate with kafka server
+* Watch broker state, if broker changed, client will refresh broker and topic metadata stored in client
+
+# Install kafka
+Follow the [instructions](https://cwiki.apache.org/KAFKA/kafka-08-quick-start.html) on the Kafka wiki to build Kafka 0.8 and get a test broker up and running.
+
 # API
 ## Client
 ### Client(connectionString, clientId)
@@ -88,7 +94,7 @@ producer.createTopics(['t'], function (err, data) {});// Simply omit 2nd arg
 ```
 
 * `groupId`: *String*, consumer group id, deafult `kafka-node-group`
-* `fetchMaxWaitTime`: *Number*, the max wait time is the maximum amount of time in milliseconds to block waiting if insufficient data is available at the time the request is issued, default 1000ms
+* `fetchMaxWaitTime`: *Number*, the max wait time is the maximum amount of time in milliseconds to block waiting if insufficient data is available at the time the request is issued, default 100ms
 * `fetchMinBytes`: *Number*, this is the minimum number of bytes of messages that must be available to give a response, default 1 byte
 
 Example:
@@ -107,6 +113,8 @@ var kafka = require('kafka'),
 ```
 
 ### on('message', onMessage);
+By default, we will consume message from the last committed offset of the current group
+
 * `onMessage`: **Function**, callback when new message comes
 
 Example:
@@ -163,3 +171,6 @@ Example
 ```js
 consumer.close(true);
 ```
+
+# Todo
+* Compression: gzip & snappy
