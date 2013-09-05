@@ -27,7 +27,7 @@ producer.on('ready', function () {
     for (var i = 0; i < 5; i++) {
         producer.send([
             {topic: 'topic1', messages: ['777777777777777' + 1 + 'coolmessage', 'fdjkfdfjdksfdk'] },
-            {topic: 'topic2', messages: ['777777777777777' + 2 + 'coolmessage', 'fdjkfdfjdksfdk'] },
+            //{topic: 'topic2', messages: ['777777777777777' + 2 + 'coolmessage', 'fdjkfdfjdksfdk'] },
             {topic: 'topic3', messages: ['777777777777777' + 3 + 'coolmessage', 'fdjkfdfjdksfdk'] }
         ], function (err, data) {
             if (err) console.log(err);
