@@ -7,7 +7,7 @@ var Producer = require('../lib/producer')
 
 if (cluster.isMaster) {
     // Fork workers.
-    for (var i = 0; i < 3; i++) {
+    for (var i = 0; i < numCPUs; i++) {
         cluster.fork();
     }
 
