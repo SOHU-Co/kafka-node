@@ -185,7 +185,7 @@ consumer.close(true);
 {
    topic: 'topicName',
    partition: '0', //default 0
-   time: Date.now(), //used to ask for all messages before a certain time (ms),default Date.now() 
+   time: Date.now(), //used to ask for all messages before a certain time (ms), not support negative,default Date.now() 
    maxNum: 1 //default 1
 }
 ```
@@ -198,7 +198,10 @@ var kafka = require('kafka'),
     offset = new kafka.Offset(client);
     offset.fetch([
         { tiopic: 't', partition: 0, time: Date.now(), maxNum: 1 } 
-    ], function (err, data) {});
+    ], function (err, data) {
+        // data
+        // { 't': { '0': [999] } }
+    });
 ```
 
 # Todo
