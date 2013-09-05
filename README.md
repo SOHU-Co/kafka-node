@@ -172,5 +172,34 @@ Example
 consumer.close(true);
 ```
 
+## Offset 
+### Offset(client)
+* `client`: client which keep connect with kafka server.
+
+### fetch(payloads, cb)
+
+* `payloads`: **Array**,array of `OffsetRequest`, `OffsetRequest` is a JSON object like:
+* `cb`: *Function*, the callback
+
+``` js
+{
+   topic: 'topicName',
+   partition: '0', //default 0
+   time: Date.now(), //used to ask for all messages before a certain time (ms),default Date.now() 
+   maxNum: 1 //default 1
+}
+```
+
+Example
+
+```js
+var kafka = require('kafka'),
+    client = new kafka.Client(),
+    offset = new kafka.Offset(client);
+    offset.fetch([
+        { tiopic: 't', partition: 0, time: Date.now(), maxNum: 1 } 
+    ], function (err, data) {});
+```
+
 # Todo
 * Compression: gzip & snappy
