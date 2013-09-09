@@ -8,7 +8,7 @@ var Client = kafka.Client;
 var client = new Client();
 var consumer = new Consumer(client, 
     [{topic: 'topic1', autoCommit: false},{topic: 'topic2', autoCommit: true},{topic: 'topic75'}],
-    { autoCommit: false });
+    { autoCommit: true, fromBeginning: false });
 
 consumer.on('message', function (message) {
     console.log('group0--->',message);

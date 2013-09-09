@@ -89,6 +89,7 @@ producer.createTopics(['t'], function (err, data) {});// Simply omit 2nd arg
 {
    topic: 'topicName',
    partition: '0', //default 0 
+   offset: -1, //default -1 
 }
 ```
 
@@ -106,14 +107,10 @@ producer.createTopics(['t'], function (err, data) {});// Simply omit 2nd arg
     fetchMinBytes: 1,
     // The maximum bytes to include in the message set for this partition. This helps bound the size of the response.
     fetchMaxBytes: 1024 * 10, 
-    // 
+    // If set true, consumer will fetch message from beginning or the given offset in the payloads 
     fromBeginning: false
 }
 ```
-* `groupId`: *String*, consumer group id, deafult `kafka-node-group`
-* `fetchMaxWaitTime`: *Number*, the max wait time is the maximum amount of time in milliseconds to block waiting if insufficient data is available at the time the request is issued, default 100ms
-* `fetchMinBytes`: *Number*, this is the minimum number of bytes of messages that must be available to give a response, default 1 byte
-
 Example:
 
 ``` js
@@ -224,8 +221,9 @@ var kafka = require('kafka'),
     });
 ```
 
-### commit(payloads, cb)
+### commit(groupId, payloads, cb)
 
+* `groupId`: consumer group
 * `payloads`: **Array**,array of `OffsetCommitRequest`, `OffsetCommitRequest` is a JSON object like:
 
 ``` js
