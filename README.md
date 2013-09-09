@@ -107,8 +107,8 @@ producer.createTopics(['t'], function (err, data) {});// Simply omit 2nd arg
     fetchMinBytes: 1,
     // The maximum bytes to include in the message set for this partition. This helps bound the size of the response.
     fetchMaxBytes: 1024 * 10, 
-    // If set true, consumer will fetch message from beginning or the given offset in the payloads 
-    fromBeginning: false
+    // If set true, consumer will fetch message from the given offset in the payloads 
+    fromOffset: false
 }
 ```
 Example:
@@ -145,7 +145,6 @@ consumer.on('message', function (message) {
 
 ### addTopics(topics, cb)
 Add topics to current consumer, if any topic to be added not exists, return error
-
 * `topics`: **Array**, array of topics to add
 * `cb`: **Function**,the callback
 
@@ -222,7 +221,6 @@ var kafka = require('kafka'),
 ```
 
 ### commit(groupId, payloads, cb)
-
 * `groupId`: consumer group
 * `payloads`: **Array**,array of `OffsetCommitRequest`, `OffsetCommitRequest` is a JSON object like:
 
