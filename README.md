@@ -146,8 +146,8 @@ consumer.on('message', function (message) {
 ### addTopics(topics, cb)
 Add topics to current consumer, if any topic to be added not exists, return error
 
-* `topics`, **Array**, array of topics to add
-* `cb`, **Function**,the callback
+* `topics`: **Array**, array of topics to add
+* `cb`: **Function**,the callback
 
 Example:
 
@@ -157,8 +157,8 @@ consumer.addTopics(['t1', 't2'], function (err, added) {
 ```
 
 ### removeTopics(topics, cb)
-* `topics`, **Array**, array of topics to remove 
-* `cb`, **Function**,the callback
+* `topics`: **Array**, array of topics to remove 
+* `cb`: **Function**, the callback
 
 Example:
 
@@ -170,7 +170,7 @@ consumer.removeTopics(['t1', 't2'], function (err, removed) {
 ### commit(cb)
 Commit offset of the current topics manually, this method should be called when a consumer leaves
 
-* `cb`, **Function**, the callback
+* `cb`: **Function**, the callback
 
 Example:
 
@@ -180,7 +180,7 @@ consumer.commit(function(err, data) {
 ```
 
 ### close(force)
-* `force`, **Boolean**, if set true, it force commit current offset before close, default false
+* `force`: **Boolean**, if set true, it force commit current offset before close, default false
 
 Example
 
