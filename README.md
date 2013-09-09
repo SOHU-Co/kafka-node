@@ -2,6 +2,7 @@ Kafka-node
 ==========
 
 Kafka-node is a nodejs client for the latest Kafka-0.8 with zookeeper integration.Zookeeper is does the following jobs:
+
 * Load broker metadata from zookeeper before we can comucicate with kafka server
 * Watch broker state, if broker changed, client will refresh broker and topic metadata stored in client
 
@@ -80,19 +81,35 @@ producer.createTopics(['t'], function (err, data) {});// Simply omit 2nd arg
 ```
 
 ## Consumer
-### Consumer(client, payloads, goupId, fetchMaxWaitMs, fetchMinBytes)
+### Consumer(client, payloads, options)
 * `client`: client which keep connect with kafka server.
 * `payloads`: **Array**,array of `FetchRequest`, `FetchRequest` is a JSON object like:
 
 ``` js
 {
    topic: 'topicName',
-   partition: '0', //default 0
-   autoCommit: true, //default true
-   commitIntervalMs: 5000 //default 5s
+   partition: '0', //default 0 
 }
 ```
 
+* `options`: options for consumer,
+
+```js
+{
+    groupId: 'kafka-node-group',//consumer group id, deafult `kafka-node-group`
+    // Auto commit config 
+    autoCommit: true,
+    autoCommitIntervalMs: 5000,
+    // The max wait time is the maximum amount of time in milliseconds to block waiting if insufficient data is available at the time the request is issued, default 100ms
+    fetchMaxWaitMs: 100,
+    // This is the minimum number of bytes of messages that must be available to give a response, default 1 byte
+    fetchMinBytes: 1,
+    // The maximum bytes to include in the message set for this partition. This helps bound the size of the response.
+    fetchMaxBytes: 1024 * 10, 
+    // 
+    fromBeginning: false
+}
+```
 * `groupId`: *String*, consumer group id, deafult `kafka-node-group`
 * `fetchMaxWaitTime`: *Number*, the max wait time is the maximum amount of time in milliseconds to block waiting if insufficient data is available at the time the request is issued, default 100ms
 * `fetchMinBytes`: *Number*, this is the minimum number of bytes of messages that must be available to give a response, default 1 byte
@@ -108,7 +125,9 @@ var kafka = require('kafka'),
         [
             { topic: 't', partition: 0 }, { topic: 't1', partition: 1 }
         ],
-        'my-group'
+        {
+            autoCommit: false
+        }
     );
 ```
 
@@ -179,7 +198,6 @@ consumer.close(true);
 ### fetch(payloads, cb)
 
 * `payloads`: **Array**,array of `OffsetRequest`, `OffsetRequest` is a JSON object like:
-* `cb`: *Function*, the callback
 
 ``` js
 {
@@ -189,6 +207,8 @@ consumer.close(true);
    maxNum: 1 //default 1
 }
 ```
+
+* `cb`: *Function*, the callback
 
 Example
 
@@ -201,6 +221,31 @@ var kafka = require('kafka'),
     ], function (err, data) {
         // data
         // { 't': { '0': [999] } }
+    });
+```
+
+### commit(payloads, cb)
+
+* `payloads`: **Array**,array of `OffsetCommitRequest`, `OffsetCommitRequest` is a JSON object like:
+
+``` js
+{
+   topic: 'topicName',
+   partition: '0', //default 0
+   offset: 1,
+   metadata: 'm', //default 'm'
+}
+```
+
+Example
+
+```js
+var kafka = require('kafka'),
+    client = new kafka.Client(),
+    offset = new kafka.Offset(client);
+    offset.commit([
+        { tiopic: 't', partition: 0, offset: 10 } 
+    ], function (err, data) {
     });
 ```
 
