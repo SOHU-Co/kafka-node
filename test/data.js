@@ -2,7 +2,7 @@ var util = require('./util')
     , config = require('./config.json')
     , fs = require('fs');
 
-var total = config.topicNum * config.msgNum;
+var total = config.topicNum * config.msgNum * config.repeat;
 var buffer = '';
 
 function appendData(i) {
