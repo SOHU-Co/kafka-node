@@ -8,7 +8,7 @@ var Producer = require('../lib/producer')
 function send() {
     var client = new Client(config.zookeeper)
         , producer = new Producer(client)
-        , total = config.topicNum * config.msgNum * config.repeat
+        , total = config.topicNum * config.msgNum
         , count = 0;
     producer.on('ready', function () {
         var lr = new lineByLineReader(config.dataSource);

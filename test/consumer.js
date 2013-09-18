@@ -7,7 +7,7 @@ var Consumer = require('../lib/consumer')
 var consumer = new Consumer(client, [
         {topic: 'topic3', autoCommit: false}
     ])
-    , total = config.topicNum * config.msgNum * config.repeat
+    , total = config.topicNum * config.msgNum
     , topics = []
     , step = 100
     , firstTopics = true
