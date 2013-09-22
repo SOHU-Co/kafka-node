@@ -5,18 +5,7 @@ var Producer = require('../lib/producer')
     , numCPUs = require('os').cpus().length
     , lineByLineReader = require('line-by-line');
 
-if (cluster.isMaster) {
-    // Fork workers.
-    for (var i = 0; i < numCPUs; i++) {
-        cluster.fork();
-    }
-
-    cluster.on('exit', function (worker) {
-        console.log('worker ' + worker.process.pid + ' exit');
-    });
-} else {
-    // Workers can share any TCP connection
-    // In this case its a HTTP server
+function send() {
     var client = new Client(config.zookeeper)
         , producer = new Producer(client)
         , total = config.topicNum * config.msgNum
@@ -37,6 +26,20 @@ if (cluster.isMaster) {
             });
         });
     });
+}
+
+if (cluster.isMaster) {
+    // Fork workers.
+    for (var i = 0; i < numCPUs; i++) {
+        cluster.fork();
+    }
+
+    cluster.on('exit', function (worker) {
+        console.log('worker ' + worker.process.pid + ' exit');
+    });
+} else {
+    // start a worker each 30 seconds
+    setTimeout(send, 30000 * (cluster.worker.id - 1));
 }
 
 
