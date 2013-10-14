@@ -1,5 +1,5 @@
 {
-    "name": "kafka-node",
+    "name": "kafka",
     "version": "0.0.0",
     "private": true,
     "main": "kafka.js",
