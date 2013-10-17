@@ -32,6 +32,6 @@ consumer.on('message', function (message) {
 consumer.on('error', function (err) {
     console.log(err);
 });
-consumer.on('offsetOutOffRange', function (err) {
+consumer.on('offsetOutOfRange', function (err) {
     console.log(err);
 })
