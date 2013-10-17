@@ -143,6 +143,8 @@ consumer.on('message', function (message) {
 
 ### on('error', function (err) {})
 
+### on('offsetOutOffRange', function (err) {})
+
 ### addTopics(topics, cb)
 Add topics to current consumer, if any topic to be added not exists, return error
 * `topics`: **Array**, array of topics to add
@@ -176,6 +178,21 @@ Example:
 ``` js
 consumer.commit(function(err, data) {
 });
+```
+
+### setOffset(topic, partition, offset)
+Set offset of the given topic
+
+* `topic`: **String**
+
+* `partition`: **Number**
+
+* `offset`: **Number**
+
+Example:
+
+``` js
+consumer.setOffset('topic', 0, 0); 
 ```
 
 ### close(force)

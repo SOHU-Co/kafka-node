@@ -23,12 +23,15 @@ var consumer = new Consumer(
         {topic: 'topic75'},
         //{topic: 't4'}, 
     ],
-    { autoCommit: false, fromBeginning: false }
+    { autoCommit: false, fromBeginning: false, fetchMaxWaitMs: 3000 }
 );
 
 consumer.on('message', function (message) {
     console.log(message);
 });
 consumer.on('error', function (err) {
+    console.log(err);
+});
+consumer.on('offsetOutOffRange', function (err) {
     console.log(err);
 })
