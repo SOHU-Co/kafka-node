@@ -24,7 +24,7 @@ var consumer = new Consumer(
         {topic: 'new_1'}, 
         {topic: 'none_1'} 
     ],
-    { autoCommit: false, fromBeginning: false, fetchMaxWaitMs: 3000 }
+    { autoCommit: true, fromBeginning: false, fetchMaxWaitMs: 3000 }
 );
 
 consumer.on('message', function (message) {
