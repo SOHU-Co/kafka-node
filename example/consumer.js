@@ -7,7 +7,7 @@ require('nodetime').profile({
 */
 
 //var agent = require('webkit-devtools-agent');
-require('look').start();
+//require('look').start();
 
 var kafka = require('../kafka');
 var Consumer = kafka.Consumer;
@@ -18,10 +18,11 @@ var client = new Client();
 var consumer = new Consumer(
     client, 
     [
-        {topic: 'topic1'},
-        {topic: 'topic2'},
-        {topic: 'topic75'},
-        //{topic: 't4'}, 
+        //{topic: 'topic1'},
+        //{topic: 'topic2'},
+        //{topic: 'topic75'},
+        {topic: 'new_1'}, 
+        {topic: 'none_1'} 
     ],
     { autoCommit: false, fromBeginning: false, fetchMaxWaitMs: 3000 }
 );
