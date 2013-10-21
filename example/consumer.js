@@ -14,22 +14,23 @@ var Consumer = kafka.Consumer;
 var Producer = kafka.Producer;
 var Client = kafka.Client;
 
-var client = new Client('192.168.105.113:2181/kafka0.8');
+//var client = new Client('192.168.105.113:2181/kafka0.8');
+var client = new Client();
 var topics = [
-        //{topic: 'topic1'},
+        {topic: 'topic1'},
         //{topic: 't2'},
         //{topic: 'topic75'},
-        //{topic: 'new_1'}, 
+        {topic: 'new_1'} 
         //
-        {topic: '1-news'} 
+        //{topic: '1-news'} 
     ],
-    options = { autoCommit: false, fromBeginning: false, fetchMaxWaitMs: 5000, groupId: 'hello' };
+    options = { autoCommit: false, fromBeginning: false, fetchMaxWaitMs: 5000 };
 
 
 function createConsumer() {
     var consumer = new Consumer(client, topics, options);
     consumer.on('message', function (message) {
-        //console.log(this.id, message);
+        console.log(this.id, message);
     });
     consumer.on('error', function (err) {
         console.log(err);
