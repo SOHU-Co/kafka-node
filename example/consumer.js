@@ -15,24 +15,32 @@ var Producer = kafka.Producer;
 var Client = kafka.Client;
 
 var client = new Client();
-var consumer = new Consumer(
-    client, 
-    [
+var topics = [
         //{topic: 'topic1'},
         //{topic: 'topic2'},
         //{topic: 'topic75'},
-        {topic: 'new_1'}, 
+        //{topic: 'new_1'}, 
+        //
         {topic: 'none_1'} 
     ],
-    { autoCommit: true, fromBeginning: false, fetchMaxWaitMs: 3000 }
-);
+    options = { autoCommit: false, fromBeginning: false, fetchMaxWaitMs: 30000 , groupId: 'bug_group' };
 
-consumer.on('message', function (message) {
-    console.log(message);
-});
-consumer.on('error', function (err) {
-    console.log(err);
-});
-consumer.on('offsetOutOfRange', function (err) {
-    console.log(err);
-})
+
+function createConsumer() {
+    var consumer = new Consumer(client, topics, options);
+    consumer.on('message', function (message) {
+        console.log(this.id, message);
+    });
+    consumer.on('error', function (err) {
+        console.log(err);
+    });
+    consumer.on('offsetOutOfRange', function (err) {
+        console.log(this.id, err);
+    })
+}
+
+createConsumer();
+
+setTimeout(createConsumer, 400);
+
+setTimeout(createConsumer, 400);
