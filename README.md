@@ -20,7 +20,7 @@ Follow the [instructions](https://cwiki.apache.org/KAFKA/kafka-08-quick-start.ht
 * `client`: client which keep connect with kafka server.
 
 ``` js
-var kafka = require('kafka'),
+var kafka = require('kafka-node'),
     Producer = kafka.Producer,
     client = new kafka.Client(),
     producer = new Producer(client);
@@ -42,7 +42,7 @@ var kafka = require('kafka'),
 Example:
 
 ``` js
-var kafka = require('kafka'),
+var kafka = require('kafka-node'),
     Producer = kafka.Producer,
     client = new kafka.Client(),
     producer = new Producer(client),
@@ -67,7 +67,7 @@ This method is used to create topics in kafka server, only work when kafka serve
 Example:
 
 ``` js
-var kafka = require('kafka'),
+var kafka = require('kafka-node'),
     Producer = kafka.Producer,
     client = new kafka.Client(),
     producer = new Producer(client);
@@ -114,7 +114,7 @@ producer.createTopics(['t'], function (err, data) {});// Simply omit 2nd arg
 Example:
 
 ``` js
-var kafka = require('kafka'),
+var kafka = require('kafka-node'),
     Consumer = kafka.Consumer,
     client = new kafka.Client(),
     consumer = new Consumer(
@@ -253,7 +253,7 @@ var kafka = require('kafka'),
 Example
 
 ```js
-var kafka = require('kafka'),
+var kafka = require('kafka-node'),
     client = new kafka.Client(),
     offset = new kafka.Offset(client);
     offset.commit([
