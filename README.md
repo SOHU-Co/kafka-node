@@ -1,13 +1,7 @@
-Kafka-node
-==========
-
-Kafka-node is a nodejs client for the latest Kafka-0.8 with zookeeper integration.Zookeeper is does the following jobs:
-
-* Load broker metadata from zookeeper before we can comucicate with kafka server
-* Watch broker state, if broker changed, client will refresh broker and topic metadata stored in client
-
-# Install kafka
-Follow the [instructions](https://cwiki.apache.org/KAFKA/kafka-08-quick-start.html) on the Kafka wiki to build Kafka 0.8 and get a test broker up and running.
+Kafka node client
+================
+ 
+This is nodejs client for Kafka-0.8 with zookeeper integration
 
 # API
 ## Client
