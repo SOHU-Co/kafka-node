@@ -1,15 +1,20 @@
 {
-    "name": "kafka",
-    "version": "0.0.0",
-    "private": true,
+    "name": "kafka-node",
+    "description": "node client for Apache kafka, only support kafka 0.8 and above",
+    "version": "0.0.1",
     "main": "kafka.js",
     "dependencies": {
         "underscore": "~1.5.1",
         "buffermaker": "0.0.11",
         "binary": "~0.3.0",
-        "async": "~0.2.9",
         "buffer-crc32": "~0.2.1",
-        "node-zookeeper-client": "*",
+        "node-zookeeper-client": "*"
+    },
+    "devDependencies": {
         "line-by-line": "~0.1.1"
-    }
+    },
+    "repository": {
+        "type": "git",
+        "url": "git@github.com:SOHU-Co/kafka-node.git"
+    },
 }
