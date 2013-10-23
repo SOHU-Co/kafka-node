@@ -16,5 +16,5 @@
     "repository": {
         "type": "git",
         "url": "git@github.com:SOHU-Co/kafka-node.git"
-    },
+    }
 }
