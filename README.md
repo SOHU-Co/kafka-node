@@ -89,7 +89,7 @@ producer.createTopics(['t'], function (err, data) {});// Simply omit 2nd arg
 {
    topic: 'topicName',
    partition: '0', //default 0 
-   offset: -1, //default -1 
+   offset: 0, //default 0 
 }
 ```
 
@@ -143,7 +143,9 @@ consumer.on('message', function (message) {
 
 ### on('error', function (err) {})
 
-### on('offsetOutOffRange', function (err) {})
+
+### on('offsetOutOfRange', function (err) {})
+
 
 ### addTopics(topics, cb)
 Add topics to current consumer, if any topic to be added not exists, return error
@@ -256,7 +258,7 @@ Example
 var kafka = require('kafka-node'),
     client = new kafka.Client(),
     offset = new kafka.Offset(client);
-    offset.commit([
+    offset.commit('groupId', [
         { tiopic: 't', partition: 0, offset: 10 } 
     ], function (err, data) {
     });
