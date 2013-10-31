@@ -7,7 +7,7 @@ var client = new Client();
 
 function createTopics() {
     var producer = new Producer(client);
-    producer.createTopics(['topic0000', 'topic2', 'topic3', 'topic4'],false, function (err, data) {
+    producer.createTopics(['new_100'],false, function (err, data) {
         console.log(data);
     });
 }

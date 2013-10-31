@@ -2,15 +2,17 @@
 
 var Consumer = require('../lib/consumer'),
     Producer = require('../lib/producer'),
+    Offset = require('../lib/offset'),
     Client = require('../lib/client');
 
-var client, consumer, producer;
+var client, consumer, producer, offset;
 
 function noop() { console.log(arguments) }
 
 before(function (done) {
     client = new Client();
     producer = new Producer(client);
+    offset = new Offset(client);
     producer.on('ready', function () {
         producer.createTopics(['_exist_topic_1_test', '_exist_topic_2_test'], false, function (err, created) {
             producer.send([{ topic: '_exist_topic_2_test', messages: 'hello kafka' }], function (err) {
@@ -26,15 +28,14 @@ describe('Consumer', function () {
             var topics = [ { topic: '_exist_topic_2_test' } ],
                 options = { autoCommit: true, groupId: '_groupId_1_test' };
             var consumer = new Consumer(client, topics, options);
-            var count = 0;
             consumer.on('error', noop);
             consumer.on('message', function (message) {
                 message.topic.should.equal('_exist_topic_2_test'); 
-                setTimeout(function () {
-                    consumer.commit(true, function () {
-                        if (count++ === 0) done();
-                    });
-                }, 500);
+                message.value.should.equal('hello kafka');
+                message.partition.should.equal(0);
+                offset.commit('_groupId_1_test', [message], function (err) {
+                    done(err); 
+                });
             });
         });
 
