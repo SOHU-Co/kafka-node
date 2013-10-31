@@ -64,7 +64,7 @@ describe('Consumer', function () {
             consumer.on('error', noop);
         });
     });
-   /* 
+
     describe('#addTopics', function () {
         describe('when topic need to added not exist', function () {
             it('should return error', function (done) {
@@ -81,13 +81,12 @@ describe('Consumer', function () {
         });
 
         describe('when topic need to added exist', function () {
-            it('should added successfully', function () {
+            it('should added successfully', function (done) {
                 var options = { autoCommit: false, groupId: '_groupId_addTopics_test' },
                     topics = ['_exist_topic_2_test'];
                 var consumer = new Consumer(client, [], options);
                 consumer.on('error', noop);
                 consumer.addTopics(topics, function (err, data) {
-                    err.should.not.be.ok;
                     data.should.eql(topics);
                     consumer.payloads.some(function (p) { return p.topic === topics[0] }).should.be.ok;
                     done();
@@ -95,7 +94,7 @@ describe('Consumer', function () {
             });
         });
     }); 
-    */
+    
     describe('#removeTopics', function () {
         it('should remove topics successfully', function (done) {
             var options = { autoCommit: false, groupId: '_groupId_addTopics_test' },
@@ -114,7 +113,7 @@ describe('Consumer', function () {
 
     describe('#setOffset', function () {
         it('should update the offset in consumer', function () {
-            var options = { autoCommit: true, groupId: '_groupId_addTopics_test' },
+            var options = { autoCommit: false, groupId: '_groupId_addTopics_test' },
                 topics = [{ topic: '_exist_topic_2_test' }];
             var consumer = new Consumer(client, topics, options);
             consumer.on('error', noop);
@@ -128,15 +127,50 @@ describe('Consumer', function () {
 
     describe('#commit', function () {
         it('should commit offset of current topics', function (done) {
-            var options = { autoCommit: false, groupId: '_groupId_commit_test' },
+            var options = { autoCommit: true, groupId: '_groupId_commit_test' },
                 topics = [{ topic: '_exist_topic_2_test' }];
             var consumer = new Consumer(client, topics, options);
             var count = 0;
             consumer.on('message', function (message) {
-                consumer.commit(function (err) {
+                consumer.commit(true, function (err) {
                     if (!err && count++ === 0) done(err); 
                 });
             });
+        });
+    });
+
+    describe('#buildPayloads', function () {
+        it('should set default config on the topic', function () {
+            var defaults = { 
+                groupId: 'kafka-node-group',
+                autoCommit: true,
+                autoCommitMsgCount: 100,
+                autoCommitIntervalMs: 5000,
+                fetchMaxWaitMs: 100,
+                fetchMinBytes: 1,
+                fetchMaxBytes: 1024 * 10, 
+                fromOffset: false
+            };
+
+            var consumer = new Consumer(client, []);
+            consumer.options.should.eql(defaults);
+            
+            var topic = consumer.buildPayloads([{ topic: 'topic' }])[0];
+            topic.partition.should.equal(0); 
+            topic.offset.should.equal(0); 
+            topic.metadata.should.equal('m'); 
+            topic.maxBytes.should.equal(1024 * 10); 
+        }); 
+
+        it('should return right payloads when arguments is string', function () {
+            var consumer = new Consumer(client, []);
+            var topics = ['topic']; 
+            var topic = consumer.buildPayloads(topics)[0];
+            topic.should.be.an.instanceof(Object);
+            topic.partition.should.equal(0); 
+            topic.offset.should.equal(0); 
+            topic.metadata.should.equal('m'); 
+            topic.maxBytes.should.equal(1024 * 10);
         });
     });
 });
