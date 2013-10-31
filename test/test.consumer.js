@@ -26,15 +26,16 @@ describe('Consumer', function () {
     describe('events', function () {
         it ('should emit message when get new message', function (done) {
             var topics = [ { topic: '_exist_topic_2_test' } ],
-                options = { autoCommit: true, groupId: '_groupId_1_test' };
+                options = { autoCommit: false, groupId: '_groupId_1_test' };
             var consumer = new Consumer(client, topics, options);
+            var count = 0;
             consumer.on('error', noop);
             consumer.on('message', function (message) {
                 message.topic.should.equal('_exist_topic_2_test'); 
                 message.value.should.equal('hello kafka');
                 message.partition.should.equal(0);
                 offset.commit('_groupId_1_test', [message], function (err) {
-                    done(err); 
+                    if (count++ === 0) done(err); 
                 });
             });
         });
@@ -51,7 +52,7 @@ describe('Consumer', function () {
 
         it('should emit offsetOutOfRange when offset out of range', function (done) {
             var topics = [ { topic: '_exist_topic_1_test', offset: 100 } ],
-                options = { fromOffset: true }, 
+                options = { fromOffset: true, autoCommit: false }, 
                 count = 0;
             var consumer = new Consumer(client, topics, options);
             consumer.on('offsetOutOfRange', function (topic) {
@@ -63,11 +64,11 @@ describe('Consumer', function () {
             consumer.on('error', noop);
         });
     });
-
+   /* 
     describe('#addTopics', function () {
         describe('when topic need to added not exist', function () {
             it('should return error', function (done) {
-                var options = { autoCommit: true, groupId: '_groupId_1_test' },
+                var options = { autoCommit: false, groupId: '_groupId_1_test' },
                     topics = ['_not_exist_topic_1_test'];
                 var consumer = new Consumer(client, [], options);           
                 consumer.on('error', noop);
@@ -81,7 +82,7 @@ describe('Consumer', function () {
 
         describe('when topic need to added exist', function () {
             it('should added successfully', function () {
-                var options = { autoCommit: true, groupId: '_groupId_addTopics_test' },
+                var options = { autoCommit: false, groupId: '_groupId_addTopics_test' },
                     topics = ['_exist_topic_2_test'];
                 var consumer = new Consumer(client, [], options);
                 consumer.on('error', noop);
@@ -94,10 +95,10 @@ describe('Consumer', function () {
             });
         });
     }); 
-
+    */
     describe('#removeTopics', function () {
         it('should remove topics successfully', function (done) {
-            var options = { autoCommit: true, groupId: '_groupId_addTopics_test' },
+            var options = { autoCommit: false, groupId: '_groupId_addTopics_test' },
                 topics = [{ topic: '_exist_topic_2_test' }, { topic: '_exist_topic_1_test' }];
             var consumer = new Consumer(client, topics, options);
             consumer.on('error', noop);
@@ -124,4 +125,18 @@ describe('Consumer', function () {
             })[0].offset.should.equal(100);
         });
     }); 
+
+    describe('#commit', function () {
+        it('should commit offset of current topics', function (done) {
+            var options = { autoCommit: false, groupId: '_groupId_commit_test' },
+                topics = [{ topic: '_exist_topic_2_test' }];
+            var consumer = new Consumer(client, topics, options);
+            var count = 0;
+            consumer.on('message', function (message) {
+                consumer.commit(function (err) {
+                    if (!err && count++ === 0) done(err); 
+                });
+            });
+        });
+    });
 });
