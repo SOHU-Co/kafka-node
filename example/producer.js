@@ -24,17 +24,20 @@ function createMsg() {
     return ret + dictionary.slice(n1);
 }
 
-var count = 5, rets = 0;
+var count = 1, rets = 0;
 producer.on('ready', function () {
-    console.log('producer ready');
+   setInterval(send, 1000); 
+});
+
+function send() {
     for (var i = 0; i < count; i++) {
         producer.send([
-            {topic: 'topic1', messages: ['777777777777777' + 1 + 'coolmessage', 'fdjkfdfjdksfdk'] },
-            {topic: 'new_100', messages: ['777777777777777' + 2 + 'coolmessage'] }
+            {topic: 'topic1', messages: ['777777777777777' + 1 + 'coolmessage'] },
+            {topic: 'topic2', messages: ['777777777777777' + 2 + 'coolmessage'] }
         ], function (err, data) {
-            if (err) console.log(err);
-            console.log(data);
-            if (++rets === count) process.exit();
+            if (err) console.log(arguments);
+            else console.log(data);
+            //if (++rets === count) process.exit();
         });
     }
-});
+}
