@@ -16,12 +16,12 @@ function encode () {
 console.time('encode');
 for (var i=0; i<50000; i++) {
     var data = encode();
-    var result = test(data);
+    var result = decodeWithLoop(data);
 }
 
 console.timeEnd('encode');
 
-function test(resp) {
+function decodeWithLoop(resp) {
     return Binary.parse(resp)
         .word32bu('size')
         .word16bu('apikey')
@@ -40,6 +40,7 @@ function test(resp) {
     
     function decodeTopics (end, vars) {
         if (--vars.topicNum === 0) end();
+        //if (this.eof()) { end(); return }
         this.word16bu('topic')
             .tap(function (vars) {
                 this.buffer('topic', vars.topic);
@@ -49,12 +50,13 @@ function test(resp) {
     }
 
     function decodePartitions (end, vars) {
-        if (this.eof()) end();
+        if (--vars.partitionNum === 0) end();
         this.word32bu('partition'); 
+        //console.log(vars.partition)
     }
 }
 
-function test1(resp) {
+function decodeWithFor(resp) {
     var cur = 4 + 2 + 2 + 4 + 2;
     var vars = Binary.parse(resp)
         .word32bu('size')
@@ -87,11 +89,16 @@ function test1(resp) {
         resp = resp.slice(cur + 4);
 
         for (var j=0; j<topic.partitionNum; j++) {
-            Binary.parse(resp)
-                .word32bu('partition');
+            var p = Binary.parse(resp)
+                .word32bu('partition').vars;
+            console.log(p.partition)
             resp = resp.slice(4);
         }
     }
 
     return vars;
+}
+
+function decode (resp) {
+    
 }
