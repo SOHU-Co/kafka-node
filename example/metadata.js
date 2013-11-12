@@ -3,7 +3,8 @@
 var kafka = require('../kafka');
 var Client = kafka.Client;
 var client = new Client();
-var total = 10000;
+var total = 50000;
+var assert = require('assert');
 var count = 0;
 
 client.on('error', function () {

@@ -1,8 +1,9 @@
 'use strict';
 
-var Offset = require('../lib/offset'),
-    Producer = require('../lib/producer'),
-    Client = require('../lib/client');
+var libPath = process.env['kafka-cov'] ? '../lib-cov/' : '../lib/',
+    Producer = require(libPath + 'producer'),
+    Offset = require(libPath + 'offset'),
+    Client = require(libPath + 'client');
 
 var client, producer, offset;
 
