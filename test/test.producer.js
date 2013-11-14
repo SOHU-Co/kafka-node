@@ -1,10 +1,14 @@
 'use strict';
 
-var libPath = process.env['kafka-cov'] ? '../lib-cov/' : '../lib/',
-    Producer = require(libPath + 'producer'),
-    Client = require(libPath + 'client');
+var Producer = require('../lib/producer'),
+    Client = require('../lib/client');
 
 var client, producer;
+
+// Helper method
+function randomId () {
+    return Math.floor(Math.random() * 10000)
+}
 
 before(function (done) {
     client = new Client();
@@ -35,14 +39,21 @@ describe('Producer', function () {
     
     describe('#createTopics', function () {
         it('should return All requests sent when async is true', function (done) {
-            producer.createTopics(['_exist_topic_4_test'], function (err, data) {
+            producer.createTopics(['_exist_topic_'+ randomId() +'_test'], true, function (err, data) {
+                data.should.equal('All requests sent'); 
+                done(err);
+            });
+        });
+
+        it('async should be true if not present', function (done) {
+            producer.createTopics(['_exist_topic_'+ randomId() +'_test'], function (err, data) {
                 data.should.equal('All requests sent'); 
                 done(err);
             });
         });
 
         it('should return All created when async is false', function (done) {
-            producer.createTopics(['_exist_topic_4_test'], false, function (err, data) {
+            producer.createTopics(['_exist_topic_'+ randomId() +'_test'], false, function (err, data) {
                 data.should.equal('All created'); 
                 done(err);
             });
