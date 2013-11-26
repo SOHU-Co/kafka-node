@@ -1,7 +1,7 @@
 {
   "name": "kafka-node",
   "description": "node client for Apache kafka, only support kafka 0.8 and above",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "main": "kafka.js",
   "dependencies": {
     "buffermaker": "0.0.11",
@@ -13,7 +13,8 @@
   "devDependencies": {
     "mocha": "~1.12.0",
     "should": "~1.2.2",
-    "line-by-line": "~0.1.1"
+    "line-by-line": "~0.1.1",
+    "optimist": "~0.6.0"
   },
   "repository": {
     "type": "git",

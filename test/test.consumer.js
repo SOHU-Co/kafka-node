@@ -10,13 +10,23 @@ var client, consumer, producer, offset;
 
 function noop() { console.log(arguments) }
 
+function offsetOutOfRange (topic, consumer) {
+    topic.maxNum = 2;
+    offset.fetch([topic], function (err, offsets) {
+        var min = Math.min.apply(null, offsets[topic.topic][topic.partition]);
+        consumer.setOffset(topic.topic, topic.partition, min);
+    });
+}
+
 before(function (done) {
     client = new Client();
     producer = new Producer(client);
     offset = new Offset(client);
     producer.on('ready', function () {
         producer.createTopics(['_exist_topic_1_test', '_exist_topic_2_test'], false, function (err, created) {
-            producer.send([{ topic: '_exist_topic_2_test', messages: 'hello kafka' }], function (err) {
+            producer.send([
+                { topic: '_exist_topic_2_test', messages: 'hello kafka' }
+            ], function (err) {
                 done(err);
             });
         });
@@ -24,6 +34,7 @@ before(function (done) {
 });
 
 describe('Consumer', function () {
+    
     describe('events', function () {
         it ('should emit message when get new message', function (done) {
             var topics = [ { topic: '_exist_topic_2_test' } ],
@@ -31,6 +42,9 @@ describe('Consumer', function () {
             var consumer = new Consumer(client, topics, options);
             var count = 0;
             consumer.on('error', noop);
+            consumer.on('offsetOutOfRange', function (topic) {
+                offsetOutOfRange.call(null, topic, this);
+            });
             consumer.on('message', function (message) {
                 message.topic.should.equal('_exist_topic_2_test'); 
                 //message.value.should.equal('hello kafka');
@@ -128,15 +142,21 @@ describe('Consumer', function () {
 
     describe('#commit', function () {
         it('should commit offset of current topics', function (done) {
-            var options = { autoCommit: true, groupId: '_groupId_commit_test' },
-                topics = [{ topic: '_exist_topic_2_test' }];
+            var topics = [ { topic: '_exist_topic_2_test' } ],
+                options = { autoCommit: false, groupId: '_groupId_commit_test' };
+
             var consumer = new Consumer(client, topics, options);
             var count = 0;
+            consumer.on('error', noop);
+            consumer.on('offsetOutOfRange', function (topic) {
+                offsetOutOfRange.call(null, topic, this);
+            });
             consumer.on('message', function (message) {
                 consumer.commit(true, function (err) {
                     if (!err && count++ === 0) done(err); 
                 });
             });
+
         });
     });
 

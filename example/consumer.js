@@ -8,14 +8,11 @@ var Client = kafka.Client;
 
 var client = new Client();
 var topics = [
-        {topic: 'topic2'},
         {topic: 'topic1'},
-        {topic: 't2'},
-        {topic: 'topic3'} 
     ],
-    options = { autoCommit: false, fromBeginning: false, fetchMaxWaitMs: 10000 };
+    options = { autoCommit: false, fromBeginning: false, fetchMaxWaitMs: 1000 };
 
-function createConsumer() {
+function createConsumer(topics) {
     var consumer = new Consumer(client, topics, options);
     var offset = new Offset(client);
     consumer.on('message', function (message) {
@@ -25,7 +22,6 @@ function createConsumer() {
         console.log('error', err);
     });
     consumer.on('offsetOutOfRange', function (topic) {
-        console.log(topic); 
         topic.maxNum = 2;
         offset.fetch([topic], function (err, offsets) {
             var min = Math.min.apply(null, offsets[topic.topic][topic.partition]);
@@ -34,4 +30,4 @@ function createConsumer() {
     })
 }
 
-createConsumer();
+createConsumer(topics);

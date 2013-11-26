@@ -3,6 +3,9 @@ var kafka = require('../kafka'),
     Client = kafka.Client,
     client = new Client();
 
+var argv = require('optimist').argv;
+var topic = argv.topic || 'topic1';
+
 var producer = new Producer(client);
 
 var letters = 'abcdefghijklmnopqrstuvwxyz',
@@ -26,18 +29,17 @@ function createMsg() {
 
 var count = 1, rets = 0;
 producer.on('ready', function () {
-   setInterval(send, 1000); 
+   //setInterval(send, 1000); 
+   send();
 });
 
 function send() {
     for (var i = 0; i < count; i++) {
         producer.send([
-            {topic: 'topic1', messages: ['777777777777777' + 1 + 'coolmessage'] },
-            {topic: 'topic2', messages: ['777777777777777' + 2 + 'coolmessage'] }
+            {topic: topic, messages: ['777777777777777' + 2 + 'coolmessage'] }
         ], function (err, data) {
             if (err) console.log(arguments);
-            else console.log(data);
-            //if (++rets === count) process.exit();
+            if (++rets === count) process.exit();
         });
     }
 }
