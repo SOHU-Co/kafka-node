@@ -183,6 +183,25 @@ describe('Consumer', function () {
             topic.maxBytes.should.equal(1024 * 10); 
         }); 
 
+        it('should support custom options', function () {
+            var options = { 
+                groupId: 'custom-group',
+                autoCommit: false,
+                autoCommitIntervalMs: 1000,
+                fetchMaxWaitMs: 200,
+                fetchMinBytes: 1,
+                fetchMaxBytes: 1024, 
+                fromOffset: false
+            };
+            var consumer = new Consumer(client, [], options);
+            consumer.options.should.equal(options); 
+            var topic = consumer.buildPayloads([{ topic: 'topic' }])[0];
+            topic.partition.should.equal(0); 
+            topic.offset.should.equal(0); 
+            topic.metadata.should.equal('m'); 
+            topic.maxBytes.should.equal(1024); 
+        });
+
         it('should return right payloads when arguments is string', function () {
             var consumer = new Consumer(client, []);
             var topics = ['topic']; 
