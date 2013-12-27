@@ -169,7 +169,7 @@ describe('Consumer', function () {
                 autoCommitIntervalMs: 5000,
                 fetchMaxWaitMs: 100,
                 fetchMinBytes: 1,
-                fetchMaxBytes: 1024 * 10, 
+                fetchMaxBytes: 1024 * 1024, 
                 fromOffset: false
             };
 
@@ -180,7 +180,7 @@ describe('Consumer', function () {
             topic.partition.should.equal(0); 
             topic.offset.should.equal(0); 
             topic.metadata.should.equal('m'); 
-            topic.maxBytes.should.equal(1024 * 10); 
+            topic.maxBytes.should.equal(1024 * 1024); 
         }); 
 
         it('should support custom options', function () {
@@ -210,7 +210,7 @@ describe('Consumer', function () {
             topic.partition.should.equal(0); 
             topic.offset.should.equal(0); 
             topic.metadata.should.equal('m'); 
-            topic.maxBytes.should.equal(1024 * 10);
+            topic.maxBytes.should.equal(1024 * 1024);
         });
     });
 });
