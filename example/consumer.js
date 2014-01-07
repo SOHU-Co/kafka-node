@@ -10,7 +10,7 @@ var client = new Client();
 var topics = [
         {topic: 'topic1'},
     ],
-    options = { autoCommit: false, fromBeginning: false, fetchMaxWaitMs: 1000 };
+    options = { autoCommit: false, fromBeginning: false, fetchMaxWaitMs: 1000, fetchMaxBytes: 1024*1024 };
 
 function createConsumer(topics) {
     var consumer = new Consumer(client, topics, options);
