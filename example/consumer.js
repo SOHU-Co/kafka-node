@@ -5,10 +5,13 @@ var Consumer = kafka.Consumer;
 var Producer = kafka.Producer;
 var Offset = kafka.Offset;
 var Client = kafka.Client;
+var argv = require('optimist').argv;
+var topic = argv.topic || 'topic1';
 
 var client = new Client();
 var topics = [
-        {topic: 'topic1'},
+        {topic: topic, partition: 1},
+        {topic: topic, partition: 0}
     ],
     options = { autoCommit: false, fromBeginning: false, fetchMaxWaitMs: 1000, fetchMaxBytes: 1024*1024 };
 
