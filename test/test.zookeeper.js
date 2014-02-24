@@ -1,19 +1,20 @@
 'use strict';
 
 var libPath = process.env['kafka-cov'] ? '../lib-cov/' : '../lib/',
-    Zookeeper = require(libPath + 'zookeeper');
+    Zookeeper = require(libPath + 'zookeeper'),
+    config = require('./config');
 
 var zk;
 
 /*
  *  To run the test, you should ensure:
  *  1. at least 2 broker running
- *  2. zookeeper server running at localhost:2181
+ *  2. zookeeper host is set in config file
  *  3. create path kafka0.8 in zookeeper
  */
 
 before(function () {
-    zk = new Zookeeper();
+    zk = new Zookeeper(config.zoo);
 });
 
 describe('Zookeeper', function () {

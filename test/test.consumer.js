@@ -4,7 +4,8 @@ var libPath = process.env['KAFKA_COV'] ? '../lib-cov/' : '../lib/',
     Consumer = require(libPath + 'consumer'),
     Producer = require(libPath + 'producer'),
     Offset = require(libPath + 'offset'),
-    Client = require(libPath + 'client');
+    Client = require(libPath + 'client'),
+    config = require('./config');
 
 var client, consumer, producer, offset;
 
@@ -19,7 +20,7 @@ function offsetOutOfRange (topic, consumer) {
 }
 
 before(function (done) {
-    client = new Client();
+    client = new Client(config.zoo);
     producer = new Producer(client);
     offset = new Offset(client);
     producer.on('ready', function () {

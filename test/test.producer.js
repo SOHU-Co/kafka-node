@@ -1,7 +1,8 @@
 'use strict';
 
 var Producer = require('../lib/producer'),
-    Client = require('../lib/client');
+    Client = require('../lib/client'),
+    config = require('./config');
 
 var client, producer;
 
@@ -11,7 +12,7 @@ function randomId () {
 }
 
 before(function (done) {
-    client = new Client();
+    client = new Client(config.zoo);
     producer = new Producer(client);
     producer.on('ready', function () {
         producer.createTopics(['_exist_topic_3_test'], false, function (err, created) {
