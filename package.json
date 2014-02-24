@@ -8,7 +8,8 @@
     "binary": "~0.3.0",
     "buffer-crc32": "~0.2.1",
     "node-zookeeper-client": "*",
-    "lodash": "~2.2.1"
+    "lodash": "~2.2.1",
+    "async": "~0.2.9"
   },
   "devDependencies": {
     "mocha": "~1.12.0",
