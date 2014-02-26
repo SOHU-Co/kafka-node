@@ -65,29 +65,41 @@ describe('Default Producer', function () {
     });
 });
 
+var topic;
 describe('Partitioned Producer', function () {
     before(function (done) {
+        topic = '_exist_topic_partitioned';
         client = new Client(config.zoo);
         producer = new Producer(client, { partitionerType: 2 });
         producer.on('ready', function () {
-            producer.createTopics(['_exist_topic_partitioned'], false, function (err, created) {
+            producer.createTopics([topic], false, function (err, created) {
                 done();
             });
         });
     });
-
     describe('Producer', function () {
         describe('#send', function () {
             it('should support partitioning messages according to their key', function (done) {
                 var msgs = [
-                    { key: 'key0', topic: '_exist_topic_partitioned', messages: ['hello kafka'] },
-                    { key: 'key1', topic: '_exist_topic_partitioned', messages: ['hello kafka'] },
-                    { key: 'key2', topic: '_exist_topic_partitioned', messages: ['hello kafka', 'hello kafka', 'hello kafka', 'hello kafka'] },
+                    { key: '0_key', topic: topic, messages: ['message_partition_0'] },
+                    { key: '1_key', topic: topic, messages: ['message_partition_1','message_partition_1'] }
                 ]
-
                 producer.send(msgs, function (err, message) {
                     message.should.be.ok;
-                    done(err);
+                    var offsetPartition0 =  message[topic]['0']
+                    var offsetPartition1 =  message[topic]['1']
+                    var client = new Client(config.zoo);
+                    var consumer = new Consumer(client, [{ topic: topic, partition: 0, offset: offsetPartition0 }, { topic: topic, partition: 1, offset: offsetPartition1 }], { autoCommit: false, fromOffset: true });                    
+                    var i = 0;
+                    var messageCount = 3; // Since we are sending 1 message to partition 0 and two too partition 1
+
+                    consumer.on('message', function (message, err) {
+                        i++;
+                        message.value.should.equal('message_partition_' + message.partition);
+                        if (i == messageCount) {
+                            done();
+                        }
+                    });
                 });
             });
         });
