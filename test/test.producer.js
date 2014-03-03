@@ -65,6 +65,9 @@ describe('Default Producer', function () {
     });
 });
 
+/*
+ *  To run the test, you should ensure that topic _exist_topic_partitioned is created with 2 partitions:
+ */
 var topic;
 describe('Partitioned Producer', function () {
     before(function (done) {
@@ -100,6 +103,32 @@ describe('Partitioned Producer', function () {
                             done();
                         }
                     });
+                });
+            });
+        });
+    });
+});
+
+describe('Producer Errors', function () {
+    before(function (done) {
+        client = new Client(config.zoo);
+        producer = new Producer(client, { requireAcks: 20, ackTimeoutMs:100 });
+        producer.on('ready', function () {
+            producer.createTopics(['_error_topic'], false, function (err, created) {
+                done();
+            });
+        });
+    });
+    describe('Producer', function () {
+        describe('#send', function () {
+            it('should get en error with code 7 when producing requests with a requireAcks bigger than the total number of brokers.', function (done) {
+                var msgs = [
+                    { topic: '_error_topic', messages: ['message'] },
+                ]
+                producer.send(msgs, function (err, message) {
+                    message.should.be.ok;
+                    message._error_topic.error.should.equal(7);
+                    done(err);
                 });
             });
         });

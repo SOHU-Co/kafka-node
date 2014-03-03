@@ -18,8 +18,15 @@ Follow the [instructions](https://cwiki.apache.org/KAFKA/kafka-08-quick-start.ht
 * `clientId`: This is a user supplied identifier for the client application, default `kafka-node-client`
 
 ## Producer
-### Producer(client)
+### Producer(client, { partitionerType: 0, requireAcks: 20, ackTimeoutMs:100 })
 * `client`: client which keep connect with kafka server.
+* `requireAcks`: Indicates when a produce request is considered completed:
+      0: Never wait for an acknowledgement from the broker.
+      1: Get an acknowledgement after the leader replica has received the messages.
+     -1: Get an acknowledgement after all in-sync replicas have received the messages.
+      x: Get an acknowledgement after an x number of in-sync replicas have received the messages.
+* `ackTimeoutMs`: The amount of time the broker will wait trying to meet the requireAcks requirement before sending back an error.
+* `partitionerType`: Defines how messages will be written to a topic's partitions.
 
 ``` js
 var kafka = require('kafka-node'),
