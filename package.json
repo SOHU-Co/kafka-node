@@ -7,7 +7,7 @@
     "buffermaker": "0.0.11",
     "binary": "~0.3.0",
     "buffer-crc32": "~0.2.1",
-    "node-zookeeper-client": "*",
+    "node-zookeeper-client": "https://github.com/akram-/node-zookeeper-client/tarball/24ebba67dd51cbb32f36898b7a43afee10f71731",
     "lodash": "~2.2.1",
     "async": "~0.2.9"
   },

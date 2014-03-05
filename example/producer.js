@@ -1,7 +1,7 @@
 var kafka = require('../kafka'),
     Producer = kafka.Producer,
     Client = kafka.Client,
-    client = new Client();
+    client = new Client(null, null, { retries: 3, retriesBackoffMs: 1000, zookeeper: { spinDelay: 1000, connectionRetries: 2 } });
 
 var argv = require('optimist').argv;
 var topic = argv.topic || 'topic1';
@@ -9,6 +9,10 @@ var p = argv.p || 0;
 var count = argv.count || 1, rets = 0;
 var producer = new Producer(client);
 var producerKeyed = new Producer(client, { partitionerType: 2 });
+
+client.on('error', function (err) {
+   console.log ('An error has occured: ' + err )
+});
 
 producer.on('ready', function () {
    send('hello');
