@@ -3,3 +3,4 @@ node_modules
 *.log
 *.swo
 test/data.txt
+docs
