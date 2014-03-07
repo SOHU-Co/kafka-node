@@ -5,7 +5,8 @@ var libPath = process.env['KAFKA_COV'] ? '../lib-cov/' : '../lib/',
     Producer = require(libPath + 'producer'),
     Offset = require(libPath + 'offset'),
     Client = require(libPath + 'client'),
-    config = require('./config');
+    config = require('./config'),
+    TopicsNotExistError = require(libPath + 'errors').TopicsNotExistError;
 
 var client, consumer, producer, offset;
 
@@ -61,7 +62,8 @@ describe('Consumer', function () {
                 topicNames = topics.map(function (t) { return t.topic });
             var consumer = new Consumer(client, topics);
             consumer.on('error', function (error) {
-                error.should.equal('Topics ' + topicNames.toString() + ' not exists');
+                error.should.be.an.instanceOf(TopicsNotExistError)
+                    .and.have.property('message', 'The topic(s) _not_exist_topic_1_test do not exist');
                 done();
             });
         });
