@@ -7,7 +7,7 @@ var argv = require('optimist').argv;
 var topic = argv.topic || 'topic1';
 var p = argv.p || 0;
 var count = argv.count || 1, rets = 0;
-var producer = new Producer(client);
+var producer = new Producer(client, { metadataRefreshIntervalMs: 60000 });
 var producerKeyed = new Producer(client, { partitionerType: 2 });
 
 client.on('error', function (err) {

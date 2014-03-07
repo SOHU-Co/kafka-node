@@ -27,6 +27,7 @@ Follow the [instructions](https://cwiki.apache.org/KAFKA/kafka-08-quick-start.ht
       x: Get an acknowledgement after an x number of in-sync replicas have received the messages.
 * `ackTimeoutMs`: The amount of time the broker will wait trying to meet the requireAcks requirement before sending back an error.
 * `partitionerType`: Defines how messages will be written to a topic's partitions.
+* `metadataRefreshIntervalMs`: The interval to refresh the topics' metadata. A negative value means metadata will only get refreshed on failure, 0 means the topics will be refreshed on every message push (not recommended).
 
 ``` js
 var kafka = require('kafka-node'),
