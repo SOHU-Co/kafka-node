@@ -16,6 +16,8 @@ Follow the [instructions](https://cwiki.apache.org/KAFKA/kafka-08-quick-start.ht
 ### Client(connectionString, clientId)
 * `connectionString`: zookeeper connection string, default `localhost:2181/kafka0.8`
 * `clientId`: This is a user supplied identifier for the client application, default `kafka-node-client`
+* `metadataRetries`: The number of retries to be attempted in case of failures when loading topics metadata, default `3`
+* `metadataRetriesBackoffMs`: This amount of time ()in milliseconds) to wait between each retry, default `100`
 
 ## Producer
 ### Producer(client, { partitionerType: 0, requireAcks: 20, ackTimeoutMs:100 })
