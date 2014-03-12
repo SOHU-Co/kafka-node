@@ -76,7 +76,7 @@ describe('Partitioned Producer', function () {
         producer = new Producer(client, { partitionerType: 2 });
         producer.on('ready', function () {
             producer.createTopics([topic], false, function (err, created) {
-                done();
+                done(err);
             });
         });
     });
@@ -88,6 +88,10 @@ describe('Partitioned Producer', function () {
                     { key: '1_key', topic: topic, messages: ['message_partition_1','message_partition_1'] }
                 ]
                 producer.send(msgs, function (err, message) {
+                    if (err) {
+                        return done(err);
+                    }
+
                     message.should.be.ok;
                     var offsetPartition0 =  message[topic]['0']
                     var offsetPartition1 =  message[topic]['1']
