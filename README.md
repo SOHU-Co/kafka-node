@@ -18,6 +18,7 @@ Follow the [instructions](https://cwiki.apache.org/KAFKA/kafka-08-quick-start.ht
 * `clientId`: This is a user supplied identifier for the client application, default `kafka-node-client`
 * `metadataRetries`: The number of retries to be attempted in case of failures when loading topics metadata, default `3`
 * `metadataRetriesBackoffMs`: This amount of time ()in milliseconds) to wait between each retry, default `100`
+* `lazyBrokerConnection`: If false, the client will connect to all available brokers before emitting the ready event, else he will connect to only one of them (connection to the other brokers will only be done when required). Default `true`
 
 ## Producer
 ### Producer(client, { partitionerType: 0, requireAcks: 20, ackTimeoutMs:100 })

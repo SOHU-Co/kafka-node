@@ -72,7 +72,7 @@ var topic;
 describe('Partitioned Producer', function () {
     before(function (done) {
         topic = '_exist_topic_partitioned';
-        client = new Client(config.zoo);
+        client = new Client(config.zoo, null, { lazyBrokerConnection: false});
         producer = new Producer(client, { partitionerType: 2 });
         producer.on('ready', function () {
             producer.createTopics([topic], false, function (err, created) {
@@ -82,6 +82,7 @@ describe('Partitioned Producer', function () {
     });
     describe('Producer', function () {
         describe('#send', function () {
+            this.timeout(5000);
             it('should support partitioning messages according to their key', function (done) {
                 var msgs = [
                     { key: '0_key', topic: topic, messages: ['message_partition_0'] },
@@ -95,7 +96,6 @@ describe('Partitioned Producer', function () {
                     message.should.be.ok;
                     var offsetPartition0 =  message[topic]['0']
                     var offsetPartition1 =  message[topic]['1']
-                    var client = new Client(config.zoo);
                     var consumer = new Consumer(client, [{ topic: topic, partition: 0, offset: offsetPartition0 }, { topic: topic, partition: 1, offset: offsetPartition1 }], { autoCommit: false, fromOffset: true });                    
                     var i = 0;
                     var messageCount = 3; // Since we are sending 1 message to partition 0 and two too partition 1
@@ -125,7 +125,7 @@ describe('Producer Errors', function () {
     });
     describe('Producer', function () {
         describe('#send', function () {
-            it('should get en error with code 7 when producing requests with a requireAcks bigger than the total number of brokers.', function (done) {
+            it('should get an error with code 7 when producing requests with a requireAcks bigger than the total number of brokers.', function (done) {
                 var msgs = [
                     { topic: '_error_topic', messages: ['message'] },
                 ]
