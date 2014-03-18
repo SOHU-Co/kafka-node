@@ -3,6 +3,7 @@
 var Producer = require('../lib/producer'),
     Client = require('../lib/client'),
     Consumer = require('../lib/consumer'),
+    liberrors =  require('../lib/errors'),
     config = require('./config');
 
 var client, producer;
@@ -94,8 +95,8 @@ describe('Partitioned Producer', function () {
                     }
 
                     message.should.be.ok;
-                    var offsetPartition0 =  message[topic]['0']
-                    var offsetPartition1 =  message[topic]['1']
+                    var offsetPartition0 = message[topic]['0'];
+                    var offsetPartition1 = message[topic]['1'];
                     var consumer = new Consumer(client, [{ topic: topic, partition: 0, offset: offsetPartition0 }, { topic: topic, partition: 1, offset: offsetPartition1 }], { autoCommit: false, fromOffset: true });                    
                     var i = 0;
                     var messageCount = 3; // Since we are sending 1 message to partition 0 and two too partition 1
@@ -127,12 +128,13 @@ describe('Producer Errors', function () {
         describe('#send', function () {
             it('should get an error with code 7 when producing requests with a requireAcks bigger than the total number of brokers.', function (done) {
                 var msgs = [
-                    { topic: '_error_topic', messages: ['message'] },
+                    { topic: '_error_topic', messages: ['message'], partitions:0 },
                 ]
                 producer.send(msgs, function (err, message) {
-                    message.should.be.ok;
-                    message._error_topic.error.should.equal(7);
-                    done(err);
+                    err.should.be.ok;
+                    err.should.be.an.instanceof(liberrors.TopicsPartitionsError);
+                    err.topics._error_topic.partitions['0'].errorCode.should.equal(7);
+                    done();
                 });
             });
         });

@@ -41,6 +41,15 @@ var kafka = require('kafka-node'),
 
 ### send(payloads, cb)
 * `payloads`: **Array**,array of `ProduceRequest`, `ProduceRequest` is a JSON object like:
+* `cb`: **Function**, the callback which return two objects, error and response.
+*       The `response` format:
+*                      {
+*                         'topic0': {
+*                           'partitions': { '0': {'offset': 1 }, '1': { 'offset': 1 } } },
+*                         'topic1': {
+*                           'partitions': { '0': { 'offset': 1 } } }
+*                      }
+*       The `error` can be of type: TopicsBrokerNotAvailableError, TopicsError, or TopicsPartitionsError. Note: TopicsPartitionsError contains errors for only partitions with failures, the response should also be inspected for successful requests.
 
 ``` js
 {
