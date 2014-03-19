@@ -59,8 +59,6 @@ var kafka = require('kafka-node'),
 }
 ```
 
-* `cb`: **Function**, the callback
-
 Example:
 
 ``` js
