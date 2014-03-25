@@ -209,11 +209,12 @@ Example
 consumer.close(true);
 ```
 
-## Offset 
+## Offset
 ### Offset(client)
 * `client`: client which keep connect with kafka server.
 
 ### fetch(payloads, cb)
+Fetch the available offset of a specify topic-partition
 
 * `payloads`: **Array**,array of `OffsetRequest`, `OffsetRequest` is a JSON object like:
 
@@ -263,6 +264,31 @@ var kafka = require('kafka-node'),
     offset = new kafka.Offset(client);
     offset.commit('groupId', [
         { tiopic: 't', partition: 0, offset: 10 } 
+    ], function (err, data) {
+    });
+```
+
+### fetchcommits(groupid, payloads, cb)
+Fetch the last committed offset in a topic of a specific consumer group
+
+* `groupId`: consumer group
+* `payloads`: **Array**,array of `OffsetFetchRequest`, `OffsetFetchRequest` is a JSON object like:
+
+``` js
+{
+   topic: 'topicName',
+   partition: '0' //default 0
+}
+```
+
+Example
+
+```js
+var kafka = require('kafka-node'),
+    client = new kafka.Client(),
+    offset = new kafka.Offset(client);
+    offset.fetchCommits('groupId', [
+        { tiopic: 't', partition: 0 } 
     ], function (err, data) {
     });
 ```
