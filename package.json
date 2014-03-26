@@ -1,13 +1,13 @@
 {
   "name": "kafka-node",
   "description": "node client for Apache kafka, only support kafka 0.8 and above",
-  "version": "0.1.3",
+  "version": "0.1.7",
   "main": "kafka.js",
   "dependencies": {
-    "buffermaker": "0.0.11",
+    "buffermaker": "1.0.0",
     "binary": "~0.3.0",
     "buffer-crc32": "~0.2.1",
-    "node-zookeeper-client": "https://github.com/akram-/node-zookeeper-client/tarball/24ebba67dd51cbb32f36898b7a43afee10f71731",
+    "node-zookeeper-client": "0.2.0",
     "lodash": "~2.2.1",
     "async": "~0.2.9"
   },

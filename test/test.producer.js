@@ -33,6 +33,14 @@ describe('Default Producer', function () {
                 });
             });
 
+            it('should send buffer message successfully', function (done) {
+                var message = new Buffer('hello kafka');
+                producer.send([{ topic: '_exist_topic_3_test', messages: message }], function (err, message) {
+                    message.should.be.ok;
+                    done(err);
+                });
+            });
+
             it('should support multi messages in one topic', function (done) {
                 producer.send([{ topic: '_exist_topic_3_test', messages: ['hello kafka', 'hello kafka'] }], function (err, message) {
                     message.should.be.ok;

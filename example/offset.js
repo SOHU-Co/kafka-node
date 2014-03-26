@@ -22,15 +22,15 @@ function commit (cb) {
         ], cb);
 }
 
-function test() {
-    console.time('fetch');
-    for (var i=0; i<total; i++) {
-        fetch(function (err, data) {
-            if (++count === total) console.timeEnd('fetch');    
-        });
-    }
+function fetchCommits (cb) {
+    offset.fetchCommits(
+        'kafka-node-group',
+        [
+            { topic: 't2', partition: 0 },
+            { topic: 'topic2', partition: 0 },
+        ], cb);
 }
 
-fetch(function () { 
-    test();
+fetchCommits(function () {
+    console.log(arguments);
 });

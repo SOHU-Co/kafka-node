@@ -20,9 +20,9 @@ before(function () {
 describe('Zookeeper', function () {
     describe('when init success', function () {
         it('should emit init event', function (done) {
-            var zk = new Zookeeper();
+            var zk = new Zookeeper(config.zoo);
             zk.on('init', function (brokers) {
-                Object.keys(brokers).length.should.equal(1);
+                Object.keys(brokers).length.should.above(1);
                 done();
             });
         });
@@ -30,10 +30,10 @@ describe('Zookeeper', function () {
 
     describe('#listBrokers', function () {
         describe('when client not init', function () {
-            it('should return only 1 broker', function (done) {
+            it('should return all brokers', function (done) {
                 zk.inited = false;
                 zk.listBrokers(function (brokers) {
-                    Object.keys(brokers).length.should.equal(1);
+                    Object.keys(brokers).length.should.above(1);
                     done()
                 });
             });

@@ -1,7 +1,7 @@
 var kafka = require('../kafka'),
     Producer = kafka.Producer,
     Client = kafka.Client,
-    client = new Client(null, null, { metadataRetries: 3, metadataRetriesBackoffMs: 1000, zookeeper: { spinDelay: 1000, connectionRetries: 2 } });
+    client = new Client(null, null, { metadataRetries: 3, metadataRetriesBackoffMs: 1000, zookeeper: { spinDelay: 1000 } });
 
 var argv = require('optimist').argv;
 var topic = argv.topic || 'topic1';
