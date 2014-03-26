@@ -268,7 +268,7 @@ var kafka = require('kafka-node'),
     });
 ```
 
-### fetchcommits(groupid, payloads, cb)
+### fetchCommits(groupid, payloads, cb)
 Fetch the last committed offset in a topic of a specific consumer group
 
 * `groupId`: consumer group
