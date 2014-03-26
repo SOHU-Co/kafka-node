@@ -4,10 +4,10 @@
   "version": "0.1.6",
   "main": "kafka.js",
   "dependencies": {
-    "buffermaker": "0.0.11",
+    "buffermaker": "1.0.0",
     "binary": "~0.3.0",
     "buffer-crc32": "~0.2.1",
-    "node-zookeeper-client": "*",
+    "node-zookeeper-client": "0.2.0",
     "lodash": "~2.2.1"
   },
   "devDependencies": {
