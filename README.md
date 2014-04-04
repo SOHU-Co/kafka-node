@@ -18,6 +18,11 @@ Follow the [instructions](https://cwiki.apache.org/KAFKA/kafka-08-quick-start.ht
 * `clientId`: This is a user supplied identifier for the client application, default `kafka-node-client`
 * `zkOptions`: **Object**, Zookeeper options, see [node-zookeeper-client](https://github.com/alexguan/node-zookeeper-client#client-createclientconnectionstring-options)
 
+### close(cb)
+Closes the connection to Zookeeper and the brokers so that the node process can exit gracefully.
+
+* `cb`: **Function**, the callback
+
 ## Producer
 ### Producer(client)
 * `client`: client which keep connect with kafka server.
