@@ -1,14 +1,15 @@
 Kafka-node
 ==========
 
-Kafka-node is a nodejs client with zookeeper integration for apache Kafka, only support the latest version of kafka 0.8 which is still under development, so this module
-is `not production ready` so far.
-Zookeeper does the following jobs:
+Kafka-node is a nodejs client with Zookeeper integration for apache Kafka. It only supports the latest version of Kafka 0.8 which is still under development, so this module
+is _not production ready_ so far.
 
-* Load broker metadata from zookeeper before we can communicate with kafka server
-* Watch broker state, if broker changed, client will refresh broker and topic metadata stored in client
+The Zookeeper integration does the following jobs:
 
-# Install kafka
+* Loads broker metadata from Zookeeper before we can communicate with the Kafka server
+* Watches broker state, if broker changes, the client will refresh broker and topic metadata stored in the client
+
+# Install Kafka
 Follow the [instructions](https://cwiki.apache.org/KAFKA/kafka-08-quick-start.html) on the Kafka wiki to build Kafka 0.8 and get a test broker up and running.
 
 # API
@@ -20,7 +21,7 @@ Follow the [instructions](https://cwiki.apache.org/KAFKA/kafka-08-quick-start.ht
 
 ## Producer
 ### Producer(client)
-* `client`: client which keep connect with kafka server.
+* `client`: client which keeps a connection with the Kafka server.
 
 ``` js
 var kafka = require('kafka-node'),
@@ -57,11 +58,11 @@ producer.on('ready', function () {
     producer.send(payloads, function (err, data) {
         console.log(data);
     });
-})
+});
 ```
 
 ### createTopics(topics, async, cb)
-This method is used to create topics in kafka server, only work when kafka server set `auto.create.topics.enable` true, our client simply send a metadata request to let server auto crate topics. when `async` set false, this method does not return util all topics are created, otherwise return immediately.
+This method is used to create topics on the Kafka server. It only work when `auto.create.topics.enable`, on the Kafka server, is set to true. Our client simply sends a metadata request to the server which will auto create topics. When `async` is set to false, this method does not return until all topics are created, otherwise it returns immediately.
 
 * `topics`: **Array**,array of topics
 * `async`: **Boolean**,async or sync
@@ -85,7 +86,7 @@ producer.createTopics(['t'], function (err, data) {});// Simply omit 2nd arg
 
 ## Consumer
 ### Consumer(client, payloads, options)
-* `client`: client which keep connect with kafka server.
+* `client`: client which keeps a connection with the Kafka server.
 * `payloads`: **Array**,array of `FetchRequest`, `FetchRequest` is a JSON object like:
 
 ``` js
@@ -132,7 +133,7 @@ var kafka = require('kafka-node'),
 ```
 
 ### on('message', onMessage);
-By default, we will consume message from the last committed offset of the current group
+By default, we will consume messages from the last committed offset of the current group
 
 * `onMessage`: **Function**, callback when new message comes
 
@@ -211,7 +212,7 @@ consumer.close(true);
 
 ## Offset
 ### Offset(client)
-* `client`: client which keep connect with kafka server.
+* `client`: client which keeps a connection with the Kafka server.
 
 ### fetch(payloads, cb)
 Fetch the available offset of a specify topic-partition
