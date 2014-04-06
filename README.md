@@ -206,13 +206,14 @@ Example:
 consumer.setOffset('topic', 0, 0); 
 ```
 
-### close(force)
+### close(force, cb)
 * `force`: **Boolean**, if set true, it force commit current offset before close, default false
 
 Example
 
 ```js
-consumer.close(true);
+consumer.close(true, cb);
+consuemr.close(cb); //force is force
 ```
 
 ## Offset
