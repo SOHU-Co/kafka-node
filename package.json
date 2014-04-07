@@ -1,7 +1,7 @@
 {
   "name": "kafka-node",
   "description": "node client for Apache kafka, only support kafka 0.8 and above",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "main": "kafka.js",
   "dependencies": {
     "buffermaker": "1.0.0",
