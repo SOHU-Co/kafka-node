@@ -17,24 +17,24 @@ Follow the [instructions](https://cwiki.apache.org/KAFKA/kafka-08-quick-start.ht
 * `connectionString`: Zookeeper connection string, default `localhost:2181/kafka0.8`
 * `clientId`: This is a user supplied identifier for the client application, default `kafka-node-client`
 * `options`: object for client options
-*   `metadataRetries`: The number of retries to be attempted in case of failures when loading topics metadata, default `3`
-*   `metadataRetriesBackoffMs`: This amount of time ()in milliseconds) to wait between each retry, default `100`
-*   `lazyBrokerConnection`: If false, the client will connect to all available brokers before emitting the ready event, else he will connect to only one of them (connection to the other brokers will only be done when required). Default `true`
-*   `zookeeper`: **Object**, Zookeeper options, see [node-zookeeper-client](https://github.com/alexguan/node-zookeeper-client#client-createclientconnectionstring-options)
+  * `metadataRetries`: The number of retries to be attempted in case of failures when loading topics metadata, default `3`
+  * `metadataRetriesBackoffMs`: This amount of time (in milliseconds) to wait between each retry, default `100`
+  * `lazyBrokerConnection`: If false, the client will connect to all available brokers before emitting the ready event, else he will connect to only one of them (connection to the other brokers will only be done when required). Default `true`
+  * `zookeeper`: **Object**, Zookeeper options, see [node-zookeeper-client](https://github.com/alexguan/node-zookeeper-client#client-createclientconnectionstring-options)
 
 
 ## Producer
 ### Producer(client, [options])
 * `client`: client which keep connect with kafka server.
 * `options`: object for producer options
-*   `requireAcks`: Indicates when a produce request is considered completed:
-        0: Never wait for an acknowledgement from the broker.
-        1: Get an acknowledgement after the leader replica has received the messages.
-       -1: Get an acknowledgement after all in-sync replicas have received the messages.
-        x: Get an acknowledgement after an x number of in-sync replicas have received the messages.
-*   `ackTimeoutMs`: The amount of time the broker will wait trying to meet the requireAcks requirement before sending back an error.
-*   `partitionerType`: Defines how messages will be written to a topic's partitions.
-*   `metadataRefreshIntervalMs`: The interval to refresh the topics' metadata. A negative value means metadata will only get refreshed on failure, 0 means the topics will be refreshed on every message push (not recommended).
+  * `requireAcks`: Indicates when a produce request is considered completed:<br />
+    &nbsp;0: Never wait for an acknowledgement from the broker.<br />
+    &nbsp;1: Get an acknowledgement after the leader replica has received the messages.<br />
+         -1: Get an acknowledgement after all in-sync replicas have received the messages.<br />
+    &nbsp;x: Get an acknowledgement after an x number of in-sync replicas have received the messages.
+  * `ackTimeoutMs`: The amount of time the broker will wait trying to meet the requireAcks requirement before sending back an error.
+  * `partitionerType`: Defines how messages will be written to a topic's partitions.
+  * `metadataRefreshIntervalMs`: The interval to refresh the topics' metadata. A negative value means metadata will only get refreshed on failure, 0 means the topics will be refreshed on every message push (not recommended).
 
 ``` js
 var kafka = require('kafka-node'),
@@ -45,21 +45,27 @@ var kafka = require('kafka-node'),
 
 ### send(payloads, cb)
 * `payloads`: **Array**,array of `ProduceRequest`, `ProduceRequest` is a JSON object like:
-* `cb`: **Function**, the callback which return two objects, error and response.
-*       The `response` format:
-*                      {
-*                         'topic0': {
-*                           'partitions': { '0': {'offset': 1 }, '1': { 'offset': 1 } } },
-*                         'topic1': {
-*                           'partitions': { '0': { 'offset': 1 } } }
-*                      }
-*       The `error` can be of type: TopicsBrokerNotAvailableError, TopicsError, or TopicsPartitionsError. Note: TopicsPartitionsError contains errors for only partitions with failures, the response should also be inspected for successful requests.
 
 ``` js
 {
    topic: 'topicName',
    messages: ['message body'],// multi messages should be a array, single message can be just a string
    partition: '0', //default 0
+}
+```
+
+* `cb`: **Function**, the callback which returns two objects, error and response.
+  * The `error` can be of type: TopicsBrokerNotAvailableError, TopicsError, or TopicsPartitionsError. TopicsPartitionsError contains errors for only partitions with failures, the `response` should also be inspected for successful requests.
+  * The `response` format:
+
+``` js
+{
+   'topic0': {
+     'partitions': { '0': {'offset': 1 }, '1': { 'offset': 1 } }
+   },
+   'topic1': {
+     'partitions': { '0': { 'offset': 1 } }
+   }
 }
 ```
 
