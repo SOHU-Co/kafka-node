@@ -148,6 +148,7 @@ describe('Consumer', function () {
             var topics = [ { topic: '_exist_topic_2_test' } ],
                 options = { autoCommit: false, groupId: '_groupId_commit_test' };
 
+            var client = new Client(config.zoo);
             var consumer = new Consumer(client, topics, options);
             var count = 0;
             consumer.on('error', noop);
@@ -214,6 +215,35 @@ describe('Consumer', function () {
             topic.offset.should.equal(0); 
             topic.metadata.should.equal('m'); 
             topic.maxBytes.should.equal(1024 * 1024);
+        });
+    });
+
+    describe('#close', function () {
+        it('should close the consumer', function (done) {
+            var client = new Client(config.zoo),
+                topics = [ { topic: '_exist_topic_2_test' } ],
+                options = { autoCommit: false, groupId: '_groupId_close_test' };
+
+            var consumer = new Consumer(client, topics, options);
+            consumer.once('message', function (message) {
+                consumer.close(function (err) {
+                    done(err);
+                });
+            });
+        });
+
+        it('should commit the offset if force', function (done) {
+            var client = new Client(config.zoo),
+                topics = [ { topic: '_exist_topic_2_test' } ],
+                force = true,
+                options = { autoCommit: false, groupId: '_groupId_close_test' };
+
+            var consumer = new Consumer(client, topics, options);
+            consumer.once('message', function (message) {
+                consumer.close(force, function (err) {
+                    done(err);
+                });
+            });
         });
     });
 });

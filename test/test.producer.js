@@ -15,7 +15,7 @@ function randomId() {
 
 describe('Default Producer', function () {
     before(function (done) {
-        client = new Client(config.zoo);
+        client = new Client(config.zoo, null, { metadataRetries: 3, metadataRetriesBackoffMs: 250 } );
         producer = new Producer(client, { partitionerType: 0 });
         producer.on('ready', function () {
             producer.createTopics(['_exist_topic_3_test'], false, function (err, created) {
@@ -50,6 +50,7 @@ describe('Default Producer', function () {
         });
 
         describe('#createTopics', function () {
+            this.timeout(2000);
             it('should return All requests sent when async is true', function (done) {
                 producer.createTopics(['_exist_topic_' + randomId() + '_test'], true, function (err, data) {
                     data.should.equal('All requests sent');
