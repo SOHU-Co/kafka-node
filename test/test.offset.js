@@ -44,5 +44,18 @@ describe('Offset', function () {
             });
         });
     });
+
+    describe('#fetchCommits', function () {
+        it('should get last commited offset of the consumer group', function (done) {
+            var topic = '_exist_topic_3_test',
+                topics = [ { topic: topic, offset: 10 } ];
+            offset.fetchCommits('_groupId_commit_1_test', topics, function (err, data) {
+                data.should.be.ok;
+                Object.keys(data)[0].should.equal(topic);
+                data[topic][0].should.equal(-1);
+                done(err);
+            });
+        });
+    });
 });
 

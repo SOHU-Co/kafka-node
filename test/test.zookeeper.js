@@ -13,13 +13,13 @@ var zk;
  */
 
 before(function () {
-    zk = new Zookeeper();
+    zk = new Zookeeper('localhost:2181/kafka0.8');
 });
 
 describe('Zookeeper', function () {
     describe('when init success', function () {
         it('should emit init event', function (done) {
-            var zk = new Zookeeper();
+            var zk = new Zookeeper('localhost:2181/kafka0.8');
             zk.on('init', function (brokers) {
                 Object.keys(brokers).length.should.equal(1);
                 done();
