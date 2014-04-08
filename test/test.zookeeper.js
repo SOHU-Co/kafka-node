@@ -1,27 +1,28 @@
 'use strict';
 
 var libPath = process.env['kafka-cov'] ? '../lib-cov/' : '../lib/',
-    Zookeeper = require(libPath + 'zookeeper');
+    Zookeeper = require(libPath + 'zookeeper'),
+    config = require('./config');
 
 var zk;
 
 /*
  *  To run the test, you should ensure:
  *  1. at least 2 broker running
- *  2. zookeeper server running at localhost:2181
+ *  2. zookeeper host is set in config file
  *  3. create path kafka0.8 in zookeeper
  */
 
 before(function () {
-    zk = new Zookeeper('localhost:2181/kafka0.8');
+    zk = new Zookeeper(config.zoo);
 });
 
 describe('Zookeeper', function () {
     describe('when init success', function () {
         it('should emit init event', function (done) {
-            var zk = new Zookeeper('localhost:2181/kafka0.8');
+            var zk = new Zookeeper(config.zoo);
             zk.on('init', function (brokers) {
-                Object.keys(brokers).length.should.equal(1);
+                Object.keys(brokers).length.should.above(1);
                 done();
             });
         });
@@ -29,10 +30,10 @@ describe('Zookeeper', function () {
 
     describe('#listBrokers', function () {
         describe('when client not init', function () {
-            it('should return only 1 broker', function (done) {
+            it('should return all brokers', function (done) {
                 zk.inited = false;
                 zk.listBrokers(function (brokers) {
-                    Object.keys(brokers).length.should.equal(1);
+                    Object.keys(brokers).length.should.above(1);
                     done()
                 });
             });

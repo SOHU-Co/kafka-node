@@ -5,6 +5,7 @@ var libPath = process.env['KAFKA_COV'] ? '../lib-cov/' : '../lib/',
     Producer = require(libPath + 'producer'),
     Offset = require(libPath + 'offset'),
     Client = require(libPath + 'client'),
+    config = require('./config'),
     TopicsNotExistError = require(libPath + 'errors').TopicsNotExistError;
 
 var client, consumer, producer, offset;
@@ -20,7 +21,7 @@ function offsetOutOfRange (topic, consumer) {
 }
 
 before(function (done) {
-    client = new Client();
+    client = new Client(config.zoo);
     producer = new Producer(client);
     offset = new Offset(client);
     producer.on('ready', function () {
@@ -147,7 +148,7 @@ describe('Consumer', function () {
             var topics = [ { topic: '_exist_topic_2_test' } ],
                 options = { autoCommit: false, groupId: '_groupId_commit_test' };
 
-            var client = new Client();
+            var client = new Client(config.zoo);
             var consumer = new Consumer(client, topics, options);
             var count = 0;
             consumer.on('error', noop);
@@ -216,10 +217,10 @@ describe('Consumer', function () {
             topic.maxBytes.should.equal(1024 * 1024);
         });
     });
-    
+
     describe('#close', function () {
         it('should close the consumer', function (done) {
-            var client = new Client(),
+            var client = new Client(config.zoo),
                 topics = [ { topic: '_exist_topic_2_test' } ],
                 options = { autoCommit: false, groupId: '_groupId_close_test' };
 
@@ -232,7 +233,7 @@ describe('Consumer', function () {
         });
 
         it('should commit the offset if force', function (done) {
-            var client = new Client(),
+            var client = new Client(config.zoo),
                 topics = [ { topic: '_exist_topic_2_test' } ],
                 force = true,
                 options = { autoCommit: false, groupId: '_groupId_close_test' };

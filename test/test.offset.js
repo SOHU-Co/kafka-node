@@ -3,12 +3,13 @@
 var libPath = process.env['kafka-cov'] ? '../lib-cov/' : '../lib/',
     Producer = require(libPath + 'producer'),
     Offset = require(libPath + 'offset'),
-    Client = require(libPath + 'client');
+    Client = require(libPath + 'client'),
+    config = require('./config');
 
 var client, producer, offset;
 
 before(function (done) {
-    client = new Client();
+    client = new Client(config.zoo);
     producer = new Producer(client);
     producer.on('ready', function () {
         producer.createTopics(['_exist_topic_3_test'], false, function (err, created) {
