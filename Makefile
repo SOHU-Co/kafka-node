@@ -10,4 +10,4 @@ docs:
 	rm -rf docs
 	jsdoc -d docs lib/ DOCS.md
 
-.PHONY: test, docs
+.PHONY: test docs
