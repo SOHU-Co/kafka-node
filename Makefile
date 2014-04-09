@@ -6,4 +6,8 @@ coverage:
 	@jscoverage lib lib-cov
 	@KAFKA_COV=1 mocha -r should -R html-cov > ~/work/coverage.html
 	rm -rf lib-cov
-.PHONY: test
+docs:
+	rm -rf docs
+	jsdoc -d docs lib/ DOCS.md
+
+.PHONY: test, docs
