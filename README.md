@@ -11,7 +11,7 @@ Adding a high-level kafka consumer to the kafk-node repo - https://github.com/SO
 
 ``` js
 {
-   topic: 'topicName',
+   topic: 'topicName'
 }
 ```
 
