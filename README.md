@@ -239,11 +239,11 @@ Fetch the available offset of a specify topic-partition
 Example
 
 ```js
-var kafka = require('kafka'),
+var kafka = require('kafka-node'),
     client = new kafka.Client(),
     offset = new kafka.Offset(client);
     offset.fetch([
-        { tiopic: 't', partition: 0, time: Date.now(), maxNum: 1 } 
+        { topic: 't', partition: 0, time: Date.now(), maxNum: 1 } 
     ], function (err, data) {
         // data
         // { 't': { '0': [999] } }
