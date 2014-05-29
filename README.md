@@ -270,7 +270,7 @@ var kafka = require('kafka-node'),
     client = new kafka.Client(),
     offset = new kafka.Offset(client);
     offset.commit('groupId', [
-        { tiopic: 't', partition: 0, offset: 10 } 
+        { topic: 't', partition: 0, offset: 10 } 
     ], function (err, data) {
     });
 ```
@@ -295,7 +295,7 @@ var kafka = require('kafka-node'),
     client = new kafka.Client(),
     offset = new kafka.Offset(client);
     offset.fetchCommits('groupId', [
-        { tiopic: 't', partition: 0 } 
+        { topic: 't', partition: 0 } 
     ], function (err, data) {
     });
 ```
