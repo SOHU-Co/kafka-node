@@ -7,7 +7,7 @@ var client = new kafka.Client('localhost:2181/');
 var consumer = new kafka.MessageConsumer(client, ['test'], { fromBeginning: true, fromOffset: true });
 
 var count = {}, messageCount = 0;
-consumer.on('message', function(message) {
+consumer.on('message', function(message, commit) {
   ++messageCount;
   count[message.value] = (count[message.value] || 0) + 1;
 });
