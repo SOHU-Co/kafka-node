@@ -9,8 +9,11 @@ var consumer = new kafka.MessageConsumer(client, ['test'], { fromBeginning: true
 var count = {}, messageCount = 0;
 consumer.on('message', function(message, commit) {
   ++messageCount;
+  console.log('message', message);
   count[message.value] = (count[message.value] || 0) + 1;
+  setTimeout(commit, 100);
 });
+if (0)//XXX
 setInterval(function() {
   var hist = {};
   for (var i = 1; i <= 1000000; ++i) {
