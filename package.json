@@ -1,14 +1,17 @@
 {
   "name": "kafka-node",
+  "engine": "node 0.10.26",
   "description": "node client for Apache kafka, only support kafka 0.8 and above",
   "version": "0.1.9",
   "main": "kafka.js",
   "dependencies": {
-    "buffermaker": "1.0.0",
+    "async": "^0.9.0",
     "binary": "~0.3.0",
     "buffer-crc32": "~0.2.1",
-    "node-zookeeper-client": "0.2.0",
-    "lodash": "~2.2.1"
+    "buffermaker": "git+ssh://git@github.com:remind101/BufferMaker.git#master",
+    "debug": "^0.8.1",
+    "lodash": "~2.2.1",
+    "node-zookeeper-client": "0.2.0"
   },
   "devDependencies": {
     "mocha": "^1.18.2",
