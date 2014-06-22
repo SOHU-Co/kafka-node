@@ -91,7 +91,7 @@ producer.createTopics(['t'], function (err, data) {});// Simply omit 2nd arg
 
 
 ## HighLevelProducer
-### HighLevelConsumer(client)
+### HighLevelProducer(client)
 * `client`: client which keeps a connection with the Kafka server. Round-robins produce requests to the available topic partitions
 
 ``` js
@@ -117,9 +117,9 @@ Example:
 
 ``` js
 var kafka = require('kafka-node'),
-    Producer = kafka.Producer,
+    HighLevelProducer = kafka.HighLevelProducer,
     client = new kafka.Client(),
-    producer = new Producer(client),
+    producer = new HighLevelProducer(client),
     payloads = [
         { topic: 'topic1', messages: 'hi' },
         { topic: 'topic2', messages: ['hello', 'world'] }
@@ -312,9 +312,9 @@ Example:
 
 ``` js
 var kafka = require('kafka-node'),
-    Consumer = kafka.Consumer,
+    HighLevelConsumer = kafka.HighLevelConsumer,
     client = new kafka.Client(),
-    consumer = new Consumer(
+    consumer = new HighLevelConsumer(
         client,
         [
             { topic: 't' }, { topic: 't1' }
