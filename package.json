@@ -1,26 +1,28 @@
 {
-  "name": "kafka-node",
-  "description": "node client for Apache kafka, only support kafka 0.8 and above",
-  "version": "0.1.9",
-  "main": "kafka.js",
-  "dependencies": {
-    "buffermaker": "1.0.0",
-    "binary": "~0.3.0",
-    "buffer-crc32": "~0.2.1",
-    "node-zookeeper-client": "0.2.0",
-    "lodash": "~2.2.1"
-  },
-  "devDependencies": {
-    "mocha": "^1.18.2",
-    "should": "~1.2.2",
-    "line-by-line": "~0.1.1",
-    "optimist": "~0.6.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:SOHU-Co/kafka-node.git"
-  },
-  "scripts": {
-    "test": "make test"
-  }
+    "name": "kafka-node",
+    "description": "node client for Apache kafka, only support kafka 0.8 and above",
+    "version": "0.2.0",
+    "main": "kafka.js",
+    "dependencies": {
+        "buffermaker": "1.0.0",
+        "binary": "~0.3.0",
+        "buffer-crc32": "~0.2.1",
+        "node-zookeeper-client": "0.2.0",
+        "async": "0.7.0",
+        "node-uuid": "1.4.1",
+        "lodash": "~2.2.1"
+    },
+    "devDependencies": {
+        "mocha": "^1.18.2",
+        "should": "~1.2.2",
+        "line-by-line": "~0.1.1",
+        "optimist": "~0.6.0"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git@github.com:SOHU-Co/kafka-node.git"
+    },
+    "scripts": {
+        "test": "make test"
+    }
 }
