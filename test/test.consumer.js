@@ -69,8 +69,10 @@ describe('Consumer', function () {
 
         it('should emit offsetOutOfRange when offset out of range', function (done) {
             var topics = [ { topic: '_exist_topic_1_test', offset: 100 } ],
-                options = { fromOffset: true, autoCommit: false }, 
+                options = { fromOffset: true, autoCommit: false },
                 count = 0;
+
+            var client = new Client();
             var consumer = new Consumer(client, topics, options);
             consumer.on('offsetOutOfRange', function (topic) {
                 topic.topic.should.equal('_exist_topic_1_test');
