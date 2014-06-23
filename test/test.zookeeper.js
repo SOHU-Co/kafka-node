@@ -1,7 +1,7 @@
 'use strict';
 
 var libPath = process.env['kafka-cov'] ? '../lib-cov/' : '../lib/',
-    Zookeeper = require(libPath + 'zookeeper');
+    Zookeeper = require(libPath + 'zookeeper').Zookeeper;
 
 var zk;
 
