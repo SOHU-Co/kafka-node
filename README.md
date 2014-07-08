@@ -417,7 +417,10 @@ Fetch the available offset of a specify topic-partition
 {
    topic: 'topicName',
    partition: '0', //default 0
-   time: Date.now(), //used to ask for all messages before a certain time (ms), not support negative,default Date.now() 
+   // time:
+   // Used to ask for all messages before a certain time (ms), default Date.now(),
+   // Specify -1 to receive the latest offsets and -2 to receive the earliest available offset.
+   time: Date.now(),
    maxNum: 1 //default 1
 }
 ```
