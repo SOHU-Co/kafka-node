@@ -26,8 +26,30 @@ describe('Offset', function () {
                 topics = [ { topic: topic } ];
             offset.fetch(topics, function (err, data) {
                 var offsets = data[topic][0];
-                offsets.should.be.an.instanceOf(Array); 
+                offsets.should.be.an.instanceOf(Array);
                 offsets.length.should.equal(1);
+                done(err);
+            });
+        });
+
+        it('should return earliest offset of the topics', function (done) {
+            var topic = '_exist_topic_3_test',
+                topics = [ { topic: topic, time: -2 } ];
+            offset.fetch(topics, function (err, data) {
+                var offsets = data[topic][0];
+                offsets.should.be.an.instanceOf(Array);
+                offsets.length.should.above(0);
+                done(err);
+            });
+        });
+
+        it('should return latest offset of the topics', function (done) {
+            var topic = '_exist_topic_3_test',
+                topics = [ { topic: topic, time: -1 } ];
+            offset.fetch(topics, function (err, data) {
+                var offsets = data[topic][0];
+                offsets.should.be.an.instanceOf(Array);
+                offsets.length.should.above(0);
                 done(err);
             });
         });
