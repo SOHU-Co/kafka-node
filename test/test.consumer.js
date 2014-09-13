@@ -9,6 +9,7 @@ var libPath = process.env['KAFKA_COV'] ? '../lib-cov/' : '../lib/',
 
 var client, consumer, producer, offset;
 
+var host = process.env['KAFKA_TEST_HOST'] || '';
 function noop() { console.log(arguments) }
 
 function offsetOutOfRange (topic, consumer) {
@@ -20,7 +21,7 @@ function offsetOutOfRange (topic, consumer) {
 }
 
 before(function (done) {
-    client = new Client();
+    client = new Client(host);
     producer = new Producer(client);
     offset = new Offset(client);
     producer.on('ready', function () {
@@ -72,7 +73,7 @@ describe('Consumer', function () {
                 options = { fromOffset: true, autoCommit: false },
                 count = 0;
 
-            var client = new Client();
+            var client = new Client(host);
             var consumer = new Consumer(client, topics, options);
             consumer.on('offsetOutOfRange', function (topic) {
                 topic.topic.should.equal('_exist_topic_1_test');
@@ -97,6 +98,18 @@ describe('Consumer', function () {
                     done();
                 });
             });
+
+            it('should return error when using payload as well', function (done) {
+                var options = { autoCommit: false, groupId: '_groupId_1_test' },
+                    topics = [{topic: '_not_exist_topic_1_test', offset: 42}];
+                var consumer = new Consumer(client, [], options);
+                consumer.on('error', noop);
+                consumer.addTopics(topics, function (err, data) {
+                    err.should.equal(1);
+                    data.should.eql(topics.map(function(p) {return p.topic;}));
+                    done();
+                }, true);
+            });
         });
 
         describe('when topic need to added exist', function () {
@@ -110,6 +123,18 @@ describe('Consumer', function () {
                     consumer.payloads.some(function (p) { return p.topic === topics[0] }).should.be.ok;
                     done();
                 });
+            });
+
+            it('should add with given offset', function (done) {
+                var options = { autoCommit: false, groupId: '_groupId_addTopics_test' },
+                    topics = [{topic: '_exist_topic_2_test', offset: 42}];
+                var consumer = new Consumer(client, [], options);
+                consumer.on('error', noop);
+                consumer.addTopics(topics, function (err, data) {
+                    data.should.eql(topics.map(function(p) {return p.topic;}));
+                    consumer.payloads.some(function (p) { return p.topic === topics[0].topic && p.offset === topics[0].offset; }).should.be.ok;
+                    done();
+                }, true);
             });
         });
     }); 
@@ -149,7 +174,7 @@ describe('Consumer', function () {
             var topics = [ { topic: '_exist_topic_2_test' } ],
                 options = { autoCommit: false, groupId: '_groupId_commit_test' };
 
-            var client = new Client();
+            var client = new Client(host);
             var consumer = new Consumer(client, topics, options);
             var count = 0;
             consumer.on('error', noop);
@@ -221,7 +246,7 @@ describe('Consumer', function () {
     
     describe('#close', function () {
         it('should close the consumer', function (done) {
-            var client = new Client(),
+            var client = new Client(host),
                 topics = [ { topic: '_exist_topic_2_test' } ],
                 options = { autoCommit: false, groupId: '_groupId_close_test' };
 
@@ -234,7 +259,7 @@ describe('Consumer', function () {
         });
 
         it('should commit the offset if force', function (done) {
-            var client = new Client(),
+            var client = new Client(host),
                 topics = [ { topic: '_exist_topic_2_test' } ],
                 force = true,
                 options = { autoCommit: false, groupId: '_groupId_close_test' };
