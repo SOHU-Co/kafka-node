@@ -220,16 +220,22 @@ consumer.on('message', function (message) {
 ### on('offsetOutOfRange', function (err) {})
 
 
-### addTopics(topics, cb)
+### addTopics(topics, cb, fromOffset)
 Add topics to current consumer, if any topic to be added not exists, return error
 * `topics`: **Array**, array of topics to add
 * `cb`: **Function**,the callback
+* `fromOffset`: **Boolean**, if ture, the consumer will fetch message from the specified offset, otherwise it will fetch message from the last commited offset of the topic.
 
 Example:
 
 ``` js
 consumer.addTopics(['t1', 't2'], function (err, added) {
 });
+
+or
+
+consumer.addTopics([{ topic: 't1', offset: 10 }], function (err, added) {
+}, true);
 ```
 
 ### removeTopics(topics, cb)
@@ -343,17 +349,22 @@ consumer.on('message', function (message) {
 
 ### on('offsetOutOfRange', function (err) {})
 
-
-### addTopics(topics, cb)
+### addTopics(topics, cb, fromOffset)
 Add topics to current consumer, if any topic to be added not exists, return error
 * `topics`: **Array**, array of topics to add
 * `cb`: **Function**,the callback
+* `fromOffset`: **Boolean**, if ture, the consumer will fetch message from the specified offset, otherwise it will fetch message from the last commited offset of the topic.
 
 Example:
 
 ``` js
 consumer.addTopics(['t1', 't2'], function (err, added) {
 });
+
+or
+
+consumer.addTopics([{ topic: 't1', offset: 10 }], function (err, added) {
+}, true);
 ```
 
 ### removeTopics(topics, cb)
