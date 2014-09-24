@@ -66,5 +66,11 @@ describe('Producer', function () {
                 done(err);
             });
         });
-    }); 
+    });
+
+    describe('#close', function () {
+        it('should close successfully', function (done) {
+            producer.close(done);
+        });
+    });
 });
