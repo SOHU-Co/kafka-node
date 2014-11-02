@@ -64,6 +64,8 @@ producer.on('ready', function () {
         console.log(data);
     });
 });
+
+producer.on('error', function (err) {})
 ```
 
 ### createTopics(topics, async, cb)
@@ -275,6 +277,12 @@ Example:
 ``` js
 consumer.setOffset('topic', 0, 0); 
 ```
+
+### pause()
+Pause the consumer
+
+### resume()
+Resume the consumer
 
 ### close(force, cb)
 * `force`: **Boolean**, if set true, it force commit current offset before close, default false
