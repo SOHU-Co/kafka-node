@@ -8,7 +8,7 @@ var Client = kafka.Client;
 var argv = require('optimist').argv;
 var topic = argv.topic || 'topic1';
 
-var client = new Client();
+var client = new Client('localhost:2181');
 var topics = [
         {topic: topic, partition: 1},
         {topic: topic, partition: 0}
