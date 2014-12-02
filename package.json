@@ -1,7 +1,7 @@
 {
     "name": "kafka-node",
     "description": "node client for Apache kafka, only support kafka 0.8 and above",
-    "version": "0.2.11",
+    "version": "0.2.12",
     "main": "kafka.js",
     "dependencies": {
         "buffermaker": "1.2.0",
@@ -10,7 +10,8 @@
         "node-zookeeper-client": "0.2.0",
         "async": "0.7.0",
         "node-uuid": "1.4.1",
-        "lodash": "~2.2.1"
+        "lodash": "~2.2.1",
+        "retry": "^0.6.1"
     },
     "devDependencies": {
         "mocha": "^1.18.2",
