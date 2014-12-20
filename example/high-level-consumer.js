@@ -8,7 +8,7 @@ var argv = require('optimist').argv;
 var topic = argv.topic || 'topic1';
 var client = new Client('localhost:2181');
 var topics = [ { topic: topic }];
-var options = { autoCommit: false, fromBeginning: false, fetchMaxWaitMs: 1000, fetchMaxBytes: 1024*1024 };
+var options = { autoCommit: true, fromBeginning: false, fetchMaxWaitMs: 1000, fetchMaxBytes: 1024*1024 };
 var consumer = new HighLevelConsumer(client, topics, options);
 var offset = new Offset(client);
 
