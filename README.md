@@ -1,7 +1,7 @@
 Kafka-node
 ==========
 
-Kafka-node is a nodejs client with Zookeeper integration for apache Kafka. It only supports the latest version of Kafka 0.8 which is still under development, so this module
+Kafka-node is a Node.js client with Zookeeper integration for Apache Kafka. It only supports the latest version of Kafka 0.8 which is still under development, so this module
 is _not production ready_ so far.
 
 The Zookeeper integration does the following jobs:
@@ -291,7 +291,7 @@ Example
 
 ```js
 consumer.close(true, cb);
-consuemr.close(cb); //force is force
+consumer.close(cb); //force is force
 ```
 
 ## HighLevelConsumer
@@ -420,7 +420,7 @@ Example
 
 ```js
 consumer.close(true, cb);
-consuemr.close(cb); //force is force
+consumer.close(cb); //force is force
 ```
 
 ## Offset
