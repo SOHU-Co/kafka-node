@@ -43,10 +43,17 @@ var kafka = require('kafka-node'),
    topic: 'topicName',
    messages: ['message body'],// multi messages should be a array, single message can be just a string
    partition: '0', //default 0
+   attributes: 2, // default: 0
 }
 ```
 
 * `cb`: **Function**, the callback
+
+`attributes` controls compression of the message set. It supports the following values:
+
+* `0`: No compression
+* `1`: Compress using GZip
+* `2`: Compress using snappy
 
 Example:
 
@@ -183,7 +190,9 @@ producer.createTopics(['t'], function (err, data) {});// Simply omit 2nd arg
     // The maximum bytes to include in the message set for this partition. This helps bound the size of the response.
     fetchMaxBytes: 1024 * 10, 
     // If set true, consumer will fetch message from the given offset in the payloads 
-    fromOffset: false
+    fromOffset: false,
+    // If set to 'buffer', values will be returned as raw buffer objects.
+    encoding: 'utf8'
 }
 ```
 Example:

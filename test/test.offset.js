@@ -7,8 +7,10 @@ var libPath = process.env['kafka-cov'] ? '../lib-cov/' : '../lib/',
 
 var client, producer, offset;
 
+var host = process.env['KAFKA_TEST_HOST'] || '';
+
 before(function (done) {
-    client = new Client();
+    client = new Client(host);
     producer = new Producer(client);
     producer.on('ready', function () {
         producer.createTopics(['_exist_topic_3_test'], false, function (err, created) {
