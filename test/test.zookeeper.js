@@ -3,6 +3,7 @@
 var libPath = process.env['kafka-cov'] ? '../lib-cov/' : '../lib/',
     Zookeeper = require(libPath + 'zookeeper').Zookeeper;
 
+var host = process.env['KAFKA_TEST_HOST'] || '';
 var zk;
 
 /*
@@ -13,26 +14,26 @@ var zk;
  */
 
 before(function () {
-    zk = new Zookeeper('localhost:2181/kafka0.8');
+    zk = new Zookeeper(host);
 });
 
 describe('Zookeeper', function () {
     describe('when init success', function () {
         it('should emit init event', function (done) {
-            var zk = new Zookeeper('localhost:2181/kafka0.8');
+            var zk = new Zookeeper(host);
             zk.on('init', function (brokers) {
-                Object.keys(brokers).length.should.equal(1);
+                Object.keys(brokers).length.should.above(1);
                 done();
             });
         });
-    }); 
+    });
 
     describe('#listBrokers', function () {
         describe('when client not init', function () {
-            it('should return only 1 broker', function (done) {
+            it('should return all brokers', function (done) {
                 zk.inited = false;
                 zk.listBrokers(function (brokers) {
-                    Object.keys(brokers).length.should.equal(1);
+                    Object.keys(brokers).length.should.above(1);
                     done()
                 });
             });
@@ -60,9 +61,9 @@ describe('Zookeeper', function () {
         it('should return false when topic not exist', function (done) {
             zk.topicExists('_not_exist_topic_test', function (existed, topic) {
                 existed.should.not.be.ok;
-                topic.should.equal('_not_exist_topic_test'); 
+                topic.should.equal('_not_exist_topic_test');
                 done();
-            }); 
+            });
         });
     });
 });
