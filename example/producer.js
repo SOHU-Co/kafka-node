@@ -6,6 +6,7 @@ var kafka = require('../kafka'),
 var argv = require('optimist').argv;
 var topic = argv.topic || 'topic1';
 var p = argv.p || 0;
+var a = argv.a || 0;
 var count = argv.count || 1, rets = 0;
 var producer = new Producer(client);
 
@@ -20,7 +21,7 @@ producer.on('error', function (err) {
 function send(message) {
     for (var i = 0; i < count; i++) {
         producer.send([
-            {topic: topic, messages: [message] , partition: p}
+            {topic: topic, messages: [message] , partition: p, attributes: a}
         ], function (err, data) {
             if (err) console.log(arguments);
             if (++rets === count) process.exit();
