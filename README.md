@@ -117,6 +117,7 @@ var kafka = require('kafka-node'),
 {
    topic: 'topicName',
    messages: ['message body'],// multi messages should be a array, single message can be just a string
+   attributes: 1
 }
 ```
 
@@ -180,7 +181,7 @@ producer.createTopics(['t'], function (err, data) {});// Simply omit 2nd arg
 ```js
 {
     groupId: 'kafka-node-group',//consumer group id, deafult `kafka-node-group`
-    // Auto commit config 
+    // Auto commit config
     autoCommit: true,
     autoCommitIntervalMs: 5000,
     // The max wait time is the maximum amount of time in milliseconds to block waiting if insufficient data is available at the time the request is issued, default 100ms
@@ -188,8 +189,8 @@ producer.createTopics(['t'], function (err, data) {});// Simply omit 2nd arg
     // This is the minimum number of bytes of messages that must be available to give a response, default 1 byte
     fetchMinBytes: 1,
     // The maximum bytes to include in the message set for this partition. This helps bound the size of the response.
-    fetchMaxBytes: 1024 * 10, 
-    // If set true, consumer will fetch message from the given offset in the payloads 
+    fetchMaxBytes: 1024 * 10,
+    // If set true, consumer will fetch message from the given offset in the payloads
     fromOffset: false,
     // If set to 'buffer', values will be returned as raw buffer objects.
     encoding: 'utf8'
@@ -250,7 +251,7 @@ consumer.addTopics([{ topic: 't1', offset: 10 }], function (err, added) {
 ```
 
 ### removeTopics(topics, cb)
-* `topics`: **Array**, array of topics to remove 
+* `topics`: **Array**, array of topics to remove
 * `cb`: **Function**, the callback
 
 Example:
@@ -284,7 +285,7 @@ Set offset of the given topic
 Example:
 
 ``` js
-consumer.setOffset('topic', 0, 0); 
+consumer.setOffset('topic', 0, 0);
 ```
 
 ### pause()
@@ -328,7 +329,9 @@ consumer.close(cb); //force is force
     // The maximum bytes to include in the message set for this partition. This helps bound the size of the response.
     fetchMaxBytes: 1024 * 10,
     // If set true, consumer will fetch message from the given offset in the payloads
-    fromOffset: false
+    fromOffset: false,
+    // If set to 'buffer', values will be returned as raw buffer objects.
+    encoding: 'utf8'
 }
 ```
 Example:
@@ -462,7 +465,7 @@ var kafka = require('kafka-node'),
     client = new kafka.Client(),
     offset = new kafka.Offset(client);
     offset.fetch([
-        { topic: 't', partition: 0, time: Date.now(), maxNum: 1 } 
+        { topic: 't', partition: 0, time: Date.now(), maxNum: 1 }
     ], function (err, data) {
         // data
         // { 't': { '0': [999] } }
@@ -489,7 +492,7 @@ var kafka = require('kafka-node'),
     client = new kafka.Client(),
     offset = new kafka.Offset(client);
     offset.commit('groupId', [
-        { topic: 't', partition: 0, offset: 10 } 
+        { topic: 't', partition: 0, offset: 10 }
     ], function (err, data) {
     });
 ```
@@ -514,13 +517,13 @@ var kafka = require('kafka-node'),
     client = new kafka.Client(),
     offset = new kafka.Offset(client);
     offset.fetchCommits('groupId', [
-        { topic: 't', partition: 0 } 
+        { topic: 't', partition: 0 }
     ], function (err, data) {
     });
 ```
 
 # Todo
-* Compression: gzip & snappy
+* Compression: gzip & snappy (√)
 
 # LICENSE - "MIT"
 Copyright (c) 2013 Sohu.com
@@ -530,7 +533,7 @@ this software and associated documentation files (the "Software"), to deal in
 the Software without restriction, including without limitation the rights to
 use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
 of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions: 
+furnished to do so, subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
