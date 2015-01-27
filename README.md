@@ -19,7 +19,7 @@ Follow the [instructions](https://cwiki.apache.org/KAFKA/kafka-08-quick-start.ht
 ## Client
 ### Client(connectionString, clientId, [zkOptions])
 * `connectionString`: Zookeeper connection string, default `localhost:2181/kafka0.8`
-* `clientId`: This is a user supplied identifier for the client application, default `kafka-node-client`
+* `clientId`: This is a user-supplied identifier for the client application, default `kafka-node-client`
 * `zkOptions`: **Object**, Zookeeper options, see [node-zookeeper-client](https://github.com/alexguan/node-zookeeper-client#client-createclientconnectionstring-options)
 
 ### close(cb)
@@ -45,7 +45,7 @@ var kafka = require('kafka-node'),
 {
    topic: 'topicName',
    messages: ['message body'],// multi messages should be a array, single message can be just a string
-   partition: '0', //default 0
+   partition: 0, //default 0
    attributes: 2, // default: 0
 }
 ```
@@ -81,9 +81,9 @@ producer.on('error', function (err) {})
 ### createTopics(topics, async, cb)
 This method is used to create topics on the Kafka server. It only work when `auto.create.topics.enable`, on the Kafka server, is set to true. Our client simply sends a metadata request to the server which will auto create topics. When `async` is set to false, this method does not return until all topics are created, otherwise it returns immediately.
 
-* `topics`: **Array**,array of topics
-* `async`: **Boolean**,async or sync
-* `cb`: **Function**,the callback
+* `topics`: **Array**, array of topics
+* `async`: **Boolean**, async or sync
+* `cb`: **Function**, the callback
 
 Example:
 
@@ -239,7 +239,7 @@ consumer.on('message', function (message) {
 Add topics to current consumer, if any topic to be added not exists, return error
 * `topics`: **Array**, array of topics to add
 * `cb`: **Function**,the callback
-* `fromOffset`: **Boolean**, if ture, the consumer will fetch message from the specified offset, otherwise it will fetch message from the last commited offset of the topic.
+* `fromOffset`: **Boolean**, if true, the consumer will fetch message from the specified offset, otherwise it will fetch message from the last commited offset of the topic.
 
 Example:
 
@@ -298,13 +298,13 @@ Pause the consumer
 Resume the consumer
 
 ### close(force, cb)
-* `force`: **Boolean**, if set true, it force commit current offset before close, default false
+* `force`: **Boolean**, if set to true, it forces the consumer to commit the current offset before closing, default `false`
 
 Example
 
 ```js
 consumer.close(true, cb);
-consumer.close(cb); //force is force
+consumer.close(cb); //force is disabled
 ```
 
 ## HighLevelConsumer
@@ -376,7 +376,7 @@ consumer.on('message', function (message) {
 Add topics to current consumer, if any topic to be added not exists, return error
 * `topics`: **Array**, array of topics to add
 * `cb`: **Function**,the callback
-* `fromOffset`: **Boolean**, if ture, the consumer will fetch message from the specified offset, otherwise it will fetch message from the last commited offset of the topic.
+* `fromOffset`: **Boolean**, if true, the consumer will fetch message from the specified offset, otherwise it will fetch message from the last commited offset of the topic.
 
 Example:
 
@@ -429,13 +429,13 @@ consumer.setOffset('topic', 0, 0);
 ```
 
 ### close(force, cb)
-* `force`: **Boolean**, if set true, it force commit current offset before close, default false
+* `force`: **Boolean**, if set to true, it forces the consumer to commit the current offset before closing, default `false`
 
-Example
+Example:
 
 ```js
 consumer.close(true, cb);
-consumer.close(cb); //force is force
+consumer.close(cb); //force is disabled
 ```
 
 ## Offset
@@ -450,7 +450,7 @@ Fetch the available offset of a specify topic-partition
 ``` js
 {
    topic: 'topicName',
-   partition: '0', //default 0
+   partition: 0, //default 0
    // time:
    // Used to ask for all messages before a certain time (ms), default Date.now(),
    // Specify -1 to receive the latest offsets and -2 to receive the earliest available offset.
@@ -482,7 +482,7 @@ var kafka = require('kafka-node'),
 ``` js
 {
    topic: 'topicName',
-   partition: '0', //default 0
+   partition: 0, //default 0
    offset: 1,
    metadata: 'm', //default 'm'
 }
@@ -509,7 +509,7 @@ Fetch the last committed offset in a topic of a specific consumer group
 ``` js
 {
    topic: 'topicName',
-   partition: '0' //default 0
+   partition: 0 //default 0
 }
 ```
 
