@@ -428,6 +428,12 @@ Example:
 consumer.setOffset('topic', 0, 0);
 ```
 
+### pause()
+Pause the consumer
+
+### resume()
+Resume the consumer
+
 ### close(force, cb)
 * `force`: **Boolean**, if set to true, it forces the consumer to commit the current offset before closing, default `false`
 
