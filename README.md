@@ -1,6 +1,9 @@
 Kafka-node
 ==========
 
+[![NPM](https://nodei.co/npm/kafka-node.png)](https://nodei.co/npm/kafka-node/)
+[![NPM](https://nodei.co/npm-dl/kafka-node.png?height=3)](https://nodei.co/npm/kafka-node/)
+
 Kafka-node is a Node.js client with Zookeeper integration for Apache Kafka. It only supports the latest version of Kafka 0.8 which is still under development, so this module
 is _not production ready_ so far.
 
