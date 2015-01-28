@@ -54,13 +54,13 @@ before(function (done) {
                 ], done);
             }
             // Ensure leader selection happened
-            setTimeout(useNewTopics, 250);
+            setTimeout(useNewTopics, 1000);
         });
     });
 });
 
 describe('Consumer', function () {
-    
+
     describe('events', function () {
         it('should emit message when get new message', function (done) {
             var topics = [ { topic: EXISTS_TOPIC_2 } ],
@@ -72,11 +72,11 @@ describe('Consumer', function () {
                 offsetOutOfRange.call(null, topic, this);
             });
             consumer.on('message', function (message) {
-                message.topic.should.equal(EXISTS_TOPIC_2); 
+                message.topic.should.equal(EXISTS_TOPIC_2);
                 message.value.should.equal('hello kafka');
                 message.partition.should.equal(0);
                 offset.commit('_groupId_1_test', [message], function (err) {
-                    if (count++ === 0) done(err); 
+                    if (count++ === 0) done(err);
                 });
             });
         });
@@ -91,10 +91,10 @@ describe('Consumer', function () {
                 offsetOutOfRange.call(null, topic, this);
             });
             consumer.on('message', function (message) {
-                message.topic.should.equal(EXISTS_GZIP); 
+                message.topic.should.equal(EXISTS_GZIP);
                 message.value.should.equal('hello gzip');
                 offset.commit('_groupId_gzip_test', [message], function (err) {
-                    if (count++ === 0) done(err); 
+                    if (count++ === 0) done(err);
                 });
             });
         });
@@ -109,10 +109,10 @@ describe('Consumer', function () {
                 offsetOutOfRange.call(null, topic, this);
             });
             consumer.once('message', function (message) {
-                message.topic.should.equal(EXISTS_SNAPPY); 
+                message.topic.should.equal(EXISTS_SNAPPY);
                 message.value.should.equal(SNAPPY_MESSAGE);
                 offset.commit('_groupId_snappy_test', [message], function (err) {
-                    if (count++ === 0) done(err); 
+                    if (count++ === 0) done(err);
                 });
             });
         });
@@ -150,11 +150,11 @@ describe('Consumer', function () {
             it('should return error', function (done) {
                 var options = { autoCommit: false, groupId: '_groupId_1_test' },
                     topics = ['_not_exist_topic_1_test'];
-                var consumer = new Consumer(client, [], options);           
+                var consumer = new Consumer(client, [], options);
                 consumer.on('error', noop);
-                consumer.addTopics(topics, function (err, data) {
-                    err.should.equal(1);
-                    data.should.eql(topics);
+                consumer.addTopics(topics, function (err) {
+                    err.topics.length.should.equal(1);
+                    err.topics.should.eql(topics);
                     done();
                 });
             });
@@ -164,9 +164,9 @@ describe('Consumer', function () {
                     topics = [{topic: '_not_exist_topic_1_test', offset: 42}];
                 var consumer = new Consumer(client, [], options);
                 consumer.on('error', noop);
-                consumer.addTopics(topics, function (err, data) {
-                    err.should.equal(1);
-                    data.should.eql(topics.map(function(p) {return p.topic;}));
+                consumer.addTopics(topics, function (err) {
+                    err.topics.length.should.equal(1);
+                    err.topics.should.eql(topics.map(function(p) {return p.topic;}));
                     done();
                 }, true);
             });
@@ -197,15 +197,15 @@ describe('Consumer', function () {
                 }, true);
             });
         });
-    }); 
-    
+    });
+
     describe('#removeTopics', function () {
         it('should remove topics successfully', function (done) {
             var options = { autoCommit: false, groupId: '_groupId_addTopics_test' },
                 topics = [{ topic: EXISTS_TOPIC_2 }, { topic: EXISTS_TOPIC_1 }];
             var consumer = new Consumer(client, topics, options);
             consumer.on('error', noop);
-            
+
             consumer.payloads.length.should.equal(2);
             consumer.removeTopics(EXISTS_TOPIC_2, function (err, removed) {
                 removed.should.equal(1);
@@ -223,11 +223,11 @@ describe('Consumer', function () {
             consumer.on('error', noop);
 
             consumer.setOffset(EXISTS_TOPIC_2, 0, 100);
-            consumer.payloads.filter(function (p) { 
-                return p.topic === EXISTS_TOPIC_2; 
+            consumer.payloads.filter(function (p) {
+                return p.topic === EXISTS_TOPIC_2;
             })[0].offset.should.equal(100);
         });
-    }); 
+    });
 
     describe('#commit', function () {
         it('should commit offset of current topics', function (done) {
@@ -243,7 +243,7 @@ describe('Consumer', function () {
             });
             consumer.on('message', function (message) {
                 consumer.commit(true, function (err) {
-                    if (!err && count++ === 0) done(err); 
+                    if (!err && count++ === 0) done(err);
                 });
             });
 
@@ -252,7 +252,7 @@ describe('Consumer', function () {
 
     describe('#buildPayloads', function () {
         it('should set default config on the topic', function () {
-            var defaults = { 
+            var defaults = {
                 groupId: 'kafka-node-group',
                 autoCommit: true,
                 autoCommitMsgCount: 100,
@@ -260,51 +260,51 @@ describe('Consumer', function () {
                 encoding: 'utf8',
                 fetchMaxWaitMs: 100,
                 fetchMinBytes: 1,
-                fetchMaxBytes: 1024 * 1024, 
+                fetchMaxBytes: 1024 * 1024,
                 fromOffset: false
             };
 
             var consumer = new Consumer(client, []);
             consumer.options.should.eql(defaults);
-            
+
             var topic = consumer.buildPayloads([{ topic: 'topic' }])[0];
-            topic.partition.should.equal(0); 
-            topic.offset.should.equal(0); 
-            topic.metadata.should.equal('m'); 
-            topic.maxBytes.should.equal(1024 * 1024); 
-        }); 
+            topic.partition.should.equal(0);
+            topic.offset.should.equal(0);
+            topic.metadata.should.equal('m');
+            topic.maxBytes.should.equal(1024 * 1024);
+        });
 
         it('should support custom options', function () {
-            var options = { 
+            var options = {
                 groupId: 'custom-group',
                 autoCommit: false,
                 autoCommitIntervalMs: 1000,
                 fetchMaxWaitMs: 200,
                 fetchMinBytes: 1,
-                fetchMaxBytes: 1024, 
+                fetchMaxBytes: 1024,
                 fromOffset: false
             };
             var consumer = new Consumer(client, [], options);
-            consumer.options.should.equal(options); 
+            consumer.options.should.equal(options);
             var topic = consumer.buildPayloads([{ topic: 'topic' }])[0];
-            topic.partition.should.equal(0); 
-            topic.offset.should.equal(0); 
-            topic.metadata.should.equal('m'); 
-            topic.maxBytes.should.equal(1024); 
+            topic.partition.should.equal(0);
+            topic.offset.should.equal(0);
+            topic.metadata.should.equal('m');
+            topic.maxBytes.should.equal(1024);
         });
 
         it('should return right payloads when arguments is string', function () {
             var consumer = new Consumer(client, []);
-            var topics = ['topic']; 
+            var topics = ['topic'];
             var topic = consumer.buildPayloads(topics)[0];
             topic.should.be.an.instanceof(Object);
-            topic.partition.should.equal(0); 
-            topic.offset.should.equal(0); 
-            topic.metadata.should.equal('m'); 
+            topic.partition.should.equal(0);
+            topic.offset.should.equal(0);
+            topic.metadata.should.equal('m');
             topic.maxBytes.should.equal(1024 * 1024);
         });
     });
-    
+
     describe('#close', function () {
         it('should close the consumer', function (done) {
             var client = new Client(host),

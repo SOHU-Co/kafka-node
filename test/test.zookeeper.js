@@ -59,7 +59,7 @@ describe('Zookeeper', function () {
 
     describe('#topicExists', function () {
         it('should return false when topic not exist', function (done) {
-            zk.topicExists('_not_exist_topic_test', function (existed, topic) {
+            zk.topicExists('_not_exist_topic_test', function (err, existed, topic) {
                 existed.should.not.be.ok;
                 topic.should.equal('_not_exist_topic_test');
                 done();
