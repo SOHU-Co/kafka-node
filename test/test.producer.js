@@ -21,7 +21,7 @@ before(function (done) {
     producer.on('ready', function () {
         producer.createTopics([EXISTS_TOPIC_3], false, function (err, created) {
             if(err) return done(err);
-            setTimeout(done, 250);
+            setTimeout(done, 500);
         });
     });
 });
@@ -34,7 +34,7 @@ describe('Producer', function () {
                 message.should.be.ok;
                 message[EXISTS_TOPIC_3].should.have.property('0', 0);
                 done(err);
-            }); 
+            });
         });
 
         it('should send message successfully', function (done) {
@@ -42,7 +42,7 @@ describe('Producer', function () {
                 message.should.be.ok;
                 message[EXISTS_TOPIC_3]['0'].should.be.above(0);
                 done(err);
-            }); 
+            });
         });
 
         it('should send buffer message successfully', function (done) {
@@ -51,7 +51,7 @@ describe('Producer', function () {
                 message.should.be.ok;
                 message[EXISTS_TOPIC_3]['0'].should.be.above(0);
                 done(err);
-            }); 
+            });
         });
 
         it('should support multi messages in one topic', function (done) {
@@ -88,25 +88,25 @@ describe('Producer', function () {
             });
         });
     });
-    
+
     describe('#createTopics', function () {
         it('should return All requests sent when async is true', function (done) {
             producer.createTopics(['_exist_topic_'+ randomId() +'_test'], true, function (err, data) {
-                data.should.equal('All requests sent'); 
+                data.should.equal('All requests sent');
                 done(err);
             });
         });
 
         it('async should be true if not present', function (done) {
             producer.createTopics(['_exist_topic_'+ randomId() +'_test'], function (err, data) {
-                data.should.equal('All requests sent'); 
+                data.should.equal('All requests sent');
                 done(err);
             });
         });
 
         it('should return All created when async is false', function (done) {
             producer.createTopics(['_exist_topic_'+ randomId() +'_test'], false, function (err, data) {
-                data.should.equal('All created'); 
+                data.should.equal('All created');
                 done(err);
             });
         });
