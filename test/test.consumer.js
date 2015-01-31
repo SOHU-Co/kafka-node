@@ -333,4 +333,43 @@ describe('Consumer', function () {
             });
         });
     });
+
+    describe('#pauseTopics|resumeTopics', function () {
+        it('should pause or resume the topics', function () {
+            var client = new Client(host);
+            var topics = [
+                {topic: EXISTS_TOPIC_1, partition: 0},
+                {topic: EXISTS_TOPIC_1, partition: 1},
+                {topic: EXISTS_TOPIC_2, partition: 0},
+                {topic: EXISTS_TOPIC_2, partition: 1}
+            ];
+            var consumer = new Consumer(client, topics, {});
+
+            function normalize (p) {
+                return { topic: p.topic, partition: p.partition };
+            }
+            function compare (p1, p2) {
+                return p1.topic === p2.topic
+                    ? p1.partition - p2.partition
+                    : p1.topic > p2.topic;
+            }
+            consumer.payloads.should.eql(topics);
+            consumer.pauseTopics([EXISTS_TOPIC_1, { topic: EXISTS_TOPIC_2, partition: 0 }]);
+            consumer.payloads.map(normalize).should.eql([{ topic: EXISTS_TOPIC_2, partition: 1 }]);
+
+            consumer.resumeTopics([{topic: EXISTS_TOPIC_1, partition: 0}]);
+            consumer.payloads.map(normalize).sort(compare).should.eql([
+                {topic: EXISTS_TOPIC_1, partition: 0},
+                {topic: EXISTS_TOPIC_2, partition: 1}
+            ]);
+            consumer.pausedPayloads.map(normalize).sort(compare).should.eql([
+                {topic: EXISTS_TOPIC_1, partition: 1},
+                {topic: EXISTS_TOPIC_2, partition: 0}
+            ]);
+            
+            consumer.resumeTopics([EXISTS_TOPIC_1, EXISTS_TOPIC_2]);
+            consumer.payloads.sort(compare).should.eql(topics);
+            consumer.pausedPayloads.should.eql([]);
+        });
+    });
 });
