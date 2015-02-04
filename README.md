@@ -18,7 +18,7 @@ Follow the [instructions](https://cwiki.apache.org/KAFKA/kafka-08-quick-start.ht
 # API
 ## Client
 ### Client(connectionString, clientId, [zkOptions])
-* `connectionString`: Zookeeper connection string, default `localhost:2181/kafka0.8`
+* `connectionString`: Zookeeper connection string, default `localhost:2181/`
 * `clientId`: This is a user-supplied identifier for the client application, default `kafka-node-client`
 * `zkOptions`: **Object**, Zookeeper options, see [node-zookeeper-client](https://github.com/alexguan/node-zookeeper-client#client-createclientconnectionstring-options)
 
@@ -169,7 +169,7 @@ producer.createTopics(['t'], function (err, data) {});// Simply omit 2nd arg
 
 ## Consumer
 ### Consumer(client, payloads, options)
-* `client`: client which keeps a connection with the Kafka server.
+* `client`: client which keeps a connection with the Kafka server. **Note**: it's recommend that create new client for different consumers.
 * `payloads`: **Array**,array of `FetchRequest`, `FetchRequest` is a JSON object like:
 
 ``` js
@@ -447,6 +447,10 @@ consumer.close(cb); //force is disabled
 ## Offset
 ### Offset(client)
 * `client`: client which keeps a connection with the Kafka server.
+
+### events
+* `ready`: when zookeeper is ready
+* `connect` when broker is ready
 
 ### fetch(payloads, cb)
 Fetch the available offset of a specify topic-partition
