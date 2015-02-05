@@ -335,7 +335,7 @@ describe('Consumer', function () {
     });
 
     describe('#pauseTopics|resumeTopics', function () {
-        it('should pause or resume the topics', function () {
+        it('should pause or resume the topics', function (done) {
             var client = new Client(host);
             var topics = [
                 {topic: EXISTS_TOPIC_1, partition: 0},
@@ -353,6 +353,7 @@ describe('Consumer', function () {
                     ? p1.partition - p2.partition
                     : p1.topic > p2.topic;
             }
+
             consumer.payloads.should.eql(topics);
             consumer.pauseTopics([EXISTS_TOPIC_1, { topic: EXISTS_TOPIC_2, partition: 0 }]);
             consumer.payloads.map(normalize).should.eql([{ topic: EXISTS_TOPIC_2, partition: 1 }]);
@@ -370,6 +371,9 @@ describe('Consumer', function () {
             consumer.resumeTopics([EXISTS_TOPIC_1, EXISTS_TOPIC_2]);
             consumer.payloads.sort(compare).should.eql(topics);
             consumer.pausedPayloads.should.eql([]);
+            consumer.once('message', function () {
+                consumer.close(true, done);
+            });
         });
     });
 });
