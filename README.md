@@ -434,6 +434,26 @@ Pause the consumer
 ### resume()
 Resume the consumer
 
+### pauseTopics(topics)
+Pause specify topics
+
+```
+consumer.pauseTopics([
+    'topic1',
+    { topic: 'topic2', partition: 0 }
+]);
+```
+
+### resumeTopics(topics)
+Resume specify topics
+
+```
+consumer.resumeTopics([
+    'topic1',
+    { topic: 'topic2', partition: 0 }
+]);
+```
+
 ### close(force, cb)
 * `force`: **Boolean**, if set to true, it forces the consumer to commit the current offset before closing, default `false`
 
