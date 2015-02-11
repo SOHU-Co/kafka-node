@@ -344,6 +344,7 @@ describe('Consumer', function () {
                 {topic: EXISTS_TOPIC_2, partition: 1}
             ];
             var consumer = new Consumer(client, topics, {});
+            consumer.on('error', function () {});
 
             function normalize (p) {
                 return { topic: p.topic, partition: p.partition };
@@ -367,7 +368,7 @@ describe('Consumer', function () {
                 {topic: EXISTS_TOPIC_1, partition: 1},
                 {topic: EXISTS_TOPIC_2, partition: 0}
             ]);
-            
+
             consumer.resumeTopics([EXISTS_TOPIC_1, EXISTS_TOPIC_2]);
             consumer.payloads.sort(compare).should.eql(topics);
             consumer.pausedPayloads.should.eql([]);
