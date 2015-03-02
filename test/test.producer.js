@@ -1,9 +1,9 @@
 'use strict';
 
-var Producer = require('../lib/producer'),
-    Client = require('../lib/client'),
-    protocol = require('../lib/protocol/'),
-    Message = protocol.Message;
+var kafka = require('..'),
+    Producer = kafka.Producer,
+    Client = kafka.Client,
+    KeyedMessage = kafka.KeyedMessage;
 
 var client, producer;
 
@@ -57,7 +57,7 @@ describe('Producer', function () {
         });
 
         it('should send Message struct successfully', function(done) {
-            var message = new Message(0, 0, 'test-key', 'test-message');
+            var message = new KeyedMessage('test-key', 'test-message');
             producer.send([{ topic: EXISTS_TOPIC_3, messages: message }], function (err, message) {
                 message.should.be.ok;
                 message[EXISTS_TOPIC_3]['0'].should.be.above(0);
