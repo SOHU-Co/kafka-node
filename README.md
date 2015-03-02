@@ -44,7 +44,7 @@ var kafka = require('kafka-node'),
 ``` js
 {
    topic: 'topicName',
-   messages: ['message body'],// multi messages should be a array, single message can be just a string
+   messages: ['message body'],// multi messages should be a array, single message can be just a string or a KeyMessage instance
    partition: 0, //default 0
    attributes: 2, // default: 0
 }
@@ -63,11 +63,13 @@ Example:
 ``` js
 var kafka = require('kafka-node'),
     Producer = kafka.Producer,
+    KeyedMessage = kafka.KeyedMessage,
     client = new kafka.Client(),
     producer = new Producer(client),
+    km = new KeyedMessage('key', 'message'),
     payloads = [
         { topic: 'topic1', messages: 'hi', partition: 0 },
-        { topic: 'topic2', messages: ['hello', 'world'] }
+        { topic: 'topic2', messages: ['hello', 'world', km] }
     ];
 producer.on('ready', function () {
     producer.send(payloads, function (err, data) {
