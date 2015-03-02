@@ -44,7 +44,7 @@ var kafka = require('kafka-node'),
 ``` js
 {
    topic: 'topicName',
-   messages: ['message body'],// multi messages should be a array, single message can be just a string or a KeyMessage instance
+   messages: ['message body'],// multi messages should be a array, single message can be just a string or a KeyedMessage instance
    partition: 0, //default 0
    attributes: 2, // default: 0
 }
