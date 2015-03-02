@@ -13,7 +13,7 @@ The Zookeeper integration does the following jobs:
 * Watches broker state, if broker changes, the client will refresh broker and topic metadata stored in the client
 
 # Install Kafka
-Follow the [instructions](https://cwiki.apache.org/KAFKA/kafka-08-quick-start.html) on the Kafka wiki to build Kafka 0.8 and get a test broker up and running.
+Follow the [instructions](http://kafka.apache.org/documentation.html#quickstart) on the Kafka wiki to build Kafka 0.8 and get a test broker up and running.
 
 # API
 ## Client
