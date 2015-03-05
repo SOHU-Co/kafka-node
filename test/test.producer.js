@@ -56,6 +56,24 @@ describe('Producer', function () {
             });
         });
 
+        it('should send null message successfully', function (done) {
+            var message = null;
+            producer.send([{ topic: EXISTS_TOPIC_3, messages: message }], function (err, message) {
+                message.should.be.ok;
+                message[EXISTS_TOPIC_3]['0'].should.be.above(0);
+                done(err);
+            });
+        });
+
+        it('should convert none buffer message to string', function (done) {
+            var message = -1;
+            producer.send([{ topic: EXISTS_TOPIC_3, messages: message }], function (err, message) {
+                message.should.be.ok;
+                message[EXISTS_TOPIC_3]['0'].should.be.above(0);
+                done(err);
+            });
+        })
+
         it('should send Message struct successfully', function(done) {
             var message = new KeyedMessage('test-key', 'test-message');
             producer.send([{ topic: EXISTS_TOPIC_3, messages: message }], function (err, message) {
