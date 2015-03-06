@@ -2,4 +2,5 @@
 
 ## Version NEXT (Unreleased)
 
+- Fix #170: In case of `offsetOutOfRange`, the consumer should be paused.
 - Fix #169: When paused why try to fetch every 1000 ms?
