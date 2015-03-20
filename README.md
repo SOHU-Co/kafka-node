@@ -4,8 +4,7 @@ Kafka-node
 [![NPM](https://nodei.co/npm/kafka-node.png)](https://nodei.co/npm/kafka-node/)
 [![NPM](https://nodei.co/npm-dl/kafka-node.png?height=3)](https://nodei.co/npm/kafka-node/)
 
-Kafka-node is a Node.js client with Zookeeper integration for Apache Kafka. It only supports the latest version of Kafka 0.8 which is still under development, so this module
-is _not production ready_ so far.
+Kafka-node is a Node.js client with Zookeeper integration for Apache Kafka 0.8.1 and later.
 
 The Zookeeper integration does the following jobs:
 
@@ -561,7 +560,7 @@ var kafka = require('kafka-node'),
 * Compression: gzip & snappy (√)
 
 # LICENSE - "MIT"
-Copyright (c) 2013 Sohu.com
+Copyright (c) 2015 Sohu.com
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
