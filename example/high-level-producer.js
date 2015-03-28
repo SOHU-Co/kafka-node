@@ -1,25 +1,27 @@
-var kafka = require('../kafka');
+var kafka = require('..');
 var HighLevelProducer = kafka.HighLevelProducer;
 var Client = kafka.Client;
 var client = new Client();
 var argv = require('optimist').argv;
 var topic = argv.topic || 'topic1';
-var count = 3, rets = 0;
+var count = 10, rets = 0;
 var producer = new HighLevelProducer(client);
 
 producer.on('ready', function () {
-    send('hello');
-    setTimeout(function () {
-        send('world');
-        send('world');
-    }, 2000);
+    setInterval(send, 1000);
 });
 
-function send(message) {
+producer.on('error', function (err) {
+    console.log('error', err)
+})
+
+function send() {
+    var message = new Date().toString();
     producer.send([
-        {topic: topic, messages: [message] }
+      {topic: topic, messages: [message] }
     ], function (err, data) {
-        if (err) console.log(arguments);
-        if (++rets === count) process.exit();
+        if (err) console.log(err);
+        else console.log('send %d messages', ++rets);
+        if (rets === count) process.exit();
     });
 }
