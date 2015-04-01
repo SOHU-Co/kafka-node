@@ -27,8 +27,9 @@ Closes the connection to Zookeeper and the brokers so that the node process can 
 * `cb`: **Function**, the callback
 
 ## Producer
-### Producer(client)
+### Producer(client, [options])
 * `client`: client which keeps a connection with the Kafka server.
+* `options`: set `requireAcks` and `ackTimeoutMs` for producer, the default value is `{requireAcks: 1, ackTimeoutMs: 100}`
 
 ``` js
 var kafka = require('kafka-node'),
@@ -104,8 +105,9 @@ producer.createTopics(['t'], function (err, data) {});// Simply omit 2nd arg
 
 
 ## HighLevelProducer
-### HighLevelProducer(client)
+### HighLevelProducer(client, [options])
 * `client`: client which keeps a connection with the Kafka server. Round-robins produce requests to the available topic partitions
+* `options`: set `requireAcks` and `ackTimeoutMs` for producer, the default value is `{requireAcks: 1, ackTimeoutMs: 100}`
 
 ``` js
 var kafka = require('kafka-node'),
