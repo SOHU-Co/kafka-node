@@ -7,7 +7,7 @@ var argv = require('optimist').argv;
 var topic = argv.topic || 'topic1';
 var p = argv.p || 0;
 var a = argv.a || 0;
-var producer = new Producer(client);
+var producer = new Producer(client, { requireAcks: 1 });
 
 producer.on('ready', function () {
     var message = 'a message';

@@ -5,7 +5,7 @@ var kafka = require('..'),
     Client = kafka.Client,
     KeyedMessage = kafka.KeyedMessage;
 
-var client, producer;
+var client, producer, noAckProducer;
 
 var TOPIC_POSTFIX = '_test_' + Date.now();
 var EXISTS_TOPIC_3 = '_exists_3' + TOPIC_POSTFIX;
@@ -26,6 +26,7 @@ before(function (done) {
             setTimeout(done, 500);
         });
     });
+    noAckProducer = new Producer(client, { requireAcks: 0 });
 });
 
 describe('Producer', function () {
@@ -116,6 +117,16 @@ describe('Producer', function () {
                 done();
             });
         });
+
+        it('should send message without ack', function (done) {
+            noAckProducer.send([{
+                topic: EXISTS_TOPIC_3, messages: 'hello kafka'
+            }], function (err, message) {
+                if (err) return done(err);
+                message.result.should.equal('no ack');
+                done();
+            });
+        })
     });
 
     describe('#createTopics', function () {
