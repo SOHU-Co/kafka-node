@@ -81,7 +81,7 @@ producer.on('error', function (err) {})
 ```
 
 ### createTopics(topics, async, cb)
-This method is used to create topics on the Kafka server. It only work when `auto.create.topics.enable`, on the Kafka server, is set to true. Our client simply sends a metadata request to the server which will auto create topics. When `async` is set to false, this method does not return until all topics are created, otherwise it returns immediately.
+This method is used to create topics on the Kafka server. It only works when `auto.create.topics.enable`, on the Kafka server, is set to true. Our client simply sends a metadata request to the server which will auto create topics. When `async` is set to false, this method does not return until all topics are created, otherwise it returns immediately.
 
 * `topics`: **Array**, array of topics
 * `async`: **Boolean**, async or sync
