@@ -1,5 +1,11 @@
 # kafka-node CHANGELOG
 
+## 2015-04-23, Version 0.2.26
+- Fix: add callback to consumer.autoCommit method [#198](https://github.com/SOHU-Co/kafka-node/pull/198)
+- Emit an error when there is a problem with the socket connection to the kafka broker [#196](https://github.com/SOHU-Co/kafka-node/pull/196)
+- Fix: emit the error instead of slient swallow it [#193](https://github.com/SOHU-Co/kafka-node/pull/193)
+- Typo in error message [#189](https://github.com/SOHU-Co/kafka-node/pull/189)
+
 ## 2015-04-01, Version 0.2.25
 - Producer support `requireAcks` option [#187](https://github.com/SOHU-Co/kafka-node/pull/187)
 - Update examples [#185](https://github.com/SOHU-Co/kafka-node/pull/185)
