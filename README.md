@@ -347,6 +347,7 @@ consumer.close(cb); //force is disabled
 {
     groupId: 'kafka-node-group',//consumer group id, deafult `kafka-node-group`
     // Auto commit config
+    autoCommit: true,
     autoCommitIntervalMs: 5000,
     // The max wait time is the maximum amount of time in milliseconds to block waiting if insufficient data is available at the time the request is issued, default 100ms
     fetchMaxWaitMs: 100,
