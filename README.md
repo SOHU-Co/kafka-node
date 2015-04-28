@@ -38,6 +38,11 @@ var kafka = require('kafka-node'),
     producer = new Producer(client);
 ```
 
+### Events
+
+- `ready`: this event is emitted when producer is ready to send messages.
+- `error`: this is the error event propagates from internal client, producer should always listen it.
+
 ### send(payloads, cb)
 * `payloads`: **Array**,array of `ProduceRequest`, `ProduceRequest` is a JSON object like:
 
@@ -115,6 +120,11 @@ var kafka = require('kafka-node'),
     client = new kafka.Client(),
     producer = new HighLevelProducer(client);
 ```
+
+### Events
+
+- `ready`: this event is emitted when producer is ready to send messages.
+- `error`: this is the error event propagates from internal client, producer should always listen it.
 
 ### send(payloads, cb)
 * `payloads`: **Array**,array of `ProduceRequest`, `ProduceRequest` is a JSON object like:
