@@ -1,5 +1,9 @@
 # kafka-node CHANGELOG
 
+## 2015-05-11, Version 0.2.27
+- Deps: upgrade snappy to 3.2.0
+- Zookeeper#listConsumers: ignore error when there is no such node in zookeeper
+
 ## 2015-04-23, Version 0.2.26
 - Fix: add callback to consumer.autoCommit method [#198](https://github.com/SOHU-Co/kafka-node/pull/198)
 - Emit an error when there is a problem with the socket connection to the kafka broker [#196](https://github.com/SOHU-Co/kafka-node/pull/196)
