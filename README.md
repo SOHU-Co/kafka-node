@@ -487,7 +487,7 @@ consumer.close(cb); //force is disabled
 * `connect` when broker is ready
 
 ### fetch(payloads, cb)
-Fetch the available offset of a specify topic-partition
+Fetch the available offset of a specific topic-partition
 
 * `payloads`: **Array**,array of `OffsetRequest`, `OffsetRequest` is a JSON object like:
 
