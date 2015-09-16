@@ -196,7 +196,7 @@ producer.createTopics(['t'], function (err, data) {});// Simply omit 2nd arg
 
 ```js
 {
-    groupId: 'kafka-node-group',//consumer group id, deafult `kafka-node-group`
+    groupId: 'kafka-node-group',//consumer group id, default `kafka-node-group`
     // Auto commit config
     autoCommit: true,
     autoCommitIntervalMs: 5000,
