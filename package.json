@@ -13,7 +13,7 @@
     "node-uuid": "~1.4.3",
     "node-zookeeper-client": "~0.2.2",
     "retry": "~0.6.1",
-    "snappy": "^3.2.0"
+    "snappy": "^4.0.0"
   },
   "devDependencies": {
     "mocha": "^2.2.1",
