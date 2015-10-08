@@ -5,7 +5,7 @@ var kafka = require('..'),
     Client = kafka.Client,
     KeyedMessage = kafka.KeyedMessage;
 
-var client, producer, noAckProducer;
+var client, producer, noAckProducer, producerKeyed;
 
 var TOPIC_POSTFIX = '_test_' + Date.now();
 var EXISTS_TOPIC_3 = '_exists_3' + TOPIC_POSTFIX;
@@ -14,19 +14,23 @@ var host = process.env['KAFKA_TEST_HOST'] || '';
 
 // Helper method
 function randomId () {
-    return Math.floor(Math.random() * 10000)
+    return Math.floor(Math.random() * 10000);
 }
 
 before(function (done) {
     client = new Client(host);
     producer = new Producer(client);
+    noAckProducer = new Producer(client, { requireAcks: 0 });
+    producerKeyed = new Producer(client, { partitionerType: Producer.PARTITIONER_TYPES.keyed });
+
     producer.on('ready', function () {
-        producer.createTopics([EXISTS_TOPIC_3], false, function (err, created) {
-            if(err) return done(err);
-            setTimeout(done, 500);
+        producerKeyed.on('ready', function () {
+            producer.createTopics([EXISTS_TOPIC_3], false, function (err, created) {
+                if (err) return done(err);
+                setTimeout(done, 500);
+            });
         });
     });
-    noAckProducer = new Producer(client, { requireAcks: 0 });
 });
 
 describe('Producer', function () {
@@ -126,7 +130,23 @@ describe('Producer', function () {
                 message.result.should.equal('no ack');
                 done();
             });
-        })
+        });
+
+        it('should send message to specified partition even when producer configured with keyed partitioner', function (done) {
+            producerKeyed.send([{ key: '12345', partition: 0, topic: EXISTS_TOPIC_3, messages: 'hello kafka' }], function (err, message) {
+                message.should.be.ok;
+                message[EXISTS_TOPIC_3]['0'].should.be.above(0);
+                done(err);
+            });
+        });
+
+        it('should send message to partition determined by keyed partitioner', function (done) {
+            producerKeyed.send([{ key: '12345', topic: EXISTS_TOPIC_3, messages: 'hello kafka' }], function (err, message) {
+                message.should.be.ok;
+                message[EXISTS_TOPIC_3].should.have.property('1', 0);
+                done(err);
+            });
+        });
     });
 
     describe('#createTopics', function () {
