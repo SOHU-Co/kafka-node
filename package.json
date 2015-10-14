@@ -13,7 +13,7 @@
     "node-uuid": "~1.4.3",
     "node-zookeeper-client": "~0.2.2",
     "retry": "~0.6.1",
-    "snappy": "^4.0.0"
+    "snappy": "git://github.com/kesla/node-snappy#91ebdba00b3e0de036ecf1bb8bde2e96d2b7f3ac"
   },
   "devDependencies": {
     "mocha": "^2.2.1",
