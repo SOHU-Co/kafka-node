@@ -8,9 +8,9 @@
     "binary": "~0.3.0",
     "buffer-crc32": "~0.2.5",
     "buffermaker": "~1.2.0",
+    "cassandra-uuid": "^0.0.2",
     "debug": "^2.1.3",
     "lodash": ">3.0 <4.0",
-    "node-uuid": "~1.4.3",
     "node-zookeeper-client": "~0.2.2",
     "retry": "~0.6.1",
     "snappy": "^4.0.1"
