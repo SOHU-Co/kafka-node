@@ -29,7 +29,18 @@ Closes the connection to Zookeeper and the brokers so that the node process can 
 ## Producer
 ### Producer(client, [options])
 * `client`: client which keeps a connection with the Kafka server.
-* `options`: set `requireAcks` and `ackTimeoutMs` for producer, the default value is `{requireAcks: 1, ackTimeoutMs: 100}`
+* `options`: options for producer,
+
+```js
+{
+    // Configuration for when to consider a message as acknowledged, default 1
+    requireAcks: 1,
+    // The amount of time in milliseconds to wait for all acks before considered, default 100ms
+    ackTimeoutMs: 100,
+    // Partitioner type (default = 0, random = 1, cyclic = 2, keyed = 3), default 0
+    partitionerType: 2
+}
+```
 
 ``` js
 var kafka = require('kafka-node'),
@@ -49,9 +60,10 @@ var kafka = require('kafka-node'),
 ``` js
 {
    topic: 'topicName',
-   messages: ['message body'],// multi messages should be a array, single message can be just a string or a KeyedMessage instance
-   partition: 0, //default 0
-   attributes: 2, // default: 0
+   messages: ['message body'], // multi messages should be a array, single message can be just a string or a KeyedMessage instance
+   key: 'theKey', // only needed when using keyed partitioner
+   partition: 0, // default 0
+   attributes: 2 // default: 0
 }
 ```
 
@@ -112,7 +124,18 @@ producer.createTopics(['t'], function (err, data) {});// Simply omit 2nd arg
 ## HighLevelProducer
 ### HighLevelProducer(client, [options])
 * `client`: client which keeps a connection with the Kafka server. Round-robins produce requests to the available topic partitions
-* `options`: set `requireAcks` and `ackTimeoutMs` for producer, the default value is `{requireAcks: 1, ackTimeoutMs: 100}`
+* `options`: options for producer,
+
+```js
+{
+    // Configuration for when to consider a message as acknowledged, default 1
+    requireAcks: 1,
+    // The amount of time in milliseconds to wait for all acks before considered, default 100ms
+    ackTimeoutMs: 100,
+    // Partitioner type (default = 0, random = 1, cyclic = 2, keyed = 3), default 2
+    partitionerType: 3
+}
+```
 
 ``` js
 var kafka = require('kafka-node'),
@@ -132,7 +155,8 @@ var kafka = require('kafka-node'),
 ``` js
 {
    topic: 'topicName',
-   messages: ['message body'],// multi messages should be a array, single message can be just a string
+   messages: ['message body'], // multi messages should be a array, single message can be just a string,
+   key: 'theKey', // only needed when using keyed partitioner
    attributes: 1
 }
 ```
