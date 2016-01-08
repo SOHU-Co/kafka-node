@@ -1,6 +1,9 @@
 # kafka-node CHANGELOG
 
-## 2015-01-08, Version 0.3.0
+## 2016-01-09, Version 0.3.1
+- Buffer batch for async producers [#262](https://github.com/SOHU-Co/kafka-node/pull/262)
+
+## 2016-01-08, Version 0.3.0
 - Add partitions to producer [#260](https://github.com/SOHU-Co/kafka-node/pull/260)
 
 ## 2015-05-11, Version 0.2.27
