@@ -1,5 +1,8 @@
 # kafka-node CHANGELOG
 
+## 2015-01-08, Version 0.3.0
+- Add partitions to producer [#260](https://github.com/SOHU-Co/kafka-node/pull/260)
+
 ## 2015-05-11, Version 0.2.27
 - Deps: upgrade snappy to 3.2.0
 - Zookeeper#listConsumers: ignore error when there is no such node in zookeeper
