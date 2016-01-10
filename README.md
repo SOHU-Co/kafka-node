@@ -380,7 +380,10 @@ consumer.close(cb); //force is disabled
 
 ```js
 {
-    groupId: 'kafka-node-group',//consumer group id, deafult `kafka-node-group`
+    // Consumer group id, deafult `kafka-node-group`
+    groupId: 'kafka-node-group',
+    // Consumer id, defaults to `groupId`
+    id: 'my-consumer-id',
     // Auto commit config
     autoCommit: true,
     autoCommitIntervalMs: 5000,
