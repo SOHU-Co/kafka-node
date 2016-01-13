@@ -390,8 +390,6 @@ consumer.close(cb); //force is disabled
     fetchMinBytes: 1,
     // The maximum bytes to include in the message set for this partition. This helps bound the size of the response.
     fetchMaxBytes: 1024 * 10,
-    // If set true, consumer will fetch message from the given offset in the payloads
-    fromOffset: false,
     // If set to 'buffer', values will be returned as raw buffer objects.
     encoding: 'utf8'
 }
@@ -431,22 +429,16 @@ consumer.on('message', function (message) {
 
 ### on('offsetOutOfRange', function (err) {})
 
-### addTopics(topics, cb, fromOffset)
+### addTopics(topics, cb)
 Add topics to current consumer, if any topic to be added not exists, return error
 * `topics`: **Array**, array of topics to add
 * `cb`: **Function**,the callback
-* `fromOffset`: **Boolean**, if true, the consumer will fetch message from the specified offset, otherwise it will fetch message from the last commited offset of the topic.
 
 Example:
 
 ``` js
 consumer.addTopics(['t1', 't2'], function (err, added) {
 });
-
-or
-
-consumer.addTopics([{ topic: 't1', offset: 10 }], function (err, added) {
-}, true);
 ```
 
 ### removeTopics(topics, cb)
