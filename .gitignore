@@ -4,3 +4,4 @@ node_modules
 *.swo
 test/data.txt
 docs
+.idea
