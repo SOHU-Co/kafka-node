@@ -302,15 +302,16 @@ consumer.removeTopics(['t1', 't2'], function (err, removed) {
 });
 ```
 
-### commit(cb)
+### commit(force, cb)
 Commit offset of the current topics manually, this method should be called when a consumer leaves
 
+* `force`: **Boolean**, if true, the offset will be committed even if the consumer is already committing
 * `cb`: **Function**, the callback
 
 Example:
 
 ``` js
-consumer.commit(function(err, data) {
+consumer.commit(true, function(err, data) {
 });
 ```
 
