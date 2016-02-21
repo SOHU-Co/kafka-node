@@ -20,7 +20,7 @@ Follow the [instructions](http://kafka.apache.org/documentation.html#quickstart)
 * `connectionString`: Zookeeper connection string, default `localhost:2181/`
 * `clientId`: This is a user-supplied identifier for the client application, default `kafka-node-client`
 * `zkOptions`: **Object**, Zookeeper options, see [node-zookeeper-client](https://github.com/alexguan/node-zookeeper-client#client-createclientconnectionstring-options)
-* `noAckBatchOptions`: **Object**, when requireAcks is disabled on Producer side we can define the batch properties, 'noAckBatchSize' in bytes and 'noAckBatchAge' in milliseconds. The default value is `{ noAckBatchSize: 500, noAckBatchAge: 300 }`
+* `noAckBatchOptions`: **Object**, when requireAcks is disabled on Producer side we can define the batch properties, 'noAckBatchSize' in bytes and 'noAckBatchAge' in milliseconds. The default value is `{ noAckBatchSize: null, noAckBatchAge: null }` and it acts as if there was no batch
 
 ### close(cb)
 Closes the connection to Zookeeper and the brokers so that the node process can exit gracefully.
