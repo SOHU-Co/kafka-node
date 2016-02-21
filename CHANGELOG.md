@@ -1,5 +1,10 @@
 # kafka-node CHANGELOG
 
+## 2016-02-21, Version 0.3.2
+- Fix client socket when closing and error handling [#314](https://github.com/SOHU-Co/kafka-node/pull/314)
+- Make `commit()` handle case when only callback is passed [#306](https://github.com/SOHU-Co/kafka-node/pull/306)
+- Fix typo in offset.js [#304](https://github.com/SOHU-Co/kafka-node/pull/304)
+
 ## 2016-01-09, Version 0.3.1
 - Buffer batch for async producers [#262](https://github.com/SOHU-Co/kafka-node/pull/262)
 
