@@ -55,6 +55,16 @@ describe('Partitioner', function () {
                 partitions[4].should.equal(1);
                 partitions[5].should.equal(2);
             });
+
+            it('should not modify different partitioners', function () {
+                var partitioner2 = new CyclicPartitioner();
+                var partitions1 = getPartitions(partitioner, [0, 1, 2], 1);
+                var partitions2 = getPartitions(partitioner2, [0, 1, 2], 1);
+                partitions1.should.have.length(3);
+                partitions2.should.have.length(3);
+                partitions1[0].should.equal(0);
+                partitions2[0].should.equal(0);
+            });
         });
     });
 
