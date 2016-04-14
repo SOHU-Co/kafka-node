@@ -230,7 +230,7 @@ producer.createTopics(['t'], function (err, data) {});// Simply omit 2nd arg
     // This is the minimum number of bytes of messages that must be available to give a response, default 1 byte
     fetchMinBytes: 1,
     // The maximum bytes to include in the message set for this partition. This helps bound the size of the response.
-    fetchMaxBytes: 1024 * 10,
+    fetchMaxBytes: 1024 * 1024,
     // If set true, consumer will fetch message from the given offset in the payloads
     fromOffset: false,
     // If set to 'buffer', values will be returned as raw buffer objects.
@@ -392,7 +392,7 @@ consumer.close(cb); //force is disabled
     // This is the minimum number of bytes of messages that must be available to give a response, default 1 byte
     fetchMinBytes: 1,
     // The maximum bytes to include in the message set for this partition. This helps bound the size of the response.
-    fetchMaxBytes: 1024 * 10,
+    fetchMaxBytes: 1024 * 1024,
     // If set true, consumer will fetch message from the given offset in the payloads
     fromOffset: false,
     // If set to 'buffer', values will be returned as raw buffer objects.
