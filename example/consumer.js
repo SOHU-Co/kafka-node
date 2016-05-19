@@ -9,16 +9,17 @@ var topic = argv.topic || 'topic1';
 
 var client = new Client('localhost:2181');
 var topics = [
-        {topic: topic, partition: 1},
         {topic: topic, partition: 0}
     ],
-    options = { autoCommit: false, fetchMaxWaitMs: 1000, fetchMaxBytes: 1024*1024 };
+    options = { autoCommit: false, fetchMaxWaitMs: 1000, fetchMaxBytes: 500*1024*1024, encoding: 'buffer' };
 
 var consumer = new Consumer(client, topics, options);
 var offset = new Offset(client);
 
+var start = Date.now();
 consumer.on('message', function (message) {
-    console.log(message);
+    console.log("message - offset:", message.offset, "| length:", message.value.length);
+    console.log("receive msg after (ms):", Date.now() - start);
 });
 
 consumer.on('error', function (err) {
