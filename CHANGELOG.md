@@ -1,5 +1,11 @@
 # kafka-node CHANGELOG
 
+## 2016-05-27, Version 0.3.3
+- Fix type error while producing messages [#360](https://github.com/SOHU-Co/kafka-node/pull/360)
+- Update README [#307](https://github.com/SOHU-Co/kafka-node/pull/307) and [#352](https://github.com/SOHU-Co/kafka-node/pull/352)
+- Add contributing guidelines [#346](https://github.com/SOHU-Co/kafka-node/pull/346)
+- Make Snappy an optional dependency [#347](https://github.com/SOHU-Co/kafka-node/pull/347)
+
 ## 2016-02-21, Version 0.3.2
 - Fix client socket when closing and error handling [#314](https://github.com/SOHU-Co/kafka-node/pull/314)
 - Make `commit()` handle case when only callback is passed [#306](https://github.com/SOHU-Co/kafka-node/pull/306)
