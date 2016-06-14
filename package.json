@@ -16,7 +16,7 @@
     "retry": "~0.6.1"
   },
   "optionalDependencies": {
-    "snappy": "^4.0.1"
+    "snappy": "^5.0.4"
   },
   "devDependencies": {
     "mocha": "^2.2.1",
