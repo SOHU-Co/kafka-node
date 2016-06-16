@@ -600,6 +600,31 @@ var kafka = require('kafka-node'),
 # Todo
 * Compression: gzip & snappy (√)
 
+
+# Running Tests
+
+### Install Docker
+
+On the Mac
+
+```bash
+brew install docker docker-machine docker-compose
+docker-machine create --driver virtualbox dev
+```
+
+### Start Docker and Run Tests
+
+```bash
+./run-tests.sh
+```
+
+### Stop Docker
+
+```bash
+npm run stopDocker
+```
+
+
 # LICENSE - "MIT"
 Copyright (c) 2015 Sohu.com
 

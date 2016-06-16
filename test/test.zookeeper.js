@@ -8,16 +8,15 @@ var zk;
 
 /*
  *  To run the test, you should ensure:
- *  1. at least 2 broker running
- *  2. zookeeper server running at localhost:2181
- *  3. create path kafka0.8 in zookeeper
+ *   - at least 2 broker running
  */
 
-before(function () {
-    zk = new Zookeeper(host);
-});
 
-describe('Zookeeper', function () {
+xdescribe('Zookeeper', function () {
+    before(function () {
+        zk = new Zookeeper(host);
+    });
+
     describe('when init success', function () {
         it('should emit init event', function (done) {
             var zk = new Zookeeper(host);
