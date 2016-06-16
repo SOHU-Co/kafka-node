@@ -70,7 +70,7 @@ describe('Offset', function () {
     });
 
     describe('#fetchCommits', function () {
-        it('should get last commited offset of the consumer group', function (done) {
+        it('should get last committed offset of the consumer group', function (done) {
             var topic = '_exist_topic_3_test',
                 topics = [ { topic: topic, offset: 10 } ];
             offset.fetchCommits('_groupId_commit_1_test', topics, function (err, data) {
@@ -81,5 +81,21 @@ describe('Offset', function () {
             });
         });
     });
-});
 
+    describe('#fetchLatestOffsets', function() {
+        it('should get latest kafka offsets for all topics passed in', function(done) {
+            var topic = 'exist_topic_3_test',
+                topics = [topic],
+                partition = 0;
+            offset.fetch([{ topic: topic, time: -1}], function(err, results) {
+                if (err) return done(err);
+                var latestOffset = results[topic][partition][0];
+                offset.fetchLatestOffsets(topics, function(err, offsets) {
+                    if (err) return done(err);
+                    offsets[topic][partition].should.equal(latestOffset);
+                    done();
+                });
+            });
+        });
+    });
+});
