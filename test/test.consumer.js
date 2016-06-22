@@ -30,14 +30,16 @@ function offsetOutOfRange (topic, consumer) {
 }
 
 [
-    { name: 'Consumer' },
+    { name: 'PLAINTEXT Consumer' },
     {
         name: 'SSL Consumer',
-        sslClientOptions: { rejectUnauthorized: false }
+        sslClientOptions: { rejectUnauthorized: false },
+        timeout: 30000
     }
 ].forEach(function(testParameters) {
     var sslClientOptions = testParameters.sslClientOptions;
     var suiteName = testParameters.name;
+    var timeout = testParameters.timeout || 4000;
 
     function createClient() {
         return new Client(
@@ -50,6 +52,7 @@ function offsetOutOfRange (topic, consumer) {
 
     describe(suiteName, function () {
         before(function (done) {
+            this.timeout(timeout);
             client = createClient(sslClientOptions);
             producer = new Producer(client);
             offset = new Offset(client);
@@ -60,6 +63,7 @@ function offsetOutOfRange (topic, consumer) {
                     EXISTS_GZIP,
                     EXISTS_SNAPPY
                 ], false, function (err, created) {
+
                     if (err) return done(err);
 
                     function useNewTopics() {
@@ -77,6 +81,8 @@ function offsetOutOfRange (topic, consumer) {
 
         describe('events', function () {
             it('should emit message when get new message', function (done) {
+
+                this.timeout(timeout);
                 var topics = [ { topic: EXISTS_TOPIC_2 } ],
                     options = { autoCommit: false, groupId: '_groupId_1_test' };
                 var consumer = new Consumer(client, topics, options);
@@ -96,6 +102,8 @@ function offsetOutOfRange (topic, consumer) {
             });
 
             it('should decode gzip messages', function (done) {
+
+                this.timeout(timeout);
                 var topics = [ { topic: EXISTS_GZIP } ],
                     options = { autoCommit: false, groupId: '_groupId_gzip_test' };
                 var consumer = new Consumer(createClient(), topics, options);
@@ -114,6 +122,8 @@ function offsetOutOfRange (topic, consumer) {
             });
 
             it('should decode snappy messages', function (done) {
+
+                this.timeout(timeout);
                 var topics = [ { topic: EXISTS_SNAPPY } ],
                     options = { autoCommit: false, groupId: '_groupId_snappy_test' };
                 var consumer = new Consumer(createClient(), topics, options);
