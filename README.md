@@ -600,6 +600,12 @@ var kafka = require('kafka-node'),
 # Todo
 * Compression: gzip & snappy (√)
 
+# Development
+
+To run tests, run `make kafka-instance` in one terminal and then `make test` in another. You will need [docker](https://www.docker.com/) and [fig](http://www.fig.sh/) to be installed.
+
+If you are on a mac, you'll want to override the `KAFKA_TEST_HOST` environment variable to point to your [boot2docker](http://boot2docker.io/) instance. The commands would look like `KAFKA_TEST_HOST=$(boot2docker ip) make kafka-instance` and `KAFKA_TEST_HOST=$(boot2docker ip) make test` instead.
+
 # LICENSE - "MIT"
 Copyright (c) 2015 Sohu.com
 
