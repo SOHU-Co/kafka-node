@@ -21,7 +21,7 @@ Follow the [instructions](http://kafka.apache.org/documentation.html#quickstart)
 * `clientId`: This is a user-supplied identifier for the client application, default `kafka-node-client`
 * `zkOptions`: **Object**, Zookeeper options, see [node-zookeeper-client](https://github.com/alexguan/node-zookeeper-client#client-createclientconnectionstring-options)
 * `noAckBatchOptions`: **Object**, when requireAcks is disabled on Producer side we can define the batch properties, 'noAckBatchSize' in bytes and 'noAckBatchAge' in milliseconds. The default value is `{ noAckBatchSize: null, noAckBatchAge: null }` and it acts as if there was no batch
-* `sslOptions`: **Object**, options to be passed to the tls broker sockets, ex. { rejectUnauthorized: false }
+* `sslOptions`: **Object**, options to be passed to the tls broker sockets, ex. { rejectUnauthorized: false } (Kafka +0.9)
 
 ### close(cb)
 Closes the connection to Zookeeper and the brokers so that the node process can exit gracefully.
