@@ -20,18 +20,20 @@
     "snappy": "^4.0.1"
   },
   "devDependencies": {
+    "eslint": "^2.13.1",
+    "eslint-config-semistandard": "^6.0.2",
     "mocha": "^2.2.1",
+    "optimist": "^0.6.1",
     "should": "^5.2.0",
-    "sinon": "~1.17.2",
-    "optimist": "^0.6.1"
+    "sinon": "~1.17.2"
   },
   "repository": {
     "type": "git",
     "url": "git@github.com:SOHU-Co/kafka-node.git"
   },
   "scripts": {
-    "test": "./run-tests.sh",
+    "test": "./node_modules/eslint/bin/eslint.js . && ./run-tests.sh",
     "startDocker": "./start-docker.sh",
-    "stopDocker" : "docker-compose down"
+    "stopDocker": "docker-compose down"
   }
 }
