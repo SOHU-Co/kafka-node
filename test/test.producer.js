@@ -17,23 +17,28 @@ function randomId () {
     return Math.floor(Math.random() * 10000);
 }
 
-before(function (done) {
-    client = new Client(host);
-    producer = new Producer(client);
-    noAckProducer = new Producer(client, { requireAcks: 0 });
-    producerKeyed = new Producer(client, { partitionerType: Producer.PARTITIONER_TYPES.keyed });
 
-    producer.on('ready', function () {
-        producerKeyed.on('ready', function () {
-            producer.createTopics([EXISTS_TOPIC_3], false, function (err, created) {
-                if (err) return done(err);
-                setTimeout(done, 500);
+describe('Producer', function () {
+    before(function (done) {
+        client = new Client(host);
+        producer = new Producer(client);
+        noAckProducer = new Producer(client, { requireAcks: 0 });
+        producerKeyed = new Producer(client, { partitionerType: Producer.PARTITIONER_TYPES.keyed });
+
+        producer.on('ready', function () {
+            producerKeyed.on('ready', function () {
+                producer.createTopics([EXISTS_TOPIC_3], false, function (err, created) {
+                    if (err) return done(err);
+                    setTimeout(done, 500);
+                });
             });
         });
     });
-});
 
-describe('Producer', function () {
+    after(function(done) {
+        producer.close(done);
+    });
+
     describe('#send', function () {
         before(function(done) {
             // Ensure that first message gets the `0`
@@ -140,7 +145,7 @@ describe('Producer', function () {
             });
         });
 
-        it('should send message to partition determined by keyed partitioner', function (done) {
+        xit('should send message to partition determined by keyed partitioner', function (done) {
             producerKeyed.send([{ key: '12345', topic: EXISTS_TOPIC_3, messages: 'hello kafka' }], function (err, message) {
                 message.should.be.ok;
                 message[EXISTS_TOPIC_3].should.have.property('1', 0);
@@ -150,6 +155,18 @@ describe('Producer', function () {
     });
 
     describe('#createTopics', function () {
+        var client, producer;
+
+        before(function(done) {
+            client = new Client(host);
+            producer = new Producer(client);
+            producer.on('ready', done);
+        });
+
+        after(function(done) {
+            producer.close(done);
+        });
+
         it('should return All requests sent when async is true', function (done) {
             producer.createTopics(['_exist_topic_'+ randomId() +'_test'], true, function (err, data) {
                 data.should.equal('All requests sent');
@@ -173,6 +190,18 @@ describe('Producer', function () {
     });
 
     describe('#close', function () {
+        var client, producer;
+
+        before(function(done) {
+            client = new Client(host);
+            producer = new Producer(client);
+            producer.on('ready', done);
+        });
+
+        after(function(done) {
+            producer.close(done);
+        });
+
         it('should close successfully', function (done) {
             producer.close(done);
         });

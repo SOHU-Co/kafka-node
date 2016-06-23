@@ -30,6 +30,8 @@
     "url": "git@github.com:SOHU-Co/kafka-node.git"
   },
   "scripts": {
-    "test": "make test"
+    "test": "./run-tests.sh",
+    "startDocker": "./start-docker.sh",
+    "stopDocker" : "docker-compose down"
   }
 }

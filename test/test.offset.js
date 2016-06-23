@@ -9,19 +9,23 @@ var client, producer, offset;
 
 var host = process.env['KAFKA_TEST_HOST'] || '';
 
-before(function (done) {
-    client = new Client(host);
-    producer = new Producer(client);
-    producer.on('ready', function () {
-        producer.createTopics(['_exist_topic_3_test'], false, function (err, created) {
-           done(err);
+describe('Offset', function () {
+    before(function (done) {
+        client = new Client(host);
+        producer = new Producer(client);
+        producer.on('ready', function () {
+            producer.createTopics(['_exist_topic_3_test'], false, function (err, created) {
+               done(err);
+            });
         });
+
+        offset = new Offset(client);
     });
 
-    offset = new Offset(client);
-});
+    after(function(done) {
+        producer.close(done)
+    });
 
-describe('Offset', function () {
     describe('#fetch', function () {
         it('should return offset of the topics', function (done) {
             var topic = '_exist_topic_3_test',
@@ -84,7 +88,7 @@ describe('Offset', function () {
 
     describe('#fetchLatestOffsets', function() {
         it('should get latest kafka offsets for all topics passed in', function(done) {
-            var topic = 'exist_topic_3_test',
+            var topic = '_exist_topic_3_test',
                 topics = [topic],
                 partition = 0;
             offset.fetch([{ topic: topic, time: -1}], function(err, results) {
