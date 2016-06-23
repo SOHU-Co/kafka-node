@@ -605,7 +605,9 @@ var kafka = require('kafka-node'),
 
 ### Install Docker
 
-On the Mac
+On the Mac you can either install `docker-machine` or [Docker for Mac](https://docs.docker.com/engine/installation/mac/).
+
+Docker machine:
 
 ```bash
 brew install docker docker-machine docker-compose
@@ -615,7 +617,7 @@ docker-machine create --driver virtualbox dev
 ### Start Docker and Run Tests
 
 ```bash
-./run-tests.sh
+npm test
 ```
 
 ### Stop Docker
