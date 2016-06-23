@@ -3,7 +3,8 @@
 var sinon = require('sinon'),
     kafka = require('..'),
     Producer = kafka.Producer,
-    Client = kafka.Client;
+    Client = kafka.Client,
+    async = require('async');
 
 var client, producer, batchClient, batchProducer, noAckProducer;
 
@@ -13,44 +14,55 @@ var BATCH_SIZE = 500;
 var BATCH_AGE = 300;
 
 var host = process.env['KAFKA_TEST_HOST'] || '';
+var broker = null
 
-before(function (done) {
-    client = new Client(host);
-    batchClient = new Client(host, null, null, { noAckBatchSize: BATCH_SIZE, noAckBatchAge: BATCH_AGE });
-    producer = new Producer(client);
-    batchProducer = new Producer(batchClient);
-    producer.on('ready', function () {
-        producer.createTopics([EXISTS_TOPIC_4], false, function (err, created) {
-            if(err) return done(err);
-            setTimeout(done, 500);
-        });
-    });    
-});
+// Intermittently fails
 
 describe('No Ack Producer', function () {
-
     before(function(done) {
-        // Ensure that first message gets the `0`
-        producer.send([{ topic: EXISTS_TOPIC_4, messages: '_initial 1' }], function (err, message) {
-            message.should.be.ok;
-            message[EXISTS_TOPIC_4].should.have.property('0', 0);
-            batchProducer.send([{ topic: EXISTS_TOPIC_4, messages: '_initial 2' }], function (err, message) {
-                message.should.be.ok;
-                message[EXISTS_TOPIC_4].should.have.property('0', 1);
-                done(err);
-            });
-        });
+        async.series({
+            setupClient: function(callback) {
+                client = new Client(host);
+                batchClient = new Client(host, null, null, { noAckBatchSize: BATCH_SIZE, noAckBatchAge: BATCH_AGE });
+                producer = new Producer(client);
+                batchProducer = new Producer(batchClient);
+                producer.on('ready', function () {
+                    producer.createTopics([EXISTS_TOPIC_4], false, function (err, created) {
+                        if(err) return callback(err);
+                        setTimeout(callback, 500);
+                    });
+                    broker = Object.keys(client.brokers)[0]
+                });
+            },
+            producerSend: function(callback) {
+                producer.send([{ topic: EXISTS_TOPIC_4, messages: '_initial 1' }], function (err, message) {
+                    message.should.be.ok;
+                    message[EXISTS_TOPIC_4].should.have.property('0', 0);
+                    batchProducer.send([{ topic: EXISTS_TOPIC_4, messages: '_initial 2' }], function (err, message) {
+                        message.should.be.ok;
+                        message[EXISTS_TOPIC_4].should.have.property('0', 1);
+                        callback(err);
+                    });
+                });
+                // Ensure that first message gets the `0`
+            }
+        }, done);
     });
 
-    describe('with no batch client', function () {
+    after(function(done) {
+        async.each([producer, batchProducer], function(producer, callback) {
+            producer.close(callback)
+        }, done);
+    })
 
+    describe('with no batch client', function () {
         before(function(done) {
             noAckProducer = new Producer(client, { requireAcks: 0 });
             done();
         });
 
         beforeEach(function() {
-            this.sendSpy = sinon.spy(client.brokers[host + ":9092"].socket, 'write');
+            this.sendSpy = sinon.spy(client.brokers[broker].socket, 'write');
         });
 
         afterEach(function() {
@@ -72,14 +84,13 @@ describe('No Ack Producer', function () {
     });
 
     describe('with batch client', function () {
-
         before(function(done) {
             noAckProducer = new Producer(batchClient, { requireAcks: 0 });
             done();
         });
 
         beforeEach(function() {
-            this.sendSpy = sinon.spy(batchClient.brokers[host + ":9092"].socket, 'write');
+            this.sendSpy = sinon.spy(batchClient.brokers[broker].socket, 'write');
             this.clock = sinon.useFakeTimers();
         });
 
@@ -108,7 +119,7 @@ describe('No Ack Producer', function () {
         it('should send message once the batch max size is reached', function (done) {
             var self = this;
             var foo = "";
-            for (var i = 0; i < BATCH_SIZE; i++) foo += "X" 
+            for (var i = 0; i < BATCH_SIZE; i++) foo += "X"
             foo += "end of message"
             noAckProducer.send([{
                 topic: EXISTS_TOPIC_4, messages: 'hello kafka with batch'
@@ -128,7 +139,5 @@ describe('No Ack Producer', function () {
                 });
             });
         });
-
     });
-
 });

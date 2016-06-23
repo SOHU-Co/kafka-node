@@ -5,6 +5,7 @@ var libPath = process.env['KAFKA_COV'] ? '../lib-cov/' : '../lib/',
     Producer = require(libPath + 'producer'),
     Offset = require(libPath + 'offset'),
     Client = require(libPath + 'client'),
+    uuid = require('node-uuid'),
     TopicsNotExistError = require(libPath + 'errors').TopicsNotExistError;
 
 var client, consumer, producer, offset;
@@ -29,31 +30,34 @@ function offsetOutOfRange (topic, consumer) {
     });
 }
 
+
 [
-    { name: 'PLAINTEXT Consumer' },
     {
-        name: 'SSL Consumer',
-        sslClientOptions: { rejectUnauthorized: false },
-        timeout: 30000
+        name: "PLAINTEXT Consumer"
+    },
+    {
+        name: "SSL Consumer",
+        sslOptions: {
+            rejectUnauthorized: false
+        },
+        suiteTimeout: 30000
     }
-].forEach(function(testParameters) {
-    var sslClientOptions = testParameters.sslClientOptions;
+].forEach(function(testParameters){
+    var sslOptions = testParameters.sslOptions || undefined;
+    var suiteTimeout = testParameters.suiteTimeout || null;
     var suiteName = testParameters.name;
-    var timeout = testParameters.timeout || 4000;
+
 
     function createClient() {
-        return new Client(
-            host,
-            'kafka-node-client-' + Date.now(),
-            undefined, undefined,
-            testParameters.sslClientOptions
-        );
+        var clientId = 'kafka-node-client-' + uuid.v4();
+        return new Client(host, clientId, undefined, undefined, sslOptions);
     }
 
     describe(suiteName, function () {
         before(function (done) {
-            this.timeout(timeout);
-            client = createClient(sslClientOptions);
+            if(suiteTimeout) { this.timeout(suiteTimeout); }
+
+            client = createClient();
             producer = new Producer(client);
             offset = new Offset(client);
             producer.on('ready', function () {
@@ -63,7 +67,6 @@ function offsetOutOfRange (topic, consumer) {
                     EXISTS_GZIP,
                     EXISTS_SNAPPY
                 ], false, function (err, created) {
-
                     if (err) return done(err);
 
                     function useNewTopics() {
@@ -71,7 +74,7 @@ function offsetOutOfRange (topic, consumer) {
                             { topic: EXISTS_TOPIC_2, messages: 'hello kafka' },
                             { topic: EXISTS_GZIP, messages: 'hello gzip', attributes: 1 },
                             { topic: EXISTS_SNAPPY, messages: SNAPPY_MESSAGE, attributes: 2 }
-                        ], function() { done(); });
+                        ], done);
                     }
                     // Ensure leader selection happened
                     setTimeout(useNewTopics, 1000);
@@ -79,10 +82,14 @@ function offsetOutOfRange (topic, consumer) {
             });
         });
 
+        after(function(done) {
+            client.close(done);
+        });
+
         describe('events', function () {
             it('should emit message when get new message', function (done) {
 
-                this.timeout(timeout);
+                if(suiteTimeout) { this.timeout(suiteTimeout); }
                 var topics = [ { topic: EXISTS_TOPIC_2 } ],
                     options = { autoCommit: false, groupId: '_groupId_1_test' };
                 var consumer = new Consumer(client, topics, options);
@@ -103,10 +110,11 @@ function offsetOutOfRange (topic, consumer) {
 
             it('should decode gzip messages', function (done) {
 
-                this.timeout(timeout);
+                if(suiteTimeout) { this.timeout(suiteTimeout); }
                 var topics = [ { topic: EXISTS_GZIP } ],
-                    options = { autoCommit: false, groupId: '_groupId_gzip_test' };
-                var consumer = new Consumer(createClient(), topics, options);
+                    options = { autoCommit: false, groupId: '_groupId_gzip_test' },
+                    client = createClient();
+                var consumer = new Consumer(client, topics, options);
                 var count = 0;
                 consumer.on('error', noop);
                 consumer.on('offsetOutOfRange', function (topic) {
@@ -116,17 +124,22 @@ function offsetOutOfRange (topic, consumer) {
                     message.topic.should.equal(EXISTS_GZIP);
                     message.value.should.equal('hello gzip');
                     offset.commit('_groupId_gzip_test', [message], function (err) {
-                        if (count++ === 0) done(err);
+                        if (count++ === 0) {
+                            consumer.close(function(){
+                                done(err);
+                            })
+                        }
                     });
                 });
             });
 
             it('should decode snappy messages', function (done) {
 
-                this.timeout(timeout);
+                if(suiteTimeout) { this.timeout(suiteTimeout); }
                 var topics = [ { topic: EXISTS_SNAPPY } ],
-                    options = { autoCommit: false, groupId: '_groupId_snappy_test' };
-                var consumer = new Consumer(createClient(), topics, options);
+                    options = { autoCommit: false, groupId: '_groupId_snappy_test' },
+                    client = createClient();
+                var consumer = new Consumer(client, topics, options);
                 var count = 0;
                 consumer.on('error', noop);
                 consumer.on('offsetOutOfRange', function (topic) {
@@ -136,7 +149,11 @@ function offsetOutOfRange (topic, consumer) {
                     message.topic.should.equal(EXISTS_SNAPPY);
                     message.value.should.equal(SNAPPY_MESSAGE);
                     offset.commit('_groupId_snappy_test', [message], function (err) {
-                        if (count++ === 0) done(err);
+                        if (count++ === 0) {
+                            consumer.close(function () {
+                                done(err);
+                            });
+                        }
                     });
                 });
             });
@@ -157,13 +174,17 @@ function offsetOutOfRange (topic, consumer) {
                     options = { fromOffset: true, autoCommit: false },
                     count = 0;
 
-                var client = new Client(host);
+                var client = createClient();
                 var consumer = new Consumer(client, topics, options);
                 consumer.on('offsetOutOfRange', function (topic) {
                     topic.topic.should.equal(EXISTS_TOPIC_1);
                     topic.partition.should.equal(0);
                     topic.message.should.equal('OffsetOutOfRange');
-                    if (count++ === 0) done();
+                    if (count++ === 0) {
+                        consumer.close(function() {
+                            done();
+                        });
+                    }
                 });
                 consumer.on('error', noop);
             });
@@ -358,7 +379,7 @@ function offsetOutOfRange (topic, consumer) {
             });
         });
 
-        describe('#pauseTopics|resumeTopics', function () {
+        xdescribe('#pauseTopics|resumeTopics', function () {
             it('should pause or resume the topics', function (done) {
                 var client = new Client(host);
                 var topics = [
