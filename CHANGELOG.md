@@ -1,5 +1,12 @@
 # kafka-node CHANGELOG
 
+## 2016-06-27, Version 0.4.0
+- Update test to run against docker [#387](https://github.com/SOHU-Co/kafka-node/pull/387)
+- Fix missing npm license field warning [#386](https://github.com/SOHU-Co/kafka-node/pull/386)
+- Recreate broker sockets to work around nodejs socket issue #4417 [#385](https://github.com/SOHU-Co/kafka-node/pull/385)
+- Fixes [#319](https://github.com/SOHU-Co/kafka-node/issues/319) UnknownTopicOrPartition error when reassigning topic [#384](https://github.com/SOHU-Co/kafka-node/pull/384)
+- Add **offset#getLatestOffsets** function to get all the latest offsets from a group of topics populating those topics partitions [#372](https://github.com/SOHU-Co/kafka-node/pull/372)
+
 ## 2016-05-27, Version 0.3.3
 - Fix type error while producing messages [#360](https://github.com/SOHU-Co/kafka-node/pull/360)
 - Update README [#307](https://github.com/SOHU-Co/kafka-node/pull/307) and [#352](https://github.com/SOHU-Co/kafka-node/pull/352)
