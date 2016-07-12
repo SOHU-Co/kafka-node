@@ -16,11 +16,12 @@ describe('Client', function () {
 
     it('should contain SSL options', function () {
       should.exist(client.brokerProfiles);
-      should(client.brokerProfiles).have.property('127.0.0.1:9092');
-      var profile = client.brokerProfiles['127.0.0.1:9092'];
-      should(profile).have.property('host').and.be.exactly('127.0.0.1');
+      var brokerKey = host + ':9092';
+      should(client.brokerProfiles).have.property(brokerKey);
+      var profile = client.brokerProfiles[brokerKey];
+      should(profile).have.property('host').and.be.exactly(host);
       should(profile).have.property('port').and.be.exactly(9092);
-      should(profile).have.property('sslHost').and.be.exactly('127.0.0.1');
+      should(profile).have.property('sslHost').and.be.exactly(host);
       should(profile).have.property('sslPort').and.be.exactly(9093);
     });
   });
