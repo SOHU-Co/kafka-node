@@ -57,6 +57,32 @@ function randomId () {
       producer.close(done);
     });
 
+    describe(suiteName + ' socket recovery', function () {
+      var emptyFn = function () {};
+      var recoveryClient;
+      var recoveryProducer;
+
+      before(function (done) {
+        var clientId = 'kafka-node-client-' + uuid.v4();
+        recoveryClient = new Client(host, clientId, undefined, undefined, sslOptions);
+        recoveryProducer = new Producer(recoveryClient);
+        recoveryProducer.on('ready', done);
+        // make sure uncaught errors do not fail the test
+        recoveryProducer.on('error', emptyFn);
+      });
+
+      after(function (done) {
+        recoveryProducer.close(done);
+      });
+
+      it('should recover from a socket issue', function (done) {
+        var broker = recoveryClient.brokers[Object.keys(recoveryClient.brokers)[0]];
+        recoveryClient.on('connect', done);
+        broker.socket.emit('error', new Error('Mock error'));
+        broker.socket.end();
+      });
+    });
+
     describe('#send', function () {
       before(function (done) {
         // Ensure that first message gets the `0`
