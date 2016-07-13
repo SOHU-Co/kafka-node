@@ -17,7 +17,7 @@
     "retry": "~0.6.1"
   },
   "optionalDependencies": {
-    "snappy": "^4.0.1"
+    "snappy": "^5.0.5"
   },
   "devDependencies": {
     "eslint": "^2.13.1",
