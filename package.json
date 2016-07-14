@@ -1,7 +1,7 @@
 {
   "name": "kafka-node",
   "description": "node client for Apache kafka, only support kafka 0.8 and above",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "main": "kafka.js",
   "license": "MIT",
   "dependencies": {
@@ -20,6 +20,7 @@
     "snappy": "^5.0.5"
   },
   "devDependencies": {
+    "doctoc": "^1.2.0",
     "eslint": "^2.13.1",
     "eslint-config-semistandard": "^6.0.2",
     "mocha": "^2.2.1",
@@ -34,6 +35,7 @@
   "scripts": {
     "test": "./node_modules/eslint/bin/eslint.js . && ./run-tests.sh",
     "startDocker": "./start-docker.sh",
-    "stopDocker": "docker-compose down"
+    "stopDocker": "docker-compose down",
+    "updateToc": "./node_modules/doctoc/doctoc.js README.md --maxlevel 2 --notitle"
   }
 }

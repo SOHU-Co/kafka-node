@@ -1,5 +1,10 @@
 # kafka-node CHANGELOG
 
+## 2016-07-14, Version 0.5.0
+- Fix minimatch vulnerability by upgrading snappy to v5.0.5 [#400](https://github.com/SOHU-Co/kafka-node/pull/400)
+- Added ESLint to codebase [#392](https://github.com/SOHU-Co/kafka-node/pull/392)
+- Added ability to make SSL connections to brokers [#383](https://github.com/SOHU-Co/kafka-node/pull/383) (Kafka 0.9+ only)
+
 ## 2016-06-27, Version 0.4.0
 - Update test to run against docker [#387](https://github.com/SOHU-Co/kafka-node/pull/387)
 - Fix missing npm license field warning [#386](https://github.com/SOHU-Co/kafka-node/pull/386)

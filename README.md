@@ -6,10 +6,31 @@ Kafka-node
 
 Kafka-node is a Node.js client with Zookeeper integration for Apache Kafka 0.8.1 and later.
 
-The Zookeeper integration does the following jobs:
+# Table of Contents
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
-* Loads broker metadata from Zookeeper before we can communicate with the Kafka server
-* Watches broker state, if broker changes, the client will refresh broker and topic metadata stored in the client
+
+- [Features](#features)
+- [Install Kafka](#install-kafka)
+- [API](#api)
+  - [Client](#client)
+  - [Producer](#producer)
+  - [HighLevelProducer](#highlevelproducer)
+  - [Consumer](#consumer)
+  - [HighLevelConsumer](#highlevelconsumer)
+  - [Offset](#offset)
+- [Todo](#todo)
+- [Running Tests](#running-tests)
+- [LICENSE - "MIT"](#license---mit)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+# Features
+* Consumer and High Level Consumer
+* Producer and High Level Producer
+* Manage topic Offsets
+* SSL connections to brokers (Kafka 0.9+)
 
 # Install Kafka
 Follow the [instructions](http://kafka.apache.org/documentation.html#quickstart) on the Kafka wiki to build Kafka 0.8 and get a test broker up and running.
