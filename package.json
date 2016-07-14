@@ -1,6 +1,7 @@
 {
   "name": "kafka-node",
   "description": "node client for Apache kafka, only support kafka 0.8 and above",
+  "keywords": ["kafka", "zookeeper", "consumer", "producer", "broker"],
   "version": "0.5.0",
   "main": "kafka.js",
   "license": "MIT",
