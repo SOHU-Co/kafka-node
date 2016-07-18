@@ -1,78 +1,43 @@
 'use strict';
-var util = require('util');
-var EventEmitter = require('events');
+
 var sinon = require('sinon');
-
-var libPath = '../lib/';
-
-var HighLevelConsumer = require(libPath + 'highLevelConsumer');
-
-function FakeZookeeper () {
-  EventEmitter.call(this);
-
-  this.checkPartitionOwnership = function (id, groupId, topic, partition, cb) {
-    setImmediate(cb);
-  };
-  this.deletePartitionOwnership = function (groupId, topic, partition, cb) {
-    setImmediate(cb);
-  };
-  this.addPartitionOwnership = function (id, groupId, topic, partition, cb) {
-    setImmediate(cb);
-  };
-  this.registerConsumer = function (groupId, id, payloads, cb) {
-    setImmediate(cb);
-  };
-  this.listConsumers = function (groupId) {};
-  this.getConsumersPerTopic = function (groupId, cb) {
-    var consumerTopicMap = {};
-    consumerTopicMap[groupId] = [ 'fake-topic' ];
-    var topicConsumerMap = { 'fake-topic': [ groupId ] };
-    var topicPartitionMap = { 'fake-topic': [ '0', '1', '2' ] };
-    var map = {
-      consumerTopicMap: consumerTopicMap,
-      topicConsumerMap: topicConsumerMap,
-      topicPartitionMap: topicPartitionMap
-    };
-
-    setImmediate(cb, null, map);
-  };
-}
-util.inherits(FakeZookeeper, EventEmitter);
-
-function FakeClient () {
-  EventEmitter.call(this);
-
-  this.zk = new FakeZookeeper();
-
-  this.topicExists = function (topics, cb) {
-    setImmediate(cb);
-  };
-  this.refreshMetadata = function (topicNames, cb) {
-    setImmediate(cb);
-  };
-  this.sendOffsetCommitRequest = function (groupId, commits, cb) {
-    setImmediate(cb);
-  };
-  this.sendFetchRequest = function (consumer, payloads, fetchMaxWaitMs, fetchMinBytes, maxTickMessages) {};
-  this.sendOffsetFetchRequest = function (groupId, payloads, cb) {
-    setImmediate(cb);
-  };
-  this.sendOffsetRequest = function (payloads, cb) {
-    setImmediate(cb);
-  };
-  this.addTopics = function (topics, cb) {
-    setImmediate(cb);
-  };
-  this.removeTopicMetadata = function (topics, cb) {
-    setImmediate(cb);
-  };
-  this.close = function (cb) {
-    setImmediate(cb);
-  };
-}
-util.inherits(FakeClient, EventEmitter);
+var HighLevelConsumer = require('../lib/highLevelConsumer');
+var FakeClient = require('./mocks/mockClient');
+var should = require('should');
+var InvalidConfigError = require('../lib/errors/InvalidConfigError');
 
 describe('HighLevelConsumer', function () {
+  describe('validate groupId', function () {
+    function validateThrowsInvalidConfigError (groupId) {
+      should.throws(function () {
+        var client = new FakeClient();
+        // eslint-disable-next-line no-new
+        new HighLevelConsumer(client, [ { topic: 'some_topic' } ], {groupId: groupId});
+      }, InvalidConfigError);
+    }
+
+    function validateDoesNotThrowInvalidConfigError (groupId) {
+      should.doesNotThrow(function () {
+        var client = new FakeClient();
+        // eslint-disable-next-line no-new
+        new HighLevelConsumer(client, [ { topic: 'some_topic' } ], {groupId: groupId});
+      });
+    }
+
+    it('should throws an error on invalid group IDs', function () {
+      validateThrowsInvalidConfigError('myGroupId:12345');
+      validateThrowsInvalidConfigError('myGroupId,12345');
+      validateThrowsInvalidConfigError('myGroupId"12345"');
+      validateThrowsInvalidConfigError('myGroupId?12345');
+    });
+
+    it('should not throw on valid group IDs', function () {
+      validateDoesNotThrowInvalidConfigError('myGroupId.12345');
+      validateDoesNotThrowInvalidConfigError('something_12345');
+      validateDoesNotThrowInvalidConfigError('myGroupId-12345');
+    });
+  });
+
   describe('rebalance', function () {
     var client,
       highLevelConsumer,
