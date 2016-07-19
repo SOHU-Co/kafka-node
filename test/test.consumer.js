@@ -325,7 +325,6 @@ function offsetOutOfRange (topic, consumer) {
           var defaults = {
             groupId: 'kafka-node-group',
             autoCommit: true,
-            autoCommitMsgCount: 100,
             autoCommitIntervalMs: 5000,
             encoding: 'utf8',
             fetchMaxWaitMs: 100,
