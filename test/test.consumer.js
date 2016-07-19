@@ -5,8 +5,11 @@ var Consumer = require(libPath + 'consumer');
 var Producer = require(libPath + 'producer');
 var Offset = require(libPath + 'offset');
 var Client = require(libPath + 'client');
+var should = require('should');
 var uuid = require('node-uuid');
 var TopicsNotExistError = require(libPath + 'errors').TopicsNotExistError;
+var FakeClient = require('./mocks/mockClient');
+var InvalidConfigError = require('../lib/errors/InvalidConfigError');
 
 var client, producer, offset;
 
@@ -21,6 +24,37 @@ var SNAPPY_MESSAGE = new Array(20).join('snappy');
 
 var host = process.env['KAFKA_TEST_HOST'] || '';
 function noop () { console.log(arguments); }
+
+describe('validate groupId', function () {
+  function validateThrowsInvalidConfigError (groupId) {
+    should.throws(function () {
+      var client = new FakeClient(host);
+      // eslint-disable-next-line no-new
+      new Consumer(client, [ { topic: EXISTS_TOPIC_2 } ], {groupId: groupId});
+    }, InvalidConfigError);
+  }
+
+  function validateDoesNotThrowInvalidConfigError (groupId) {
+    should.doesNotThrow(function () {
+      var client = new FakeClient(host);
+      // eslint-disable-next-line no-new
+      new Consumer(client, [ { topic: EXISTS_TOPIC_2 } ], {groupId: groupId});
+    });
+  }
+
+  it('should throws an error on invalid group IDs', function () {
+    validateThrowsInvalidConfigError('myGroupId:12345');
+    validateThrowsInvalidConfigError('myGroupId,12345');
+    validateThrowsInvalidConfigError('myGroupId"12345"');
+    validateThrowsInvalidConfigError('myGroupId?12345');
+  });
+
+  it('should not throw on valid group IDs', function () {
+    validateDoesNotThrowInvalidConfigError('myGroupId.12345');
+    validateDoesNotThrowInvalidConfigError('something_12345');
+    validateDoesNotThrowInvalidConfigError('myGroupId-12345');
+  });
+});
 
 function offsetOutOfRange (topic, consumer) {
   topic.maxNum = 2;
