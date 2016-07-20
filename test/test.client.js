@@ -39,20 +39,26 @@ describe('Client', function () {
     beforeEach(function (done) {
       var clientId = 'kafka-node-client-' + uuid.v4();
       client = new Client(host, clientId, undefined, undefined, {rejectUnauthorized: false});
-      client.on('ready', done);
+      client.once('connect', done);
     });
 
     describe('#reconnectBroker', function () {
       var emptyFn = function () {};
 
-      it('should cache brokers correctly for SSL after a reconnect', function (done) {
+      it('should cache brokers correctly for SSL after reconnects', function (done) {
         client.on('error', emptyFn);
         var broker = client.brokers[Object.keys(client.brokers)[0]];
         broker.socket.emit('error', new Error('Mock error'));
         broker.socket.end();
-        client.on('connect', function () {
+        client.once('reconnect', function () {
           Object.keys(client.brokers).should.have.lengthOf(1);
-          done();
+          broker = client.brokers[Object.keys(client.brokers)[0]];
+          broker.socket.emit('error', new Error('Mock error'));
+          broker.socket.end();
+          client.once('reconnect', function() {
+            Object.keys(client.brokers).should.have.lengthOf(1);
+            done();
+          });
         });
       });
     });
