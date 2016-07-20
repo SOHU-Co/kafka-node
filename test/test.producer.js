@@ -77,7 +77,7 @@ function randomId () {
 
       it('should recover from a socket issue', function (done) {
         var broker = recoveryClient.brokers[Object.keys(recoveryClient.brokers)[0]];
-        recoveryClient.on('connect', done);
+        recoveryClient.on('reconnect', done);
         broker.socket.emit('error', new Error('Mock error'));
         broker.socket.end();
       });
