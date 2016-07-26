@@ -27,6 +27,7 @@
     "eslint-config-semistandard": "^6.0.2",
     "mocha": "^2.2.1",
     "optimist": "^0.6.1",
+    "proxyquire": "^1.7.10",
     "should": "^6.0.0",
     "sinon": "^1.17.2"
   },
