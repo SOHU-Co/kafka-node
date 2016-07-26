@@ -3,7 +3,7 @@
   "description": "node client for Apache kafka, only support kafka 0.8 and above",
   "keywords": ["kafka", "zookeeper", "consumer", "producer", "broker"],
   "bugs": "https://github.com/SOHU-co/kafka-node/issues",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "main": "kafka.js",
   "license": "MIT",
   "dependencies": {
