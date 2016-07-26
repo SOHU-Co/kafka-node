@@ -20,7 +20,12 @@ Kafka-node is a Node.js client with Zookeeper integration for Apache Kafka 0.8.1
   - [Consumer](#consumer)
   - [HighLevelConsumer](#highlevelconsumer)
   - [Offset](#offset)
-- [Todo](#todo)
+  - [fetchLatestOffsets(topics, cb)](#fetchlatestoffsetstopics-cb)
+- [Troubleshooting / FAQ](#troubleshooting--faq)
+  - [HighLevelProducer with KeyedPartitioner errors on first send](#highlevelproducer-with-keyedpartitioner-errors-on-first-send)
+  - [How do I debug an issue?](#how-do-i-debug-an-issue)
+  - [For a new consumer how do I start consuming from the latest message in a partition?](#for-a-new-consumer-how-do-i-start-consuming-from-the-latest-message-in-a-partition)
+  - [FailedToRebalanceConsumerError: Exception: NODE_EXISTS[-110]](#failedtorebalanceconsumererror-exception-node_exists-110)
 - [Running Tests](#running-tests)
 - [LICENSE - "MIT"](#license---mit)
 
@@ -619,9 +624,64 @@ var kafka = require('kafka-node'),
     });
 ```
 
-# Todo
-* Compression: gzip & snappy (√)
+## fetchLatestOffsets(topics, cb)
 
+Example
+
+```js
+	var partition = 0;
+	var topic = 't';
+	offset.fetchLatestOffsets([topic], function (error, offsets) {
+		if (error)
+			return handleError(error);
+		console.log(offsets[topic][partition]);
+	});
+```
+
+
+# Troubleshooting / FAQ
+
+## HighLevelProducer with KeyedPartitioner errors on first send
+
+Error:
+
+```
+BrokerNotAvailableError: Could not find the leader
+```
+
+Call `client.refreshMetadata()` before sending the first message. Reference issue [#354](https://github.com/SOHU-Co/kafka-node/issues/354)
+
+
+
+## How do I debug an issue?
+This module uses the [debug module](https://github.com/visionmedia/debug) so you can just run below before starting your app.
+
+```bash
+export DEBUG=kafka-node:*
+```
+
+
+## For a new consumer how do I start consuming from the latest message in a partition?
+
+1. Call `offset.fetchLatestOffsets` to get fetch the latest offset
+2. Consume from returned offset
+
+Reference issue [#342](https://github.com/SOHU-Co/kafka-node/issues/342)
+
+
+## FailedToRebalanceConsumerError: Exception: NODE_EXISTS[-110]
+
+This error can occur when the process is killed and restarted quickly. The ephemeral nodes are not relinquished in zookeeper when `SIGINT` is sent and instead relinquished when zookeeper session timeout is reached. The timeout can be adjusted using the `zoo.cfg maxSessionTimeout` setting however it is recommended that a handler is added for this case as demostrated below:
+
+```js
+process.on('SIGINT', function () {
+    highLevelConsumer.close(true, function () {
+        process.exit();
+    });
+});
+```
+
+Reference issue [#90](https://github.com/SOHU-Co/kafka-node/issues/90)
 
 # Running Tests
 
