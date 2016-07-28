@@ -9,17 +9,16 @@ var topic = argv.topic || 'topic1';
 
 var client = new Client('localhost:2181');
 var topics = [
-        {topic: topic, partition: 0}
-    ],
-    options = { autoCommit: false, fetchMaxWaitMs: 1000, fetchMaxBytes: 500*1024*1024, encoding: 'buffer' };
+    { topic: topic, partition: 1 },
+    { topic: topic, partition: 0 }
+];
+var options = { autoCommit: false, fetchMaxWaitMs: 1000, fetchMaxBytes: 1024 * 1024 };
 
 var consumer = new Consumer(client, topics, options);
 var offset = new Offset(client);
 
-var start = Date.now();
 consumer.on('message', function (message) {
-    console.log("message - offset:", message.offset, "| length:", message.value.length);
-    console.log("receive msg after (ms):", Date.now() - start);
+    console.log(message);
 });
 
 consumer.on('error', function (err) {
@@ -32,7 +31,10 @@ consumer.on('error', function (err) {
 consumer.on('offsetOutOfRange', function (topic) {
     topic.maxNum = 2;
     offset.fetch([topic], function (err, offsets) {
-        var min = Math.min.apply(null, offsets[topic.topic][topic.partition]);
+        if (err) {
+            return console.error(err);
+        }
+        var min = Math.min(offsets[topic.topic][topic.partition]);
         consumer.setOffset(topic.topic, topic.partition, min);
     });
 });

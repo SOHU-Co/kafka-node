@@ -6,21 +6,48 @@ Kafka-node
 
 Kafka-node is a Node.js client with Zookeeper integration for Apache Kafka 0.8.1 and later.
 
-The Zookeeper integration does the following jobs:
+# Table of Contents
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
-* Loads broker metadata from Zookeeper before we can communicate with the Kafka server
-* Watches broker state, if broker changes, the client will refresh broker and topic metadata stored in the client
+
+- [Features](#features)
+- [Install Kafka](#install-kafka)
+- [API](#api)
+  - [Client](#client)
+  - [Producer](#producer)
+  - [HighLevelProducer](#highlevelproducer)
+  - [Consumer](#consumer)
+  - [HighLevelConsumer](#highlevelconsumer)
+  - [Offset](#offset)
+  - [fetchLatestOffsets(topics, cb)](#fetchlatestoffsetstopics-cb)
+- [Troubleshooting / FAQ](#troubleshooting--faq)
+  - [HighLevelProducer with KeyedPartitioner errors on first send](#highlevelproducer-with-keyedpartitioner-errors-on-first-send)
+  - [How do I debug an issue?](#how-do-i-debug-an-issue)
+  - [For a new consumer how do I start consuming from the latest message in a partition?](#for-a-new-consumer-how-do-i-start-consuming-from-the-latest-message-in-a-partition)
+  - [FailedToRebalanceConsumerError: Exception: NODE_EXISTS[-110]](#failedtorebalanceconsumererror-exception-node_exists-110)
+- [Running Tests](#running-tests)
+- [LICENSE - "MIT"](#license---mit)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+# Features
+* Consumer and High Level Consumer
+* Producer and High Level Producer
+* Manage topic Offsets
+* SSL connections to brokers (Kafka 0.9+)
 
 # Install Kafka
 Follow the [instructions](http://kafka.apache.org/documentation.html#quickstart) on the Kafka wiki to build Kafka 0.8 and get a test broker up and running.
 
 # API
 ## Client
-### Client(connectionString, clientId, [zkOptions], [noAckBatchOptions])
+### Client(connectionString, clientId, [zkOptions], [noAckBatchOptions], [sslOptions])
 * `connectionString`: Zookeeper connection string, default `localhost:2181/`
 * `clientId`: This is a user-supplied identifier for the client application, default `kafka-node-client`
 * `zkOptions`: **Object**, Zookeeper options, see [node-zookeeper-client](https://github.com/alexguan/node-zookeeper-client#client-createclientconnectionstring-options)
 * `noAckBatchOptions`: **Object**, when requireAcks is disabled on Producer side we can define the batch properties, 'noAckBatchSize' in bytes and 'noAckBatchAge' in milliseconds. The default value is `{ noAckBatchSize: null, noAckBatchAge: null }` and it acts as if there was no batch
+* `sslOptions`: **Object**, options to be passed to the tls broker sockets, ex. { rejectUnauthorized: false } (Kafka +0.9)
 
 ### close(cb)
 Closes the connection to Zookeeper and the brokers so that the node process can exit gracefully.
@@ -597,8 +624,90 @@ var kafka = require('kafka-node'),
     });
 ```
 
-# Todo
-* Compression: gzip & snappy (√)
+## fetchLatestOffsets(topics, cb)
+
+Example
+
+```js
+	var partition = 0;
+	var topic = 't';
+	offset.fetchLatestOffsets([topic], function (error, offsets) {
+		if (error)
+			return handleError(error);
+		console.log(offsets[topic][partition]);
+	});
+```
+
+
+# Troubleshooting / FAQ
+
+## HighLevelProducer with KeyedPartitioner errors on first send
+
+Error:
+
+```
+BrokerNotAvailableError: Could not find the leader
+```
+
+Call `client.refreshMetadata()` before sending the first message. Reference issue [#354](https://github.com/SOHU-Co/kafka-node/issues/354)
+
+
+
+## How do I debug an issue?
+This module uses the [debug module](https://github.com/visionmedia/debug) so you can just run below before starting your app.
+
+```bash
+export DEBUG=kafka-node:*
+```
+
+
+## For a new consumer how do I start consuming from the latest message in a partition?
+
+1. Call `offset.fetchLatestOffsets` to get fetch the latest offset
+2. Consume from returned offset
+
+Reference issue [#342](https://github.com/SOHU-Co/kafka-node/issues/342)
+
+
+## FailedToRebalanceConsumerError: Exception: NODE_EXISTS[-110]
+
+This error can occur when the process is killed and restarted quickly. The ephemeral nodes are not relinquished in zookeeper when `SIGINT` is sent and instead relinquished when zookeeper session timeout is reached. The timeout can be adjusted using the `zoo.cfg maxSessionTimeout` setting however it is recommended that a handler is added for this case as demostrated below:
+
+```js
+process.on('SIGINT', function () {
+    highLevelConsumer.close(true, function () {
+        process.exit();
+    });
+});
+```
+
+Reference issue [#90](https://github.com/SOHU-Co/kafka-node/issues/90)
+
+# Running Tests
+
+### Install Docker
+
+On the Mac you can either install `docker-machine` or [Docker for Mac](https://docs.docker.com/engine/installation/mac/).
+
+Docker machine:
+
+```bash
+brew install docker docker-machine docker-compose
+docker-machine create --driver virtualbox dev
+```
+
+### Start Docker and Run Tests
+
+```bash
+npm test
+```
+
+### Stop Docker
+
+```bash
+npm run stopDocker
+```
+
 
 # LICENSE - "MIT"
 Copyright (c) 2015 Sohu.com

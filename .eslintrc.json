@@ -1,0 +1,6 @@
+{
+	"extends": "semistandard",
+	"env": {
+		"node": true
+	}
+}

@@ -1,5 +1,24 @@
 # kafka-node CHANGELOG
 
+## 2016-07-27, Version 0.5.1
+- Prevent fetch before offset's are updated before a rebalance [#402](https://github.com/SOHU-Co/kafka-node/pull/402) 
+- Add validation to `groupId` and `clientId` [#405](https://github.com/SOHU-Co/kafka-node/pull/405)
+- Removed unused `autoCommitMsgCount` config option [#406](https://github.com/SOHU-Co/kafka-node/pull/406)
+- Fixed issue where reconnecting brokers emits a `connect` event instead of `reconnect`. [#413](https://github.com/SOHU-Co/kafka-node/pull/413)
+- Fixed uncaught exception where `sslHost` or `host` of undefined is accessed. [#413](https://github.com/SOHU-Co/kafka-node/pull/413)
+
+## 2016-07-14, Version 0.5.0
+- Fix minimatch vulnerability by upgrading snappy to v5.0.5 [#400](https://github.com/SOHU-Co/kafka-node/pull/400)
+- Added ESLint to codebase [#392](https://github.com/SOHU-Co/kafka-node/pull/392)
+- Added ability to make SSL connections to brokers [#383](https://github.com/SOHU-Co/kafka-node/pull/383) (Kafka 0.9+ only)
+
+## 2016-06-27, Version 0.4.0
+- Update test to run against docker [#387](https://github.com/SOHU-Co/kafka-node/pull/387)
+- Fix missing npm license field warning [#386](https://github.com/SOHU-Co/kafka-node/pull/386)
+- Recreate broker sockets to work around nodejs socket issue #4417 [#385](https://github.com/SOHU-Co/kafka-node/pull/385)
+- Fixes [#319](https://github.com/SOHU-Co/kafka-node/issues/319) UnknownTopicOrPartition error when reassigning topic [#384](https://github.com/SOHU-Co/kafka-node/pull/384)
+- Add **offset#getLatestOffsets** function to get all the latest offsets from a group of topics populating those topics partitions [#372](https://github.com/SOHU-Co/kafka-node/pull/372)
+
 ## 2016-05-27, Version 0.3.3
 - Fix type error while producing messages [#360](https://github.com/SOHU-Co/kafka-node/pull/360)
 - Update README [#307](https://github.com/SOHU-Co/kafka-node/pull/307) and [#352](https://github.com/SOHU-Co/kafka-node/pull/352)

@@ -1,0 +1,26 @@
+version: '2'
+services:
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports:
+      - "2181:2181"
+  kafka:
+    image: wurstmeister/kafka:0.9.0.1
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: ${KAFKA_ADVERTISED_HOST_NAME}
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: "PLAINTEXT://:9092,SSL://:9093"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://${KAFKA_ADVERTISED_HOST_NAME}:9092,SSL://${KAFKA_ADVERTISED_HOST_NAME}:9093"
+      KAFKA_SSL_KEYSTORE_LOCATION: "/var/private/ssl/certs/server.keystore.jks"
+      KAFKA_SSL_KEYSTORE_PASSWORD: "password"
+      KAFKA_SSL_KEY_PASSWORD: "password"
+      KAFKA_SSL_TRUSTSTORE_LOCATION: "/var/private/ssl/certs/server.truststore.jks"
+      KAFKA_SSL_TRUSTSTORE_PASSWORD: "password"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./docker/certs:/var/private/ssl/certs
