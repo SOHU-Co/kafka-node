@@ -4,8 +4,9 @@ var Client = kafka.Client;
 var uuid = require('node-uuid');
 var should = require('should');
 var FakeZookeeper = require('./mocks/mockZookeeper');
+var FakeSocket = require('./mocks/mockSocket');
 var InvalidConfigError = require('../lib/errors/InvalidConfigError');
-var proxyquire = require('proxyquire');
+var proxyquire = require('proxyquire').noCallThru();
 var sinon = require('sinon');
 
 describe('Client', function () {
@@ -15,6 +16,23 @@ describe('Client', function () {
     var zk, Client, brokers;
 
     before(function () {
+      zk = new FakeZookeeper();
+
+      Client = proxyquire('../lib/Client', {
+        './zookeeper': {
+          Zookeeper: function () {
+            return zk;
+          }
+        },
+        tls: {
+          connect: function () {
+            return new FakeSocket();
+          }
+        }
+      });
+    });
+
+    beforeEach(function () {
       brokers = {
         '1001': {
           endpoints: [ 'PLAINTEXT://127.0.0.1:9092', 'SSL://127.0.0.1:9093' ],
@@ -29,15 +47,62 @@ describe('Client', function () {
           port: 9092
         }
       };
+    });
 
-      zk = new FakeZookeeper();
+    describe('refreshBrokers', function () {
+      var client;
 
-      Client = proxyquire('../lib/Client', {
-        './zookeeper': {
-          Zookeeper: function () {
-            return zk;
-          }
-        }
+      beforeEach(function () {
+        var clientId = 'kafka-node-client-' + uuid.v4();
+        client = new Client(host, clientId, undefined, undefined, {rejectUnauthorized: false});
+      });
+
+      it('should delete and close dead brokers when SSL is enabled', function () {
+        var fakeSocket = new FakeSocket();
+        sinon.spy(fakeSocket, 'end');
+        sinon.stub(client, 'createBroker').returns({ socket: fakeSocket });
+        zk.emit('init', brokers);
+
+        delete brokers['1001'];
+        var broker1001 = '127.0.0.1:9092';
+        client.ssl.should.be.true;
+        client.brokers.should.have.property(broker1001);
+        var deadBroker = client.brokers[broker1001];
+        deadBroker.socket.should.not.have.property('closing');
+        var closeBrokersSpy = sinon.spy(client, 'closeBrokers');
+
+        zk.emit('brokersChanged', brokers);
+
+        client.brokers.should.not.have.property(broker1001);
+        sinon.assert.called(closeBrokersSpy);
+        deadBroker.socket.closing.should.be.true;
+        sinon.assert.calledOnce(deadBroker.socket.end);
+      });
+
+      it('should close the dead broker without triggering a reconnect on dead broker', function () {
+        var clock = sinon.useFakeTimers();
+        client.on('error', function () {}); // we expect an error catch it
+
+        zk.emit('init', brokers);
+        delete brokers['1001'];
+
+        var broker1001 = '127.0.0.1:9092';
+        client.ssl.should.be.true;
+        client.brokers.should.have.property(broker1001);
+        var deadBroker = client.brokers[broker1001];
+        deadBroker.socket.should.not.have.property('closing');
+        var closeBrokersSpy = sinon.spy(client, 'closeBrokers');
+
+        deadBroker.socket.emit('error', new Error('Socket was fakely disconnected'));
+        deadBroker.socket.end();
+        clock.tick(500);
+        zk.emit('brokersChanged', brokers);
+
+        clock.tick(500); // let reconnectBroker run
+
+        client.brokers.should.not.have.property(broker1001);
+        sinon.assert.called(closeBrokersSpy);
+        clock.restore();
       });
     });
 
