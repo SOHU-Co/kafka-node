@@ -1,5 +1,8 @@
 # kafka-node CHANGELOG
 
+## 2016-07-29, Version 0.5.2
+- Fix TypeError: Cannot read property 'sslHost' of undefined [#417](https://github.com/SOHU-Co/kafka-node/pull/417)
+
 ## 2016-07-27, Version 0.5.1
 - Prevent fetch before offset's are updated before a rebalance [#402](https://github.com/SOHU-Co/kafka-node/pull/402) 
 - Add validation to `groupId` and `clientId` [#405](https://github.com/SOHU-Co/kafka-node/pull/405)
