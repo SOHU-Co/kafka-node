@@ -8,6 +8,7 @@ var topic = argv.topic || 'topic1';
 var client = new Client('localhost:2181');
 var topics = [{topic: topic}];
 var options = { autoCommit: true, fetchMaxWaitMs: 1000, fetchMaxBytes: 1024 * 1024 };
+var debug = require('debug')('kafka-node:Child-HLC');
 
 if (argv.groupId) {
   options.groupId = argv.groupId;
@@ -24,21 +25,36 @@ consumer.on('message', function (message) {
 });
 
 consumer.on('error', function (err) {
-  console.log('error', err);
+  debug('error', err);
 });
 
 consumer.on('rebalanced', function () {
-  console.log('rebalanced!');
+  debug('rebalanced!');
+  sendEvent('rebalanced');
 });
 
-function close () {
-  console.log('closing the consumer');
-  consumer.close(true, function () {
-    process.exit();
+consumer.on('registered', function () {
+  debug('registered');
+  sendEvent('registered');
+});
+
+function sendEvent (event) {
+  process.send({
+    id: consumer.id,
+    event: event
   });
 }
 
-process.once('SIGINT', close);
-process.once('SIGTERM', close);
-process.once('SIGABRT', close);
-process.once('disconnect', close);
+function close (signal) {
+  return function () {
+    debug('closing the consumer (%s).', signal);
+    consumer.close(true, function () {
+      process.exit();
+    });
+  };
+}
+
+process.once('SIGINT', close('SIGINT'));
+process.once('SIGTERM', close('SIGTERM'));
+process.once('SIGABRT', close('SIGABRT'));
+process.once('disconnect', close('disconnect'));

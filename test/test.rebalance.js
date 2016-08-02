@@ -1,16 +1,19 @@
+'use strict';
+
 var kafka = require('..');
 var Client = kafka.Client;
 var HighLevelProducer = kafka.HighLevelProducer;
-var fork = require('child_process').fork;
 var async = require('async');
 var debug = require('debug')('kafka-node:Test-Rebalance');
-
-var children = 0;
+var Childrearer = require('./helpers/Childrearer');
+var uuid = require('node-uuid');
+var _ = require('lodash');
 
 describe('Integrated HLC Rebalance', function () {
   var producer;
   var topic = 'RebalanceTopic';
-  var child1, child2, child3, child4;
+  var rearer;
+  var groupId = 'rebal_group';
 
   function sendMessage (topic, message, done) {
     debug('sending ', message);
@@ -31,25 +34,37 @@ describe('Integrated HLC Rebalance', function () {
     });
   });
 
+  beforeEach(function (done) {
+    rearer = new Childrearer();
+
+    // make sure there are no other consumers on this topic before starting test
+    producer.client.zk.getConsumersPerTopic(groupId, function (error, data) {
+      if (error && error.name === 'NO_NODE') {
+        done();
+      } else {
+        data.consumerTopicMap.should.be.empty;
+        data.topicConsumerMap.should.be.empty;
+        data.topicPartitionMap.should.be.empty;
+        done(error);
+      }
+    });
+  });
+
   afterEach(function (done) {
     debug('killChildren');
-    child1.kill();
-    child2.kill();
-    child3 && child3.kill();
-    child4 && child4.kill();
+    rearer.closeAll();
     setTimeout(done, 1000);
   });
 
   function sendMessages (messages, done) {
-    async.eachSeries(messages, function (message, cb) {
+    async.each(messages, function (message, cb) {
       sendMessage(topic, message, cb);
     }, function (error, results) {
       if (error) {
         console.error('Send Error', error);
-        done(error);
+        return done(error);
       }
-      done(null);
-      debug('all sent');
+      debug('all messages sent');
     });
   }
 
@@ -73,84 +88,55 @@ describe('Integrated HLC Rebalance', function () {
     };
   }
 
-  it('verify two consumers consuming messages on all partitions', function (done) {
-    var groupId = 'rebal_group';
-    var messages = ['verify two consumers consuming 1', 'verify two consumers consuming 2', 'verify two consumers consuming 3'];
-
-    var verify = getConsumerVerifier(messages, 3, 2, done);
-
-    child1 = raiseChild(topic, groupId, verify);
-    child2 = raiseChild(topic, groupId, verify);
-
-    sendMessages(messages, function (error) {
-      if (error) {
-        done(error);
-      }
+  function generateMessages (numberOfMessages, prefix) {
+    return _.times(numberOfMessages, function () {
+      return prefix + '-' + uuid.v4();
     });
+  }
+
+  it('verify two consumers consuming messages on all partitions', function (done) {
+    var messages = generateMessages(3, 'verify 2 c');
+    var numberOfConsumers = 2;
+
+    var verify = getConsumerVerifier(messages, 3, numberOfConsumers, done);
+
+    rearer.setVerifier(topic, groupId, verify);
+    rearer.raise(numberOfConsumers);
+
+    sendMessages(messages, done);
   });
 
   it('verify three consumers consuming messages on all partitions', function (done) {
-    var groupId = 'rebal_group';
-    var messages = ['verify 3 consumers consuming 1', 'verify 3 consumers consuming 2', 'verify 3 consumers consuming 3'];
+    var messages = generateMessages(3, 'verify 3 c');
+    var numberOfConsumers = 3;
 
-    var verify = getConsumerVerifier(messages, 3, 3, done);
+    var verify = getConsumerVerifier(messages, 3, numberOfConsumers, done);
 
-    child1 = raiseChild(topic, groupId, verify);
-    child2 = raiseChild(topic, groupId, verify);
-    child3 = raiseChild(topic, groupId, verify);
+    rearer.setVerifier(topic, groupId, verify);
+    rearer.raise(numberOfConsumers);
 
-    sendMessages(messages, function (error) {
-      if (error) {
-        done(error);
-      }
-    });
+    sendMessages(messages, done);
   });
 
   it('verify three of four consumers are consuming messages on all partitions', function (done) {
-    var groupId = 'rebal_group';
-    var messages = ['verify 4 hlc consuming 1', 'verify 4 hlc consuming 2', 'verify 4 hlc consuming 3'];
+    var messages = generateMessages(3, 'verify 4 c');
 
     var verify = getConsumerVerifier(messages, 3, 3, done);
+    rearer.setVerifier(topic, groupId, verify);
+    rearer.raise(4);
 
-    child1 = raiseChild(topic, groupId, verify);
-    child2 = raiseChild(topic, groupId, verify);
-    child3 = raiseChild(topic, groupId, verify);
-    child4 = raiseChild(topic, groupId, verify);
-
-    sendMessages(messages, function (error) {
-      if (error) {
-        done(error);
-      }
-    });
+    sendMessages(messages, done);
   });
 
   it('verify one consumer consumes all messages on all partitions after one out of the two consumer is killed', function (done) {
-    var groupId = 'rebal_group';
-
-    var messages = ['verify one 1', 'verify one 2', 'verify one 3', 'verify one 4'];
+    var messages = generateMessages(4, 'verify 1 c 1 killed');
     var verify = getConsumerVerifier(messages, 3, 1, done);
 
-    child1 = raiseChild(topic, groupId, verify);
-    child2 = raiseChild(topic, groupId, verify);
-
-    setImmediate(function () {
-      child2.kill();
-      child2.once('close', function (code, signal) {
-        debug('child %s killed %d %s', this._childNum, code, signal);
-        sendMessages(messages, function (error) {
-          if (error) {
-            done(error);
-          }
-        });
+    rearer.setVerifier(topic, groupId, verify);
+    rearer.raise(2, function () {
+      rearer.killOne(undefined, function () {
+        sendMessages(messages, done);
       });
     });
   });
 });
-
-function raiseChild (topic, groupId, onMessage) {
-  debug('forking child ', ++children);
-  var child = fork('test/helpers/child-hlc', ['--groupId=' + groupId, '--topic=' + topic]);
-  child._childNum = children;
-  child.on('message', onMessage);
-  return child;
-}
