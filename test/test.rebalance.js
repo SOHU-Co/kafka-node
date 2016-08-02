@@ -10,7 +10,7 @@ var children = 0;
 describe('Integrated HLC Rebalance', function () {
   var producer;
   var topic = 'RebalanceTopic';
-  var child1, child2, child3;
+  var child1, child2, child3, child4;
 
   function sendMessage (topic, message, done) {
     debug('sending ', message);
@@ -36,6 +36,7 @@ describe('Integrated HLC Rebalance', function () {
     child1.kill();
     child2.kill();
     child3 && child3.kill();
+    child4 && child4.kill();
     setTimeout(done, 1000);
   });
 
@@ -58,7 +59,7 @@ describe('Integrated HLC Rebalance', function () {
     var consumedByConsumer = {};
 
     return function onData (data) {
-      debug('message received %j', data);
+      debug('From child %d %j', this._childNum, data);
       topic.should.be.eql(data.message.topic);
       if (~messages.indexOf(data.message.value)) {
         processedMessages++;
@@ -97,6 +98,24 @@ describe('Integrated HLC Rebalance', function () {
     child1 = raiseChild(topic, groupId, verify);
     child2 = raiseChild(topic, groupId, verify);
     child3 = raiseChild(topic, groupId, verify);
+
+    sendMessages(messages, function (error) {
+      if (error) {
+        done(error);
+      }
+    });
+  });
+
+  it('verify three of four consumers are consuming messages on all partitions', function (done) {
+    var groupId = 'rebal_group';
+    var messages = ['verify 4 hlc consuming 1', 'verify 4 hlc consuming 2', 'verify 4 hlc consuming 3'];
+
+    var verify = getConsumerVerifier(messages, 3, 3, done);
+
+    child1 = raiseChild(topic, groupId, verify);
+    child2 = raiseChild(topic, groupId, verify);
+    child3 = raiseChild(topic, groupId, verify);
+    child4 = raiseChild(topic, groupId, verify);
 
     sendMessages(messages, function (error) {
       if (error) {
