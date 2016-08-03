@@ -18,7 +18,7 @@ describe('Client', function () {
     before(function () {
       zk = new FakeZookeeper();
 
-      Client = proxyquire('../lib/Client', {
+      Client = proxyquire('../lib/client', {
         './zookeeper': {
           Zookeeper: function () {
             return zk;
