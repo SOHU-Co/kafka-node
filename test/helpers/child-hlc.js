@@ -7,13 +7,17 @@ var argv = require('optimist').argv;
 var topic = argv.topic || 'topic1';
 var uuid = require('node-uuid');
 var host = process.env['KAFKA_TEST_HOST'] || '';
-var client = new Client(host, 'child-'+uuid.v4(), {sessionTimeout: 5000});
+var client = new Client(host, 'child-' + uuid.v4(), {sessionTimeout: 5000});
 var topics = [{topic: topic}];
 var options = { autoCommit: true, fetchMaxWaitMs: 1000, fetchMaxBytes: 1024 * 1024 };
 var debug = require('debug')('kafka-node:Child-HLC');
 
 if (argv.groupId) {
   options.groupId = argv.groupId;
+}
+
+if (argv.consumerId) {
+  options.id = argv.consumerId;
 }
 
 var consumer = new HighLevelConsumer(client, topics, options);
@@ -31,12 +35,16 @@ consumer.on('error', function (err) {
 });
 
 consumer.on('rebalanced', function () {
-  debug('rebalanced!');
+  debug('%s rebalanced!', consumer.id);
   sendEvent('rebalanced');
 });
 
+consumer.on('rebalancing', function () {
+  debug('%s is rebalancing', consumer.id);
+});
+
 consumer.on('registered', function () {
-  debug('registered');
+  debug('%s registered', consumer.id);
   sendEvent('registered');
 });
 

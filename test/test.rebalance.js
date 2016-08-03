@@ -72,6 +72,7 @@ describe('Integrated HLC Rebalance', function () {
     var processedMessages = 0;
     var partitionsConsumed = {};
     var consumedByConsumer = {};
+    var verified = _.once(done);
 
     return function onData (data) {
       debug('From child %d %j', this._childNum, data);
@@ -83,9 +84,8 @@ describe('Integrated HLC Rebalance', function () {
       }
       if (processedMessages >= messages.length && Object.keys(partitionsConsumed).length === expectedPartitionsConsumed &&
         Object.keys(consumedByConsumer).length === expectedConsumersConsuming) {
-        done();
+        verified();
       }
-      console.log('processedMessages', processedMessages)
     };
   }
 
@@ -142,7 +142,35 @@ describe('Integrated HLC Rebalance', function () {
     });
   });
 
-  it('verify two consumer consumes all messages on all partitions after one out of the four consumers are killed', function (done) {
+  it('verify three consumer consumes all messages on all partitions after one that is unassigned is killed', function (done) {
+    this.timeout(40000);
+    var messages = generateMessages(3, 'verify 2 c 2 killed');
+    var verify = getConsumerVerifier(messages, 3, 3, done);
+
+    rearer.setVerifier(topic, groupId, verify);
+
+    async.series([
+      function (callback) {
+        rearer.raise(3, callback);
+      },
+      function (callback) {
+        setTimeout(callback, 1000);
+      },
+      function (callback) {
+        rearer.raise(1, callback);
+      },
+      function (callback) {
+        setTimeout(callback, 1000);
+      },
+      function (callback) {
+        rearer.killFirst(callback);
+      }
+    ], function () {
+      sendMessages(messages, done);
+    });
+  });
+
+  it('verify two consumer consumes all messages on all partitions after two out of the four consumers are killed', function (done) {
     this.timeout(40000);
     var messages = generateMessages(4, 'verify 2 c 2 killed');
     var verify = getConsumerVerifier(messages, 3, 2, done);
