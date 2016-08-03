@@ -5,7 +5,9 @@ var HighLevelConsumer = kafka.HighLevelConsumer;
 var Client = kafka.Client;
 var argv = require('optimist').argv;
 var topic = argv.topic || 'topic1';
-var client = new Client('localhost:2181');
+var uuid = require('node-uuid');
+var host = process.env['KAFKA_TEST_HOST'] || '';
+var client = new Client(host, 'child-'+uuid.v4(), {sessionTimeout: 5000});
 var topics = [{topic: topic}];
 var options = { autoCommit: true, fetchMaxWaitMs: 1000, fetchMaxBytes: 1024 * 1024 };
 var debug = require('debug')('kafka-node:Child-HLC');
@@ -47,7 +49,7 @@ function sendEvent (event) {
 
 function close (signal) {
   return function () {
-    debug('closing the consumer (%s).', signal);
+    debug('closing the consumer (%s) [%s].', signal, consumer.id);
     consumer.close(true, function () {
       process.exit();
     });

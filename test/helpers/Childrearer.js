@@ -3,6 +3,7 @@ var util = require('util');
 var debug = require('debug')('kafka-node:Test-Childrearer');
 var fork = require('child_process').fork;
 var async = require('async');
+var _ = require('lodash');
 
 function Childrearer () {
   EventEmitter.call(this);
@@ -23,14 +24,16 @@ Childrearer.prototype.closeAll = function () {
   });
 };
 
-Childrearer.prototype.killOne = function (signal, callback) {
-  var child = this.children.pop();
-  child.once('close', function (code, childSignal) {
-    debug('child %s killed %d %s', this._childNum, code, childSignal);
-    callback();
-  });
-  child.kill(signal);
-};
+Childrearer.prototype.kill = function (children, callback) {
+  var children = _.sample(this.children, children);
+  async.each(children, function (child, callback) {
+    child.once('close', function (code, signal){
+      debug('child %s killed %d %s', this._childNum, code, signal);
+      callback();
+    });
+    child.kill();
+  }, callback);
+}
 
 Childrearer.prototype.raise = function (children, callback) {
   while (children--) {

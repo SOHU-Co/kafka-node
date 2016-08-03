@@ -8,6 +8,7 @@ var debug = require('debug')('kafka-node:Test-Rebalance');
 var Childrearer = require('./helpers/Childrearer');
 var uuid = require('node-uuid');
 var _ = require('lodash');
+var host = process.env['KAFKA_TEST_HOST'] || '';
 
 describe('Integrated HLC Rebalance', function () {
   var producer;
@@ -16,7 +17,6 @@ describe('Integrated HLC Rebalance', function () {
   var groupId = 'rebal_group';
 
   function sendMessage (topic, message, done) {
-    debug('sending ', message);
     producer.send([ {topic: topic, messages: [message]} ], function () {
       debug('sent', message);
       done();
@@ -24,7 +24,7 @@ describe('Integrated HLC Rebalance', function () {
   }
 
   before(function (done) {
-    var client = new Client();
+    var client = new Client(host);
     producer = new HighLevelProducer(client);
     client.on('ready', function () {
       client.refreshMetadata([topic], function (data) {
@@ -57,7 +57,7 @@ describe('Integrated HLC Rebalance', function () {
   });
 
   function sendMessages (messages, done) {
-    async.each(messages, function (message, cb) {
+    async.eachSeries(messages, function (message, cb) {
       sendMessage(topic, message, cb);
     }, function (error, results) {
       if (error) {
@@ -81,10 +81,11 @@ describe('Integrated HLC Rebalance', function () {
         partitionsConsumed[data.message.partition] = true;
         consumedByConsumer[data.id] = true;
       }
-      if (processedMessages === messages.length && Object.keys(partitionsConsumed).length === expectedPartitionsConsumed &&
+      if (processedMessages >= messages.length && Object.keys(partitionsConsumed).length === expectedPartitionsConsumed &&
         Object.keys(consumedByConsumer).length === expectedConsumersConsuming) {
         done();
       }
+      console.log('processedMessages', processedMessages)
     };
   }
 
@@ -129,14 +130,43 @@ describe('Integrated HLC Rebalance', function () {
   });
 
   it('verify one consumer consumes all messages on all partitions after one out of the two consumer is killed', function (done) {
+    this.timeout(40000);
     var messages = generateMessages(4, 'verify 1 c 1 killed');
     var verify = getConsumerVerifier(messages, 3, 1, done);
 
     rearer.setVerifier(topic, groupId, verify);
     rearer.raise(2, function () {
-      rearer.killOne(undefined, function () {
+      rearer.kill(1, function () {
         sendMessages(messages, done);
       });
+    });
+  });
+
+  it('verify two consumer consumes all messages on all partitions after one out of the four consumers are killed', function (done) {
+    this.timeout(40000);
+    var messages = generateMessages(4, 'verify 2 c 2 killed');
+    var verify = getConsumerVerifier(messages, 3, 2, done);
+
+    rearer.setVerifier(topic, groupId, verify);
+    rearer.raise(4, function () {
+      rearer.kill(2, function () {
+        sendMessages(messages, done);
+      });
+    });
+  });
+
+  it('verify three consumer consumes all messages on all partitions after three out of the six consumers are killed', function (done) {
+    this.timeout(40000);
+    var messages = generateMessages(4, 'verify 3 c 3 killed');
+    var verify = getConsumerVerifier(messages, 3, 3, done);
+
+    rearer.setVerifier(topic, groupId, verify);
+    rearer.raise(6, function () {
+      setTimeout(function () {
+        rearer.kill(3, function () {
+          sendMessages(messages, done);
+        });
+      }, 1000);
     });
   });
 });
