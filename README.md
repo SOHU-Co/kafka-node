@@ -26,6 +26,7 @@ Kafka-node is a Node.js client with Zookeeper integration for Apache Kafka 0.8.1
   - [How do I debug an issue?](#how-do-i-debug-an-issue)
   - [For a new consumer how do I start consuming from the latest message in a partition?](#for-a-new-consumer-how-do-i-start-consuming-from-the-latest-message-in-a-partition)
   - [FailedToRebalanceConsumerError: Exception: NODE_EXISTS[-110]](#failedtorebalanceconsumererror-exception-node_exists-110)
+  - [HighLevelConsumer does not consume on all partitions](#highlevelconsumer-does-not-consume-on-all-partitions)
 - [Running Tests](#running-tests)
 - [LICENSE - "MIT"](#license---mit)
 
@@ -684,6 +685,12 @@ process.on('SIGINT', function () {
 ```
 
 Reference issue [#90](https://github.com/SOHU-Co/kafka-node/issues/90)
+
+## HighLevelConsumer does not consume on all partitions
+
+Your partition will be stuck if the `fetchMaxBytes` is smaller than the message produced.  Increase `fetchMaxBytes` value should resolve this issue.
+
+Reference to issue [#339](https://github.com/SOHU-Co/kafka-node/issues/339) 
 
 # Running Tests
 
