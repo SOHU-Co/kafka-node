@@ -7,6 +7,82 @@ var should = require('should');
 var InvalidConfigError = require('../lib/errors/InvalidConfigError');
 
 describe('HighLevelConsumer', function () {
+  describe('#close', function (done) {
+    var client, consumer, leaveGroupStub, commitStub, clientCloseSpy;
+
+    beforeEach(function () {
+      client = new FakeClient();
+      consumer = new HighLevelConsumer(client, [], {groupId: 'mygroup'});
+      leaveGroupStub = sinon.stub(consumer, '_leaveGroup').yields();
+      commitStub = sinon.stub(consumer, 'commit').yields();
+      clientCloseSpy = sinon.spy(client, 'close');
+    });
+
+    it('should leave consumer group, commit and then close', function (done) {
+      consumer.close(true, function (error) {
+        consumer.closing.should.be.true;
+        consumer.ready.should.be.false;
+
+        sinon.assert.calledOnce(leaveGroupStub);
+        sinon.assert.calledOnce(commitStub);
+        sinon.assert.calledOnce(clientCloseSpy);
+        sinon.assert.callOrder(commitStub, clientCloseSpy);
+        done(error);
+      });
+    });
+
+    it('should leave consumer group, and then close', function (done) {
+      consumer.close(false, function (error) {
+        consumer.closing.should.be.true;
+        consumer.ready.should.be.false;
+
+        sinon.assert.calledOnce(leaveGroupStub);
+        sinon.assert.calledOnce(clientCloseSpy);
+        done(error);
+      });
+    });
+
+    it('should leave consumer group, and then close (single callback argument)', function (done) {
+      consumer.close(function (error) {
+        consumer.closing.should.be.true;
+        consumer.ready.should.be.false;
+
+        sinon.assert.calledOnce(leaveGroupStub);
+        sinon.assert.calledOnce(clientCloseSpy);
+        done(error);
+      });
+    });
+  });
+
+  describe('#_leaveGroup', function () {
+    var client, consumer, unregisterSpy, releasePartitionsStub;
+
+    beforeEach(function () {
+      client = new FakeClient();
+      unregisterSpy = sinon.spy(client.zk, 'unregisterConsumer');
+      consumer = new HighLevelConsumer(client, [], {groupId: 'mygroup'});
+      releasePartitionsStub = sinon.stub(consumer, '_releasePartitions').yields();
+    });
+
+    it('should releases partitions and unregister it self', function (done) {
+      consumer.topicPayloads = [{topic: 'fake-topic', partition: 0, offset: 0, maxBytes: 1048576, metadata: 'm'}];
+      consumer._leaveGroup(function (error) {
+        sinon.assert.calledOnce(unregisterSpy);
+        sinon.assert.calledOnce(releasePartitionsStub);
+        done(error);
+      });
+    });
+
+    it('should only unregister it self', function (done) {
+      consumer.topicPayloads = [];
+      consumer._leaveGroup(function (error) {
+        sinon.assert.notCalled(releasePartitionsStub);
+        sinon.assert.calledOnce(unregisterSpy);
+        done(error);
+      });
+    });
+  });
+
   describe('validate groupId', function () {
     function validateThrowsInvalidConfigError (groupId) {
       should.throws(function () {
