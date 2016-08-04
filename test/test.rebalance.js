@@ -53,7 +53,7 @@ describe('Integrated HLC Rebalance', function () {
   afterEach(function (done) {
     debug('killChildren');
     rearer.closeAll();
-    setTimeout(done, 1000);
+    setTimeout(done, 500);
   });
 
   function sendMessages (messages, done) {
@@ -70,7 +70,6 @@ describe('Integrated HLC Rebalance', function () {
 
   function getConsumerVerifier (messages, expectedPartitionsConsumed, expectedConsumersConsuming, done) {
     var processedMessages = 0;
-    var partitionsConsumed = {};
     var consumedByConsumer = {};
     var verified = _.once(done);
 
@@ -79,11 +78,9 @@ describe('Integrated HLC Rebalance', function () {
       topic.should.be.eql(data.message.topic);
       if (~messages.indexOf(data.message.value)) {
         processedMessages++;
-        partitionsConsumed[data.message.partition] = true;
         consumedByConsumer[data.id] = true;
       }
-      if (processedMessages >= messages.length && Object.keys(partitionsConsumed).length === expectedPartitionsConsumed &&
-        Object.keys(consumedByConsumer).length === expectedConsumersConsuming) {
+      if (processedMessages >= messages.length && Object.keys(consumedByConsumer).length === expectedConsumersConsuming) {
         verified();
       }
     };
@@ -102,9 +99,9 @@ describe('Integrated HLC Rebalance', function () {
     var verify = getConsumerVerifier(messages, 3, numberOfConsumers, done);
 
     rearer.setVerifier(topic, groupId, verify);
-    rearer.raise(numberOfConsumers);
-
-    sendMessages(messages, done);
+    rearer.raise(numberOfConsumers, function () {
+      sendMessages(messages, done);
+    });
   });
 
   it('verify three consumers consuming messages on all partitions', function (done) {
@@ -130,7 +127,6 @@ describe('Integrated HLC Rebalance', function () {
   });
 
   it('verify one consumer consumes all messages on all partitions after one out of the two consumer is killed', function (done) {
-    this.timeout(40000);
     var messages = generateMessages(4, 'verify 1 c 1 killed');
     var verify = getConsumerVerifier(messages, 3, 1, done);
 
@@ -139,11 +135,10 @@ describe('Integrated HLC Rebalance', function () {
       rearer.kill(1, function () {
         sendMessages(messages, done);
       });
-    });
+    }, 500);
   });
 
   it('verify three consumer consumes all messages on all partitions after one that is unassigned is killed', function (done) {
-    this.timeout(40000);
     var messages = generateMessages(3, 'verify 2 c 2 killed');
     var verify = getConsumerVerifier(messages, 3, 3, done);
 
@@ -171,7 +166,6 @@ describe('Integrated HLC Rebalance', function () {
   });
 
   it('verify two consumer consumes all messages on all partitions after two out of the four consumers are killed', function (done) {
-    this.timeout(40000);
     var messages = generateMessages(4, 'verify 2 c 2 killed');
     var verify = getConsumerVerifier(messages, 3, 2, done);
 
@@ -180,11 +174,10 @@ describe('Integrated HLC Rebalance', function () {
       rearer.kill(2, function () {
         sendMessages(messages, done);
       });
-    });
+    }, 500);
   });
 
   it('verify three consumer consumes all messages on all partitions after three out of the six consumers are killed', function (done) {
-    this.timeout(40000);
     var messages = generateMessages(4, 'verify 3 c 3 killed');
     var verify = getConsumerVerifier(messages, 3, 3, done);
 

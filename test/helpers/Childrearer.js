@@ -56,21 +56,34 @@ Childrearer.prototype._killEachChild = function (children, callback) {
   }, callback);
 };
 
-Childrearer.prototype.raise = function (children, callback) {
+Childrearer.prototype.raise = function (children, callback, waitTime) {
   var newChildren = _.times(children, this._raiseChild, this);
 
   this.children = this.children.concat(newChildren);
 
   if (callback) {
-    async.each(newChildren, function (child, callback) {
-      child.once('message', function (data) {
-        if (data.event === 'registered') {
-          callback(null);
+
+    async.series([
+      function (callback) {
+        async.each(newChildren, function (child, callback) {
+          child.once('message', function (data) {
+            if (data.event === 'registered') {
+              callback(null);
+            } else {
+              callback(new Error('unregistered event: ' + data.event));
+            }
+          });
+        }, callback);
+      },
+
+      function (callback) {
+        if (waitTime) {
+          setTimeout(callback, waitTime);
         } else {
-          callback(new Error('unregistered event: ' + data.event));
+          callback();
         }
-      });
-    }, callback);
+      }], callback
+    );
   }
 };
 
