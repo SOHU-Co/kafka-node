@@ -26,7 +26,7 @@ describe('HighLevelConsumer', function () {
         sinon.assert.calledOnce(leaveGroupStub);
         sinon.assert.calledOnce(commitStub);
         sinon.assert.calledOnce(clientCloseSpy);
-        sinon.assert.callOrder(commitStub, clientCloseSpy);
+        sinon.assert.callOrder(leaveGroupStub, commitStub, clientCloseSpy);
         done(error);
       });
     });
@@ -38,6 +38,7 @@ describe('HighLevelConsumer', function () {
 
         sinon.assert.calledOnce(leaveGroupStub);
         sinon.assert.calledOnce(clientCloseSpy);
+        sinon.assert.callOrder(leaveGroupStub, clientCloseSpy);
         done(error);
       });
     });
@@ -49,6 +50,7 @@ describe('HighLevelConsumer', function () {
 
         sinon.assert.calledOnce(leaveGroupStub);
         sinon.assert.calledOnce(clientCloseSpy);
+        sinon.assert.callOrder(leaveGroupStub, clientCloseSpy);
         done(error);
       });
     });
