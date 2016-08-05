@@ -183,11 +183,9 @@ describe('Integrated HLC Rebalance', function () {
 
     rearer.setVerifier(topic, groupId, verify);
     rearer.raise(6, function () {
-      setTimeout(function () {
-        rearer.kill(3, function () {
-          sendMessages(messages, done);
-        });
-      }, 1000);
-    });
+      rearer.kill(3, function () {
+        sendMessages(messages, done);
+      });
+    }, 1000);
   });
 });

@@ -62,7 +62,6 @@ Childrearer.prototype.raise = function (children, callback, waitTime) {
   this.children = this.children.concat(newChildren);
 
   if (callback) {
-
     async.series([
       function (callback) {
         async.each(newChildren, function (child, callback) {
