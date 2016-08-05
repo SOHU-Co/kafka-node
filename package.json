@@ -1,6 +1,6 @@
 {
   "name": "kafka-node",
-  "description": "node client for Apache kafka, only support kafka 0.8 and above",
+  "description": "Client for Apache Kafka v0.8+",
   "keywords": [
     "kafka",
     "zookeeper",
@@ -9,7 +9,7 @@
     "broker"
   ],
   "bugs": "https://github.com/SOHU-co/kafka-node/issues",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "main": "kafka.js",
   "license": "MIT",
   "dependencies": {
@@ -47,9 +47,9 @@
     "url": "git@github.com:SOHU-Co/kafka-node.git"
   },
   "scripts": {
-    "test": "./node_modules/eslint/bin/eslint.js . && ./run-tests.sh",
+    "test": "eslint . && ./run-tests.sh",
     "startDocker": "./start-docker.sh",
     "stopDocker": "docker-compose down",
-    "updateToc": "./node_modules/doctoc/doctoc.js README.md --maxlevel 2 --notitle"
+    "updateToc": "doctoc README.md --maxlevel 2 --notitle"
   }
 }

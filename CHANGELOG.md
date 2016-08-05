@@ -1,5 +1,16 @@
 # kafka-node CHANGELOG
 
+## 2016-08-05, Version 0.5.3
+- Fix for some long standing high-level consumer rebalance issues: [#423](https://github.com/SOHU-Co/kafka-node/pull/423)
+	- Fixed issue where consumers who weren't assigned a partition would never rebalance... ever
+	- Fixed issue where calling `close` consumer did not force the consumer to leave the consumer group and so locks the partition(s) for (the default) of 30000ms
+	- Fixed issue where consumers who weren't assigned a partition never emitted a `rebalance` event after rebalancing
+	- Additional cases to be addressed in the next release:
+		- If consumer joins or leaves a group during another consumers rebalance then that rebalancing consumer may miss owning partitions
+		- Changes to a topic's partition does not trigger a rebalance
+- Update doc to warn about possible data loss with way the data is formated when sending with the producer [#425](https://github.com/SOHU-Co/kafka-node/pull/425)
+- Added code coverage and additional high-level producer tests [#422](https://github.com/SOHU-Co/kafka-node/pull/422)
+
 ## 2016-07-29, Version 0.5.2
 - Fix TypeError: Cannot read property 'sslHost' of undefined [#417](https://github.com/SOHU-Co/kafka-node/pull/417)
 
