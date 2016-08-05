@@ -7,6 +7,84 @@ var should = require('should');
 var InvalidConfigError = require('../lib/errors/InvalidConfigError');
 
 describe('HighLevelConsumer', function () {
+  describe('#close', function (done) {
+    var client, consumer, leaveGroupStub, commitStub, clientCloseSpy;
+
+    beforeEach(function () {
+      client = new FakeClient();
+      consumer = new HighLevelConsumer(client, [], {groupId: 'mygroup'});
+      leaveGroupStub = sinon.stub(consumer, '_leaveGroup').yields();
+      commitStub = sinon.stub(consumer, 'commit').yields();
+      clientCloseSpy = sinon.spy(client, 'close');
+    });
+
+    it('should leave consumer group, commit and then close', function (done) {
+      consumer.close(true, function (error) {
+        consumer.closing.should.be.true;
+        consumer.ready.should.be.false;
+
+        sinon.assert.calledOnce(leaveGroupStub);
+        sinon.assert.calledOnce(commitStub);
+        sinon.assert.calledOnce(clientCloseSpy);
+        sinon.assert.callOrder(leaveGroupStub, commitStub, clientCloseSpy);
+        done(error);
+      });
+    });
+
+    it('should leave consumer group, and then close', function (done) {
+      consumer.close(false, function (error) {
+        consumer.closing.should.be.true;
+        consumer.ready.should.be.false;
+
+        sinon.assert.calledOnce(leaveGroupStub);
+        sinon.assert.calledOnce(clientCloseSpy);
+        sinon.assert.callOrder(leaveGroupStub, clientCloseSpy);
+        done(error);
+      });
+    });
+
+    it('should leave consumer group, and then close (single callback argument)', function (done) {
+      consumer.close(function (error) {
+        consumer.closing.should.be.true;
+        consumer.ready.should.be.false;
+
+        sinon.assert.calledOnce(leaveGroupStub);
+        sinon.assert.calledOnce(clientCloseSpy);
+        sinon.assert.callOrder(leaveGroupStub, clientCloseSpy);
+        done(error);
+      });
+    });
+  });
+
+  describe('#_leaveGroup', function () {
+    var client, consumer, unregisterSpy, releasePartitionsStub;
+
+    beforeEach(function () {
+      client = new FakeClient();
+      unregisterSpy = sinon.spy(client.zk, 'unregisterConsumer');
+      consumer = new HighLevelConsumer(client, [], {groupId: 'mygroup'});
+      releasePartitionsStub = sinon.stub(consumer, '_releasePartitions').yields();
+    });
+
+    it('should releases partitions and unregister it self', function (done) {
+      consumer.topicPayloads = [{topic: 'fake-topic', partition: 0, offset: 0, maxBytes: 1048576, metadata: 'm'}];
+      consumer._leaveGroup(function (error) {
+        sinon.assert.calledOnce(unregisterSpy);
+        sinon.assert.calledOnce(releasePartitionsStub);
+        done(error);
+      });
+    });
+
+    it('should only unregister it self', function (done) {
+      consumer.topicPayloads = [];
+      consumer._leaveGroup(function (error) {
+        sinon.assert.notCalled(releasePartitionsStub);
+        sinon.assert.calledOnce(unregisterSpy);
+        done(error);
+      });
+    });
+  });
+
   describe('validate groupId', function () {
     function validateThrowsInvalidConfigError (groupId) {
       should.throws(function () {
@@ -66,20 +144,25 @@ describe('HighLevelConsumer', function () {
     it('should emit rebalanced event and clear rebalancing flag only after offsets are updated', function (done) {
       client.emit('ready');
 
-      highLevelConsumer.on('registered', function () {
-        // verify rebalancing is false until rebalance finishes
-        var refreshMetadataStub = sandbox.stub(client, 'refreshMetadata', function (topicNames, cb) {
-          highLevelConsumer.rebalancing.should.be.true;
-          setImmediate(cb);
-        });
+      sinon.stub(highLevelConsumer, 'rebalanceAttempt', function (oldTopicPayloads, cb) {
+        highLevelConsumer.topicPayloads = [{topic: 'fake-topic', partition: 0, offset: 0, maxBytes: 1048576, metadata: 'm'}];
+        cb();
+      });
 
+      // verify rebalancing is false until rebalance finishes
+      var refreshMetadataStub = sandbox.stub(client, 'refreshMetadata', function (topicNames, cb) {
+        highLevelConsumer.rebalancing.should.be.true;
+        setImmediate(cb);
+      });
+
+      highLevelConsumer.on('registered', function () {
         var sendOffsetFetchRequestStub = sandbox.stub(client, 'sendOffsetFetchRequest', function (groupId, payloads, cb) {
           highLevelConsumer.rebalancing.should.be.true;
           // wait for the results
           setImmediate(function () {
             // verify again before the callback
             highLevelConsumer.rebalancing.should.be.true;
-            cb();
+            cb(null, [{topic: 'fake-topic', partition: 0, offset: 0, maxBytes: 1048576, metadata: 'm'}]);
           });
         });
 
@@ -99,6 +182,11 @@ describe('HighLevelConsumer', function () {
 
     it('should emit error and clear rebalancing flag if fetchOffset failed', function (done) {
       client.emit('ready');
+
+      sinon.stub(highLevelConsumer, 'rebalanceAttempt', function (oldTopicPayloads, cb) {
+        highLevelConsumer.topicPayloads = [{topic: 'fake-topic', partition: 0, offset: 0, maxBytes: 1048576, metadata: 'm'}];
+        cb();
+      });
 
       highLevelConsumer.on('registered', function () {
         sandbox.stub(client, 'sendOffsetFetchRequest', function (groupId, payloads, cb) {
@@ -122,21 +210,28 @@ describe('HighLevelConsumer', function () {
     it('should ignore fetch calls from "done" event handler during rebalance', function (done) {
       client.emit('ready');
 
+      sinon.stub(highLevelConsumer, 'rebalanceAttempt', function (oldTopicPayloads, cb) {
+        highLevelConsumer.topicPayloads = [{topic: 'fake-topic', partition: 0, offset: 0, maxBytes: 1048576, metadata: 'm'}];
+        cb();
+      });
+
       var sendFetchRequestSpy = sandbox.spy(client, 'sendFetchRequest');
       var fetchSpy = sandbox.spy(highLevelConsumer, 'fetch');
 
+      sandbox.stub(client, 'sendOffsetFetchRequest', function (groupId, payloads, cb) {
+        highLevelConsumer.rebalancing.should.be.true;
+        highLevelConsumer.ready = true;
+        highLevelConsumer.paused = false;
+        highLevelConsumer.emit('done', {});
+        // wait for the results
+        setImmediate(function () {
+          // verify again before the callback
+          highLevelConsumer.rebalancing.should.be.true;
+          cb(null, [{topic: 'fake-topic', partition: 0, offset: 0, maxBytes: 1048576, metadata: 'm'}]);
+        });
+      });
+
       highLevelConsumer.on('registered', function () {
-        client.sendOffsetFetchRequest = function (groupId, payloads, cb) {
-          // simulate a done event before offset fetch returns
-          highLevelConsumer.ready = true;
-          highLevelConsumer.paused = false;
-          highLevelConsumer.emit('done', {});
-
-          setTimeout(function () {
-            cb();
-          }, 100);
-        };
-
         highLevelConsumer.on('rebalanced', function () {
           if (fetchSpy.callCount !== 2) {
             done(fetchSpy.callCount.should.equal(2));

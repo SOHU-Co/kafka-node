@@ -21,6 +21,7 @@ services:
       KAFKA_SSL_KEY_PASSWORD: "password"
       KAFKA_SSL_TRUSTSTORE_LOCATION: "/var/private/ssl/certs/server.truststore.jks"
       KAFKA_SSL_TRUSTSTORE_PASSWORD: "password"
+      KAFKA_CREATE_TOPICS: "RebalanceTopic:3:1"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./docker/certs:/var/private/ssl/certs

@@ -1,25 +1,18 @@
 'use strict';
 
-var libPath = process.env['kafka-cov'] ? '../lib-cov/' : '../lib/';
-var Zookeeper = require(libPath + 'zookeeper').Zookeeper;
+var Zookeeper = require('../lib/zookeeper').Zookeeper;
 var host = process.env['KAFKA_TEST_HOST'] || '';
 var zk;
 
-/*
- *  To run the test, you should ensure:
- *   - at least 2 broker running
- */
-
-xdescribe('Zookeeper', function () {
+describe('Zookeeper', function () {
   before(function () {
     zk = new Zookeeper(host);
   });
 
   describe('when init success', function () {
     it('should emit init event', function (done) {
-      var zk = new Zookeeper(host);
-      zk.on('init', function (brokers) {
-        Object.keys(brokers).length.should.above(1);
+      zk.once('init', function (brokers) {
+        Object.keys(brokers).length.should.eql(1);
         done();
       });
     });
@@ -30,7 +23,7 @@ xdescribe('Zookeeper', function () {
       it('should return all brokers', function (done) {
         zk.inited = false;
         zk.listBrokers(function (brokers) {
-          Object.keys(brokers).length.should.above(1);
+          Object.keys(brokers).length.should.eql(1);
           done();
         });
       });
@@ -42,14 +35,39 @@ xdescribe('Zookeeper', function () {
         zk.inited = true;
 
         zk.listBrokers(function (brokers) {
-          Object.keys(brokers).length.should.above(1);
+          Object.keys(brokers).length.should.eql(1);
           if (++count === 2) done();
         });
 
         zk.on('brokersChanged', function (brokers) {
-          Object.keys(brokers).length.should.above(1);
+          Object.keys(brokers).length.should.eql(1);
           if (++count === 2) done();
         });
+      });
+    });
+  });
+
+  describe('#unregisterConsumer', function () {
+    it('removes the consumer ID node if it exists yields true if successful', function (done) {
+      var groupId = 'awesomeFakeGroupId';
+      var consumerId = 'fabulousConsumerId';
+      zk.registerConsumer(groupId, consumerId, [{topic: 'fake-topic'}],
+        function (error) {
+          if (error) {
+            return done(error);
+          }
+
+          zk.unregisterConsumer(groupId, consumerId, function (error, result) {
+            result.should.be.true;
+            done(error);
+          });
+        });
+    });
+
+    it('yields false if the consumer ID node does not exists', function (done) {
+      zk.unregisterConsumer('fakeTestGroupId', 'fakeConsumerId', function (error, result) {
+        result.should.be.false;
+        done(error);
       });
     });
   });
