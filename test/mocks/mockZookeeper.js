@@ -19,6 +19,7 @@ function FakeZookeeper () {
   this.unregisterConsumer = function (groupId, id, cb) {
     setImmediate(cb);
   };
+  this.listPartitions = function (topic) {};
   this.listConsumers = function (groupId) {};
   this.getConsumersPerTopic = function (groupId, cb) {
     var consumerTopicMap = {};
