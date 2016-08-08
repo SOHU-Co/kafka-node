@@ -29,6 +29,7 @@
     "snappy": "^5.0.5"
   },
   "devDependencies": {
+    "coveralls": "^2.11.12",
     "doctoc": "^1.2.0",
     "eslint": "^2.13.1",
     "eslint-config-semistandard": "^6.0.2",
