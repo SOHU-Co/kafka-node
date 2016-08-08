@@ -4,6 +4,11 @@ var Zookeeper = require('../lib/zookeeper').Zookeeper;
 var host = process.env['KAFKA_TEST_HOST'] || '';
 var zk;
 
+// Helper method
+function randomId () {
+  return Math.floor(Math.random() * 10000);
+}
+
 describe('Zookeeper', function () {
   before(function () {
     zk = new Zookeeper(host);
@@ -78,6 +83,98 @@ describe('Zookeeper', function () {
         existed.should.not.be.ok;
         topic.should.equal('_not_exist_topic_test');
         done(err);
+      });
+    });
+  });
+
+  describe('#getConsumersPerTopic', function () {
+    it('gets all consumers per topic', function (done) {
+      var groupId = 'myGroup' + randomId();
+      var consumerId = 'myConsumer' + randomId();
+      var topic = '_exist_topic_3_test';
+
+      zk.registerConsumer(groupId, consumerId, [{topic: topic}],
+        function (error) {
+          if (error) {
+            return done(error);
+          }
+
+          zk.getConsumersPerTopic(groupId, function (error, consumerPerTopic) {
+            if (error) {
+              return done(error);
+            }
+
+            Object.keys(consumerPerTopic.consumerTopicMap)[0].should.equal(consumerId);
+            consumerPerTopic.consumerTopicMap[consumerId][0].should.equal(topic);
+
+            Object.keys(consumerPerTopic.topicConsumerMap)[0].should.equal(topic);
+            consumerPerTopic.topicConsumerMap[topic][0].should.equal(consumerId);
+
+            Object.keys(consumerPerTopic.topicPartitionMap)[0].should.equal(topic);
+            consumerPerTopic.topicPartitionMap[topic][0].should.equal('0');
+            done();
+          });
+        });
+    });
+  });
+
+  describe('#addPartitionOwnership', function () {
+    it('it adds ownership', function (done) {
+      var groupId = 'myGroup' + randomId();
+      var consumerId = 'myConsumer' + randomId();
+      var topic = '_exist_topic_3_test';
+
+      zk.addPartitionOwnership(consumerId, groupId, topic, 0, function (error) {
+        done(error);
+      });
+    });
+  });
+
+  describe('#checkPartitionOwnership', function () {
+    it('it fails if the path does not exist', function (done) {
+      var groupId = 'awesomeFakeGroupId';
+      var consumerId = 'fabulousConsumerId';
+      var topic = 'fake-topic';
+
+      zk.checkPartitionOwnership(consumerId, groupId, topic, 0,
+        function (error) {
+          error.should.equal("Path wasn't created");
+          done();
+        });
+    });
+
+    it('it finds the ownership', function (done) {
+      var groupId = 'myGroup' + randomId();
+      var consumerId = 'myConsumer' + randomId();
+      var topic = '_exist_topic_3_test';
+
+      zk.addPartitionOwnership(consumerId, groupId, topic, 0, function (error) {
+        if (error) {
+          done(error);
+        }
+
+        zk.checkPartitionOwnership(consumerId, groupId, topic, 0,
+          function (error) {
+            done(error);
+          });
+      });
+    });
+
+    it('it does not find ownership for the wrong consumer', function (done) {
+      var groupId = 'myGroup' + randomId();
+      var consumerId = 'myConsumer' + randomId();
+      var topic = '_exist_topic_3_test';
+
+      zk.addPartitionOwnership(consumerId, groupId, topic, 0, function (error) {
+        if (error) {
+          done(error);
+        }
+
+        zk.checkPartitionOwnership('notMyConsumer', groupId, topic, 0,
+          function (error) {
+            error.should.equal('Consumer not registered notMyConsumer');
+            done();
+          });
       });
     });
   });
