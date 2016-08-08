@@ -3,6 +3,7 @@
 var Zookeeper = require('../lib/zookeeper').Zookeeper;
 var host = process.env['KAFKA_TEST_HOST'] || '';
 var zk;
+var uuid = require('node-uuid');
 
 // Helper method
 function randomId () {
@@ -10,8 +11,12 @@ function randomId () {
 }
 
 describe('Zookeeper', function () {
-  before(function () {
+  beforeEach(function () {
     zk = new Zookeeper(host);
+  });
+
+  afterEach(function () {
+    zk.close();
   });
 
   describe('when init success', function () {
@@ -19,6 +24,57 @@ describe('Zookeeper', function () {
       zk.once('init', function (brokers) {
         Object.keys(brokers).length.should.eql(1);
         done();
+      });
+    });
+  });
+
+  describe('#listPartitions', function () {
+    function createTopicWithPartitions (topic, numberOfPartitions, cb) {
+      var trans = zk.client.transaction().create('/brokers/topics/' + topic).create('/brokers/topics/' + topic + '/partitions');
+
+      for (var i = 0; i < numberOfPartitions; i++) {
+        trans.create('/brokers/topics/' + topic + '/partitions/' + i);
+      }
+
+      trans.commit(function (error, results) {
+        if (error) {
+          return cb(error);
+        }
+        cb(null, results);
+      });
+    }
+
+    it('should trigger partitionsChanged event when partition is deleted', function (done) {
+      var topic = uuid.v4();
+      zk.on('partitionsChanged', done);
+      createTopicWithPartitions(topic, 3, function (error) {
+        if (error) {
+          return done(error);
+        }
+
+        zk.listPartitions(topic);
+        zk.client.remove('/brokers/topics/' + topic + '/partitions/1', function (error) {
+          if (error) {
+            done(error);
+          }
+        });
+      });
+    });
+
+    it('should trigger partitionsChanged event when partition is added', function (done) {
+      var topic = uuid.v4();
+      zk.on('partitionsChanged', done);
+      createTopicWithPartitions(topic, 3, function (error) {
+        if (error) {
+          return done(error);
+        }
+
+        zk.listPartitions(topic);
+        zk.client.create('/brokers/topics/' + topic + '/partitions/3', function (error) {
+          if (error) {
+            done(error);
+          }
+        });
       });
     });
   });
