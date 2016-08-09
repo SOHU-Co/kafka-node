@@ -152,6 +152,27 @@ describe('Client', function () {
       validateDoesNotThrowInvalidConfigError('something_12345');
       validateDoesNotThrowInvalidConfigError('myClientId-12345');
     });
+
+    it('should pass zookeeper options in a newless constructor', function () {
+      var client = Client(host, undefined, {sessionTimeout: 10400, spinDelay: 1000, retries: 0});
+      client.zkOptions.should.have.property('sessionTimeout').and.be.exactly(10400);
+      client.zkOptions.should.have.property('spinDelay').and.be.exactly(1000);
+      client.zkOptions.should.have.property('retries').and.be.exactly(0);
+    });
+
+    it('should pass noAckBatchOptions options in a newless constructor', function () {
+      var client = Client(host, undefined, undefined, {noAckBatchAge: 20000, noAckBatchSize: 1024 * 1024});
+      client.noAckBatchOptions.should.have.property('noAckBatchAge').and.be.exactly(20000);
+      client.noAckBatchOptions.should.have.property('noAckBatchSize').and.be.exactly(1024 * 1024);
+    });
+
+    it('should pass sslOptions options in a newless constructor', function () {
+      var ca = '--- CA CONTENTS HERE ---';
+      var client = Client(host, undefined, undefined, undefined, {rejectUnauthorized: false, ca: ca});
+      client.ssl.should.be.true;
+      client.sslOptions.should.have.property('ca').and.be.exactly(ca);
+      client.sslOptions.should.have.property('rejectUnauthorized').and.be.false;
+    });
   });
 
   describe('non constructor', function () {
