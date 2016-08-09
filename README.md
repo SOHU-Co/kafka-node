@@ -22,7 +22,6 @@ Kafka-node is a Node.js client with Zookeeper integration for Apache Kafka 0.8.1
   - [Consumer](#consumer)
   - [HighLevelConsumer](#highlevelconsumer)
   - [Offset](#offset)
-  - [fetchLatestOffsets(topics, cb)](#fetchlatestoffsetstopics-cb)
 - [Troubleshooting / FAQ](#troubleshooting--faq)
   - [HighLevelProducer with KeyedPartitioner errors on first send](#highlevelproducer-with-keyedpartitioner-errors-on-first-send)
   - [How do I debug an issue?](#how-do-i-debug-an-issue)
@@ -629,7 +628,7 @@ var kafka = require('kafka-node'),
     });
 ```
 
-## fetchLatestOffsets(topics, cb)
+### fetchLatestOffsets(topics, cb)
 
 Example
 
