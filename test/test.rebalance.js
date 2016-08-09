@@ -138,6 +138,18 @@ describe('Integrated HLC Rebalance', function () {
     }, 500);
   });
 
+  it('verify two consumer consumes all messages on all partitions after two out of the four consumers are killed right away', function (done) {
+    var messages = generateMessages(4, 'verify 4 c 2 killed');
+    var verify = getConsumerVerifier(messages, 3, 2, done);
+
+    rearer.setVerifier(topic, groupId, verify);
+    rearer.raise(4, function () {
+      rearer.kill(2, function () {
+        sendMessages(messages, done);
+      });
+    });
+  });
+
   it('verify three consumer consumes all messages on all partitions after one that is unassigned is killed', function (done) {
     var messages = generateMessages(3, 'verify 2 c 2 killed');
     var verify = getConsumerVerifier(messages, 3, 3, done);

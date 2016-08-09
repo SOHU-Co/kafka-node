@@ -141,6 +141,44 @@ describe('HighLevelConsumer', function () {
       highLevelConsumer = null;
     });
 
+    describe('pending rebalances', function () {
+      it('should initalize pending rebalances to zero', function () {
+        highLevelConsumer.pendingRebalances.should.be.eql(0);
+      });
+
+      function verifyPendingRebalances (event, done) {
+        sandbox.stub(client, 'refreshMetadata', function (topicNames, callback) {
+          highLevelConsumer.rebalancing.should.be.true;
+          highLevelConsumer.pendingRebalances.should.be.eql(0);
+          event();
+          highLevelConsumer.pendingRebalances.should.be.eql(1);
+          setImmediate(callback);
+        });
+        client.emit('ready');
+        highLevelConsumer.once('rebalanced', function () {
+          sandbox.restore();
+          highLevelConsumer.pendingRebalances.should.be.eql(1);
+          highLevelConsumer.on('rebalanced', done);
+        });
+      }
+
+      it('should queue brokersChanged events during a rebalance', function (done) {
+        verifyPendingRebalances(function () {
+          client.emit('brokersChanged');
+        }, done);
+      });
+      it('should queue consumersChanged rebalance events during a rebalance', function (done) {
+        verifyPendingRebalances(function () {
+          client.zk.emit('consumersChanged');
+        }, done);
+      });
+      it('should queue partitionsChanged rebalance events during a rebalance', function (done) {
+        verifyPendingRebalances(function () {
+          client.zk.emit('partitionsChanged');
+        }, done);
+      });
+    });
+
     it('should emit rebalanced event and clear rebalancing flag only after offsets are updated', function (done) {
       client.emit('ready');
 
