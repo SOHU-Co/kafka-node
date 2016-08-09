@@ -22,7 +22,6 @@ Kafka-node is a Node.js client with Zookeeper integration for Apache Kafka 0.8.1
   - [Consumer](#consumer)
   - [HighLevelConsumer](#highlevelconsumer)
   - [Offset](#offset)
-  - [fetchLatestOffsets(topics, cb)](#fetchlatestoffsetstopics-cb)
 - [Troubleshooting / FAQ](#troubleshooting--faq)
   - [HighLevelProducer with KeyedPartitioner errors on first send](#highlevelproducer-with-keyedpartitioner-errors-on-first-send)
   - [How do I debug an issue?](#how-do-i-debug-an-issue)
@@ -414,7 +413,7 @@ consumer.close(cb); //force is disabled
 {
     // Consumer group id, deafult `kafka-node-group`
     groupId: 'kafka-node-group',
-    // Consumer id, defaults to `groupId`
+    // Optional consumer id, defaults to groupId + uuid
     id: 'my-consumer-id',
     // Auto commit config
     autoCommit: true,
@@ -629,7 +628,7 @@ var kafka = require('kafka-node'),
     });
 ```
 
-## fetchLatestOffsets(topics, cb)
+### fetchLatestOffsets(topics, cb)
 
 Example
 
@@ -676,7 +675,9 @@ Reference issue [#342](https://github.com/SOHU-Co/kafka-node/issues/342)
 
 ## FailedToRebalanceConsumerError: Exception: NODE_EXISTS[-110]
 
-This error can occur when the process is killed and restarted quickly. The ephemeral nodes are not relinquished in zookeeper when `SIGINT` is sent and instead relinquished when zookeeper session timeout is reached. The timeout can be adjusted using the `zoo.cfg maxSessionTimeout` setting however it is recommended that a handler is added for this case as demostrated below:
+This error can occur when a HLC is killed and restarted quickly. The ephemeral nodes linked to the previous session are not relinquished in zookeeper when `SIGINT` is sent and instead relinquished when zookeeper session timeout is reached. The timeout can be adjusted using the `sessionTimeout` zookeeper option when the `Client` is created (the default is 30000ms).
+
+Example handler:
 
 ```js
 process.on('SIGINT', function () {
@@ -685,6 +686,8 @@ process.on('SIGINT', function () {
     });
 });
 ```
+
+Alternatively, you to avoid this issue entirely by omitting the HLC's `id` and a unique one will be generated for you.
 
 Reference issue [#90](https://github.com/SOHU-Co/kafka-node/issues/90)
 

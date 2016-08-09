@@ -1,5 +1,11 @@
 # kafka-node CHANGELOG
 
+## 2016-08-09, Version 0.5.4
+- Fix lost client options when creating a `Client` w/o the `new` operator [#437](https://github.com/SOHU-Co/kafka-node/pull/437)
+- Fix issue rebalances can be missed when an event occurs during rebalance [#435](https://github.com/SOHU-Co/kafka-node/pull/435)
+- Fix issue where changes to a topic's number of partitions should trigger a rebalance [#430](https://github.com/SOHU-Co/kafka-node/pull/430)
+- Added coverall coverage and additional tests [#433](https://github.com/SOHU-Co/kafka-node/pull/433) and [#432](https://github.com/SOHU-Co/kafka-node/pull/432)
+
 ## 2016-08-05, Version 0.5.3
 - Fix for some long standing high-level consumer rebalance issues: [#423](https://github.com/SOHU-Co/kafka-node/pull/423)
 	- Fixed issue where consumers who weren't assigned a partition would never rebalance... ever
