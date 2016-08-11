@@ -25,6 +25,76 @@ var SNAPPY_MESSAGE = new Array(20).join('snappy');
 var host = process.env['KAFKA_TEST_HOST'] || '';
 function noop () { console.log(arguments); }
 
+describe('validate topics', function () {
+  function validateThrowsInvalidConfigError (topics) {
+    should.throws(function () {
+      var client = new FakeClient(host);
+      // eslint-disable-next-line no-new
+      new Consumer(client, topics);
+    }, InvalidConfigError);
+  }
+
+  function validateDoesNotThrowInvalidConfigError (topics) {
+    should.doesNotThrow(function () {
+      var client = new FakeClient(host);
+      // eslint-disable-next-line no-new
+      new Consumer(client, topics);
+    }, InvalidConfigError);
+  }
+
+  it('should throw an error on invalid topic partitions', function () {
+    validateThrowsInvalidConfigError([
+      {
+        topic: 'another-topic'
+      },
+      {
+        topic: 'my-fake-topic',
+        partition: '7'
+      }
+    ]);
+
+    validateThrowsInvalidConfigError([
+      {
+        topic: 'another-topic',
+        partition: 3
+      },
+
+      {
+        topic: 'my-fake-topic',
+        partition: {}
+      }
+    ]);
+
+    validateThrowsInvalidConfigError([
+      {
+        topic: 'my-fake-topic',
+        partition: false
+      }
+    ]);
+  });
+
+  it('should not throw an error for valid topic partition', function () {
+    validateDoesNotThrowInvalidConfigError([
+      {
+        topic: 'fake-topic',
+        partition: 7
+      },
+      {
+        topic: 'another-topic'
+      }
+    ]);
+    validateDoesNotThrowInvalidConfigError([
+      {
+        topic: 'another-topic'
+      },
+      {
+        topic: 'fake-topic',
+        partition: 0
+      }
+    ]);
+  });
+});
+
 describe('validate groupId', function () {
   function validateThrowsInvalidConfigError (groupId) {
     should.throws(function () {
