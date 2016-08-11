@@ -12,6 +12,155 @@ var sinon = require('sinon');
 describe('Client', function () {
   var client = null;
 
+  describe('Kafka cluster not using deprecated host and port configs', function () {
+    var zk, Client, brokers;
+
+    before(function () {
+      zk = new FakeZookeeper();
+
+      Client = proxyquire('../lib/client', {
+        './zookeeper': {
+          Zookeeper: function () {
+            return zk;
+          }
+        },
+        tls: {
+          connect: function () {
+            return new FakeSocket();
+          }
+        }
+      });
+    });
+
+    function verifyBroker (brokerProfiles, expectedBrokers) {
+      Object.keys(brokerProfiles).length.should.eql(expectedBrokers.length);
+      expectedBrokers.forEach(function (broker) {
+        var addr = broker.host + ':' + broker.port;
+        should(brokerProfiles).have.property(addr);
+        brokerProfiles[addr].should.have.property('host').and.be.exactly(broker.host);
+        brokerProfiles[addr].should.have.property('port').and.be.exactly(broker.port);
+      });
+    }
+
+    it('should setup brokerProfiles using kafka listners for SSL', function () {
+      brokers = {
+        '1001': {
+          endpoints: ['SSL://127.0.0.1:9093'],
+          host: null,
+          version: 2,
+          port: -1
+        },
+        '1002': {
+          endpoints: ['SSL://127.0.0.2:9093'],
+          host: null,
+          version: 2,
+          port: -1
+        }
+      };
+
+      var clientId = 'kafka-node-client-' + uuid.v4();
+      client = new Client(host, clientId, undefined, undefined, {rejectUnauthorized: false});
+
+      zk.emit('init', brokers);
+
+      verifyBroker(client.brokerProfiles, [
+        {
+          host: '127.0.0.1',
+          port: '9093'
+        },
+        {
+          host: '127.0.0.2',
+          port: '9093'
+        }
+      ]);
+    });
+
+    it('should setup brokerProfiles using kafka listners for PLAINTEXT', function () {
+      brokers = {
+        '1001': {
+          endpoints: ['PLAINTEXT://127.0.0.1:9092'],
+          host: null,
+          version: 2,
+          port: -1
+        },
+        '1002': {
+          endpoints: ['PLAINTEXT://127.0.0.2:9092'],
+          host: null,
+          version: 2,
+          port: -1
+        }
+      };
+
+      var clientId = 'kafka-node-client-' + uuid.v4();
+      client = new Client(host, clientId);
+
+      zk.emit('init', brokers);
+
+      verifyBroker(client.brokerProfiles, [
+        {
+          host: '127.0.0.1',
+          port: '9092'
+        },
+        {
+          host: '127.0.0.2',
+          port: '9092'
+        }
+      ]);
+    });
+
+    it('should emit an error when kafka is SSL only and user expected PLAINTEXT protocol', function (done) {
+      brokers = {
+        '1001': {
+          endpoints: ['SSL://127.0.0.1:9092'],
+          host: null,
+          version: 2,
+          port: -1
+        },
+        '1002': {
+          endpoints: ['SSL://127.0.0.2:9092'],
+          host: null,
+          version: 2,
+          port: -1
+        }
+      };
+
+      var clientId = 'kafka-node-client-' + uuid.v4();
+      client = new Client(host, clientId);
+      client.on('error', function (error) {
+        error.message.should.be.eql('No kafka endpoint found for broker: 1001 with protocol plaintext:');
+        done();
+      });
+
+      zk.emit('init', brokers);
+    });
+
+    it('should emit an error when kafka is PLAINTEXT only and user expected SSL protocol', function (done) {
+      brokers = {
+        '1001': {
+          endpoints: ['PLAINTEXT://127.0.0.1:9092'],
+          host: null,
+          version: 2,
+          port: -1
+        },
+        '1002': {
+          endpoints: ['PLAINTEXT://127.0.0.2:9092'],
+          host: null,
+          version: 2,
+          port: -1
+        }
+      };
+
+      var clientId = 'kafka-node-client-' + uuid.v4();
+      client = new Client(host, clientId, undefined, undefined, {rejectUnauthorized: false});
+      client.on('error', function (error) {
+        error.message.should.be.eql('No kafka endpoint found for broker: 1001 with protocol ssl:');
+        done();
+      });
+
+      zk.emit('init', brokers);
+    });
+  });
+
   describe('on brokersChanged', function () {
     var zk, Client, brokers;
 
@@ -64,7 +213,7 @@ describe('Client', function () {
         zk.emit('init', brokers);
 
         delete brokers['1001'];
-        var broker1001 = '127.0.0.1:9092';
+        var broker1001 = '127.0.0.1:9093';
         client.ssl.should.be.true;
         client.brokers.should.have.property(broker1001);
         var deadBroker = client.brokers[broker1001];
@@ -86,7 +235,7 @@ describe('Client', function () {
         zk.emit('init', brokers);
         delete brokers['1001'];
 
-        var broker1001 = '127.0.0.1:9092';
+        var broker1001 = '127.0.0.1:9093';
         client.ssl.should.be.true;
         client.brokers.should.have.property(broker1001);
         var deadBroker = client.brokers[broker1001];
@@ -206,13 +355,11 @@ describe('Client', function () {
     describe('#setupBrokerProfiles', function () {
       it('should contain SSL options', function () {
         should.exist(client.brokerProfiles);
-        var brokerKey = host + ':9092';
+        var brokerKey = host + ':9093';
         should(client.brokerProfiles).have.property(brokerKey);
         var profile = client.brokerProfiles[brokerKey];
         should(profile).have.property('host').and.be.exactly(host);
-        should(profile).have.property('port').and.be.exactly(9092);
-        should(profile).have.property('sslHost').and.be.exactly(host);
-        should(profile).have.property('sslPort').and.be.exactly(9093);
+        should(profile).have.property('port').and.be.exactly('9093');
       });
     });
   });
