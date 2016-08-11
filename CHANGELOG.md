@@ -1,5 +1,10 @@
 # kafka-node CHANGELOG
 
+## 2016-08-11, Version 0.5.5
+- Updated doc [#443](https://github.com/SOHU-Co/kafka-node/pull/443)
+- Validate topic's partition value to be a number [#442](https://github.com/SOHU-Co/kafka-node/pull/442)
+- Fixed issue where module was relying on deprecated kafka configs (especially broken when SSL is enabled) [#427](https://github.com/SOHU-Co/kafka-node/issues/427)
+
 ## 2016-08-09, Version 0.5.4
 - Fix lost client options when creating a `Client` w/o the `new` operator [#437](https://github.com/SOHU-Co/kafka-node/pull/437)
 - Fix issue rebalances can be missed when an event occurs during rebalance [#435](https://github.com/SOHU-Co/kafka-node/pull/435)
