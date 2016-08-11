@@ -361,10 +361,10 @@ consumer.setOffset('topic', 0, 0);
 ```
 
 ### pause()
-Pause the consumer
+Pause the consumer. ***Calling `pause` does not automatically stop messages from being emitted.*** This is because pause just stops the kafka consumer fetch loop. Each iteration of the fetch loop can obtain a batch of messages (limited by `fetchMaxBytes`).
 
 ### resume()
-Resume the consumer
+Resume the consumer. Resumes the fetch loop.
 
 ### pauseTopics(topics)
 Pause specify topics
@@ -522,10 +522,10 @@ consumer.setOffset('topic', 0, 0);
 ```
 
 ### pause()
-Pause the consumer
+Pause the consumer. ***Calling `pause` does not automatically stop messages from being emitted.*** This is because pause just stops the kafka consumer fetch loop. Each iteration of the fetch loop can obtain a batch of messages (limited by `fetchMaxBytes`).
 
 ### resume()
-Resume the consumer
+Resume the consumer. Resumes the fetch loop.
 
 ### close(force, cb)
 * `force`: **Boolean**, if set to true, it forces the consumer to commit the current offset before closing, default `false`
