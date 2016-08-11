@@ -28,6 +28,7 @@ Kafka-node is a Node.js client with Zookeeper integration for Apache Kafka 0.8.1
   - [For a new consumer how do I start consuming from the latest message in a partition?](#for-a-new-consumer-how-do-i-start-consuming-from-the-latest-message-in-a-partition)
   - [FailedToRebalanceConsumerError: Exception: NODE_EXISTS[-110]](#failedtorebalanceconsumererror-exception-node_exists-110)
   - [HighLevelConsumer does not consume on all partitions](#highlevelconsumer-does-not-consume-on-all-partitions)
+  - [How to throttle messages / control the concurrency of processing messages](#how-to-throttle-messages--control-the-concurrency-of-processing-messages)
 - [Running Tests](#running-tests)
 - [LICENSE - "MIT"](#license---mit)
 
@@ -696,6 +697,12 @@ Reference issue [#90](https://github.com/SOHU-Co/kafka-node/issues/90)
 Your partition will be stuck if the `fetchMaxBytes` is smaller than the message produced.  Increase `fetchMaxBytes` value should resolve this issue.
 
 Reference to issue [#339](https://github.com/SOHU-Co/kafka-node/issues/339) 
+
+## How to throttle messages / control the concurrency of processing messages
+
+1. Create a `async.queue` with message processor and concurrency of one (the message processor itself is wrapped with `setImmediate` so it will not freeze up the event loop)
+2. Set the `queue.drain` to resume the consumer
+3. The handler for consumer's `message` event pauses the consumer and pushes the message to the queue.
 
 # Running Tests
 
