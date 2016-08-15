@@ -77,6 +77,14 @@ describe('Zookeeper', function () {
         });
       });
     });
+
+    it('should not error if the topic does not exist', function (done) {
+      zk.on('error', done);
+      zk.listPartitions('_not_a_real_topic');
+      setTimeout(function () {
+        done();
+      }, 1000);
+    });
   });
 
   describe('#listBrokers', function () {
@@ -138,6 +146,14 @@ describe('Zookeeper', function () {
       zk.topicExists('_not_exist_topic_test', function (err, existed, topic) {
         existed.should.not.be.ok;
         topic.should.equal('_not_exist_topic_test');
+        done(err);
+      });
+    });
+
+    it('should return true when topic exists', function (done) {
+      zk.topicExists('_exist_topic_3_test', function (err, existed, topic) {
+        existed.should.be.ok;
+        topic.should.equal('_exist_topic_3_test');
         done(err);
       });
     });
@@ -231,6 +247,32 @@ describe('Zookeeper', function () {
             error.should.equal('Consumer not registered notMyConsumer');
             done();
           });
+      });
+    });
+  });
+
+  describe('#deletePartitionOwnership', function () {
+    it('it removes ownership', function (done) {
+      var groupId = 'myGroup' + randomId();
+      var consumerId = 'myConsumer' + randomId();
+      var topic = '_exist_topic_3_test';
+
+      zk.addPartitionOwnership(consumerId, groupId, topic, 0, function (error) {
+        if (error) {
+          return done(error);
+        }
+
+        zk.deletePartitionOwnership(groupId, topic, 0, done);
+      });
+    });
+
+    it('should error when deleting none existing ownership', function (done) {
+      var groupId = 'myGroup' + randomId();
+      var topic = '_exist_topic_3_test';
+
+      zk.deletePartitionOwnership(groupId, topic, 0, function (error) {
+        error.should.be.defined;
+        done();
       });
     });
   });
