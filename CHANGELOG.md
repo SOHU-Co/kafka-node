@@ -1,5 +1,8 @@
 # kafka-node CHANGELOG
 
+## 2016-08-17, Version 0.5.6
+- Fix older version of node issue introduced in last version [#447](https://github.com/SOHU-Co/kafka-node/pull/447)
+
 ## 2016-08-11, Version 0.5.5
 - Updated doc [#443](https://github.com/SOHU-Co/kafka-node/pull/443)
 - Validate topic's partition value to be a number [#442](https://github.com/SOHU-Co/kafka-node/pull/442)
