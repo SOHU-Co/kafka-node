@@ -1,4 +1,4 @@
-var EventEmitter = require('events');
+var EventEmitter = require('events').EventEmitter;
 var util = require('util');
 var debug = require('debug')('kafka-node:Test-Childrearer');
 var fork = require('child_process').fork;

@@ -1,5 +1,5 @@
 var util = require('util');
-var EventEmitter = require('events');
+var EventEmitter = require('events').EventEmitter;
 
 function FakeZookeeper () {
   EventEmitter.call(this);
