@@ -116,6 +116,53 @@ describe('HighLevelConsumer', function () {
     });
   });
 
+  describe('Reregister consumer on zookeeper reconnection', function () {
+    var client, consumer, sandbox;
+    var async = require('async');
+    var FailedToRegisterConsumerError = require('../lib/errors/FailedToRegisterConsumerError');
+
+    beforeEach(function () {
+      client = new FakeClient();
+
+      consumer = new HighLevelConsumer(
+        client,
+        [ {topic: 'fake-topic'} ]
+      );
+
+      sandbox = sinon.sandbox.create();
+    });
+
+    afterEach(function () {
+      sandbox.restore();
+    });
+
+    it('should try to register the consumer and emit error on failure', function (done) {
+      sandbox.stub(consumer, 'registerConsumer').yields(new Error('failed'));
+      consumer.on('error', function (error) {
+        error.should.be.an.instanceOf(FailedToRegisterConsumerError);
+        error.message.should.be.eql('Failed to register consumer on zkReconnect');
+        done();
+      });
+      client.emit('zkReconnect');
+    });
+
+    it('should register the consumer and emit registered on success', function (done) {
+      sandbox.stub(consumer, 'registerConsumer').yields(null);
+      async.parallel([
+        function (callback) {
+          consumer.once('registered', callback);
+        },
+        function (callback) {
+          consumer.once('rebalancing', callback);
+        }
+      ], function () {
+        sinon.assert.calledOnce(consumer.registerConsumer);
+        done();
+      });
+      client.emit('zkReconnect');
+    });
+  });
+
   describe('#setOffset', function () {
     var client, highLevelConsumer;
 
