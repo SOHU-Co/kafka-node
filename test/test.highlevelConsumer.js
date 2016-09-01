@@ -116,6 +116,41 @@ describe('HighLevelConsumer', function () {
     });
   });
 
+  describe('#setOffset', function () {
+    var client, highLevelConsumer;
+
+    beforeEach(function () {
+      client = new FakeClient();
+
+      highLevelConsumer = new HighLevelConsumer(
+        client,
+        [ {topic: 'fake-topic'} ]
+      );
+
+      clearTimeout(highLevelConsumer.checkPartitionOwnershipInterval);
+      highLevelConsumer.topicPayloads = [
+        {topic: 'fake-topic', partition: '0', offset: 0, maxBytes: 1048576, metadata: 'm'},
+        {topic: 'fake-topic', partition: '1', offset: 0, maxBytes: 1048576, metadata: 'm'}
+      ];
+    });
+
+    it('should setOffset correctly given partition is a string', function () {
+      highLevelConsumer.setOffset('fake-topic', '0', 86);
+      highLevelConsumer.topicPayloads[0].offset.should.be.eql(86);
+
+      highLevelConsumer.setOffset('fake-topic', '1', 23);
+      highLevelConsumer.topicPayloads[1].offset.should.be.eql(23);
+    });
+
+    it('should setOffset correctly if given partition is a number', function () {
+      highLevelConsumer.setOffset('fake-topic', 0, 67);
+      highLevelConsumer.topicPayloads[0].offset.should.be.eql(67);
+
+      highLevelConsumer.setOffset('fake-topic', 1, 98);
+      highLevelConsumer.topicPayloads[1].offset.should.be.eql(98);
+    });
+  });
+
   describe('rebalance', function () {
     var client,
       highLevelConsumer,
