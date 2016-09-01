@@ -64,6 +64,7 @@ describe('HighLevelConsumer', function () {
       client = new FakeClient();
       unregisterSpy = sinon.spy(client.zk, 'unregisterConsumer');
       consumer = new HighLevelConsumer(client, [], {groupId: 'mygroup'});
+      clearInterval(consumer.checkPartitionOwnershipInterval);
       releasePartitionsStub = sinon.stub(consumer, '_releasePartitions').yields();
     });
 
@@ -87,20 +88,32 @@ describe('HighLevelConsumer', function () {
   });
 
   describe('validate groupId', function () {
+    var clock;
+
+    beforeEach(function () {
+      clock = sinon.useFakeTimers();
+    });
+
+    afterEach(function () {
+      clock.restore();
+    });
+
     function validateThrowsInvalidConfigError (groupId) {
+      var consumer;
       should.throws(function () {
         var client = new FakeClient();
-        // eslint-disable-next-line no-new
-        new HighLevelConsumer(client, [ { topic: 'some_topic' } ], {groupId: groupId});
+        consumer = new HighLevelConsumer(client, [ { topic: 'some_topic' } ], {groupId: groupId});
       }, InvalidConfigError);
+      consumer && consumer.close();
     }
 
     function validateDoesNotThrowInvalidConfigError (groupId) {
+      var consumer;
       should.doesNotThrow(function () {
         var client = new FakeClient();
-        // eslint-disable-next-line no-new
-        new HighLevelConsumer(client, [ { topic: 'some_topic' } ], {groupId: groupId});
+        consumer = new HighLevelConsumer(client, [ { topic: 'some_topic' } ], {groupId: groupId});
       });
+      consumer.close();
     }
 
     it('should throws an error on invalid group IDs', function () {
@@ -126,19 +139,22 @@ describe('HighLevelConsumer', function () {
 
       consumer = new HighLevelConsumer(
         client,
-        [ {topic: 'fake-topic'} ]
+        [ {topic: 'fake-topic'} ],
+        {groupId: 'zkReconnect-Test'}
       );
 
       sandbox = sinon.sandbox.create();
     });
 
     afterEach(function () {
+      consumer.close();
       sandbox.restore();
+      consumer = null;
     });
 
     it('should try to register the consumer and emit error on failure', function (done) {
       sandbox.stub(consumer, 'registerConsumer').yields(new Error('failed'));
-      consumer.on('error', function (error) {
+      consumer.once('error', function (error) {
         error.should.be.an.instanceOf(FailedToRegisterConsumerError);
         error.message.should.be.eql('Failed to register consumer on zkReconnect');
         done();
@@ -198,8 +214,9 @@ describe('HighLevelConsumer', function () {
     });
   });
 
-  describe('ensure partition ownership', function () {
+  describe('ensure partition ownership and registration', function () {
     var client, consumer, sandbox;
+    var twentySeconds = 20000;
 
     beforeEach(function () {
       sandbox = sinon.sandbox.create();
@@ -213,6 +230,7 @@ describe('HighLevelConsumer', function () {
     });
 
     afterEach(function () {
+      consumer.close();
       sandbox.restore();
       client = null;
       consumer = null;
@@ -231,10 +249,49 @@ describe('HighLevelConsumer', function () {
 
       consumer.on('error', function (error) {
         error.should.be.an.instanceOf(FailedToRegisterConsumerError);
+        error.message.should.be.eql('Error: not owned');
         sinon.assert.calledOnce(checkPartitionOwnershipStub);
         done();
       });
-      sandbox.clock.tick(20000);
+      sandbox.clock.tick(twentySeconds);
+    });
+
+    it('should emit an FailedToRegisterConsumerError when no longer registered', function (done) {
+      consumer.topicPayloads = [
+        {topic: 'fake-topic', partition: '0', offset: 0, maxBytes: 1048576, metadata: 'm'},
+        {topic: 'fake-topic', partition: '1', offset: 0, maxBytes: 1048576, metadata: 'm'}
+      ];
+
+      sandbox.stub(client.zk, 'checkPartitionOwnership').yields();
+      sandbox.stub(client.zk, 'isConsumerRegistered').yields(null, false);
+
+      consumer.on('error', function (error) {
+        error.should.be.an.instanceOf(FailedToRegisterConsumerError);
+        error.message.should.be.eql('Error: Consumer ' + consumer.id + ' is not registered in group kafka-node-group');
+        sinon.assert.calledOnce(client.zk.isConsumerRegistered);
+        done();
+      });
+      sandbox.clock.tick(twentySeconds);
+    });
+
+    it('should emit an FailedToRegisterConsumerError when registered check fails', function (done) {
+      consumer.topicPayloads = [
+        {topic: 'fake-topic', partition: '0', offset: 0, maxBytes: 1048576, metadata: 'm'},
+        {topic: 'fake-topic', partition: '1', offset: 0, maxBytes: 1048576, metadata: 'm'}
+      ];
+
+      sandbox.stub(client.zk, 'checkPartitionOwnership').yields();
+      sandbox.stub(client.zk, 'isConsumerRegistered').yields(new Error('CONNECTION_LOSS[-4]'));
+
+      consumer.on('error', function (error) {
+        error.should.be.an.instanceOf(FailedToRegisterConsumerError);
+        error.nested.should.be.an.instanceOf(Error);
+        error.nested.message.should.be.eql('CONNECTION_LOSS[-4]');
+        sinon.assert.calledOnce(client.zk.isConsumerRegistered);
+        sinon.assert.calledTwice(client.zk.checkPartitionOwnership);
+        done();
+      });
+      sandbox.clock.tick(twentySeconds);
     });
 
     it('should not emit an error if partition ownership checks succeeds', function (done) {
@@ -243,15 +300,10 @@ describe('HighLevelConsumer', function () {
         {topic: 'fake-topic', partition: '1', offset: 0, maxBytes: 1048576, metadata: 'm'}
       ];
 
-      var checkPartitionOwnershipStub = sandbox.stub(client.zk, 'checkPartitionOwnership');
+      var checkPartitionOwnershipStub = sandbox.stub(client.zk, 'checkPartitionOwnership').yields();
+      sandbox.stub(client.zk, 'isConsumerRegistered').yields(null, true);
 
-      checkPartitionOwnershipStub.withArgs(consumer.id, consumer.options.groupId, consumer.topicPayloads[0].topic,
-        consumer.topicPayloads[0].partition).yields();
-
-      checkPartitionOwnershipStub.withArgs(consumer.id, consumer.options.groupId, consumer.topicPayloads[1].topic,
-        consumer.topicPayloads[1].partition).yields();
-
-      sandbox.clock.tick(20000);
+      sandbox.clock.tick(twentySeconds);
       sandbox.clock.restore();
       setImmediate(function () {
         sinon.assert.calledTwice(checkPartitionOwnershipStub);
