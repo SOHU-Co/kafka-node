@@ -5,6 +5,7 @@ var HighLevelConsumer = require('../lib/highLevelConsumer');
 var FakeClient = require('./mocks/mockClient');
 var should = require('should');
 var InvalidConfigError = require('../lib/errors/InvalidConfigError');
+var FailedToRegisterConsumerError = require('../lib/errors/FailedToRegisterConsumerError');
 
 describe('HighLevelConsumer', function () {
   describe('#close', function (done) {
@@ -119,7 +120,6 @@ describe('HighLevelConsumer', function () {
   describe('Reregister consumer on zookeeper reconnection', function () {
     var client, consumer, sandbox;
     var async = require('async');
-    var FailedToRegisterConsumerError = require('../lib/errors/FailedToRegisterConsumerError');
 
     beforeEach(function () {
       client = new FakeClient();
@@ -195,6 +195,68 @@ describe('HighLevelConsumer', function () {
 
       highLevelConsumer.setOffset('fake-topic', 1, 98);
       highLevelConsumer.topicPayloads[1].offset.should.be.eql(98);
+    });
+  });
+
+  describe('ensure partition ownership', function () {
+    var client, consumer, sandbox;
+
+    beforeEach(function () {
+      sandbox = sinon.sandbox.create();
+      sandbox.useFakeTimers();
+      client = new FakeClient();
+
+      consumer = new HighLevelConsumer(
+        client,
+        [ {topic: 'fake-topic'} ]
+      );
+    });
+
+    afterEach(function () {
+      sandbox.restore();
+      client = null;
+      consumer = null;
+    });
+
+    it('should emit an FailedToRegisterConsumerError when ownership changes', function (done) {
+      consumer.topicPayloads = [
+        {topic: 'fake-topic', partition: '0', offset: 0, maxBytes: 1048576, metadata: 'm'},
+        {topic: 'fake-topic', partition: '1', offset: 0, maxBytes: 1048576, metadata: 'm'}
+      ];
+
+      var checkPartitionOwnershipStub = sandbox.stub(client.zk, 'checkPartitionOwnership');
+
+      checkPartitionOwnershipStub.withArgs(consumer.id, consumer.options.groupId, consumer.topicPayloads[0].topic,
+        consumer.topicPayloads[0].partition).yields(new Error('not owned'));
+
+      consumer.on('error', function (error) {
+        error.should.be.an.instanceOf(FailedToRegisterConsumerError);
+        sinon.assert.calledOnce(checkPartitionOwnershipStub);
+        done();
+      });
+      sandbox.clock.tick(20000);
+    });
+
+    it('should not emit an error if partition ownership checks succeeds', function (done) {
+      consumer.topicPayloads = [
+        {topic: 'fake-topic', partition: '0', offset: 0, maxBytes: 1048576, metadata: 'm'},
+        {topic: 'fake-topic', partition: '1', offset: 0, maxBytes: 1048576, metadata: 'm'}
+      ];
+
+      var checkPartitionOwnershipStub = sandbox.stub(client.zk, 'checkPartitionOwnership');
+
+      checkPartitionOwnershipStub.withArgs(consumer.id, consumer.options.groupId, consumer.topicPayloads[0].topic,
+        consumer.topicPayloads[0].partition).yields();
+
+      checkPartitionOwnershipStub.withArgs(consumer.id, consumer.options.groupId, consumer.topicPayloads[1].topic,
+        consumer.topicPayloads[1].partition).yields();
+
+      sandbox.clock.tick(20000);
+      sandbox.clock.restore();
+      setImmediate(function () {
+        sinon.assert.calledTwice(checkPartitionOwnershipStub);
+        done();
+      });
     });
   });
 

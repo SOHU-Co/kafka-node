@@ -37,7 +37,7 @@ describe('Zookeeper', function () {
         zk.isConsumerRegistered(groupId, consumerId, function (registered) {
           registered.should.be.eql(true);
           done();
-        })
+        });
       });
     });
 
@@ -49,7 +49,7 @@ describe('Zookeeper', function () {
         zk.isConsumerRegistered(groupId, 'some-unknown-id', function (registered) {
           registered.should.be.eql(false);
           done();
-        })
+        });
       });
     });
 
@@ -59,7 +59,7 @@ describe('Zookeeper', function () {
       zk.isConsumerRegistered(groupId, consumerId, function (registered) {
         registered.should.be.eql(false);
         done();
-      })
+      });
     });
   });
 
