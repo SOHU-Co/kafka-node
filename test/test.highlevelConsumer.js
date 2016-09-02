@@ -312,6 +312,56 @@ describe('HighLevelConsumer', function () {
     });
   });
 
+  describe('Verify no duplicate messages are being consumed', function () {
+    var Client = require('../lib/Client');
+    var Producer = require('../lib/Producer');
+    var uuid = require('node-uuid');
+    var host = process.env['KAFKA_TEST_HOST'] || '';
+    var topic = 'DuplicateMessageTest';
+
+    var highLevelConsumer;
+
+    function sendUUIDMessages (times, topic, done) {
+      var client = new Client(host, uuid.v4());
+      var _ = require('lodash');
+      var producer = new Producer(client, { requireAcks: 1 });
+
+      producer.on('ready', function () {
+        var messages = _.times(times, function () {
+          return uuid.v4();
+        });
+        producer.send([{topic: topic, messages: messages}], done);
+      });
+    }
+
+    beforeEach(function (done) {
+      sendUUIDMessages(10000, topic, done);
+    });
+
+    afterEach(function (done) {
+      highLevelConsumer.close(true, done);
+    });
+
+    it('should not receive any duplicate messages', function (done) {
+      var client = new Client(host, uuid.v4());
+      highLevelConsumer = new HighLevelConsumer(client, [ {topic: topic} ], {fetchMaxWaitMs: 10, fetchMaxBytes: 1024});
+      var map = Object.create(null);
+      var count = 0;
+
+      highLevelConsumer.on('message', function (message) {
+        if (map[message.value]) {
+          done('duplicate message');
+          return;
+        }
+        map[message.value] = true;
+
+        if (++count === 10000) {
+          done();
+        }
+      });
+    });
+  });
+
   describe('rebalance', function () {
     var client,
       highLevelConsumer,
