@@ -10,6 +10,9 @@ function FakeZookeeper () {
   this.deletePartitionOwnership = function (groupId, topic, partition, cb) {
     setImmediate(cb);
   };
+  this.isConsumerRegistered = function (groupId, id, cb) {
+    setImmediate(cb);
+  };
   this.addPartitionOwnership = function (id, groupId, topic, partition, cb) {
     setImmediate(cb);
   };

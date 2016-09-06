@@ -28,6 +28,41 @@ describe('Zookeeper', function () {
     });
   });
 
+  describe('#isConsumerRegistered', function () {
+    it('should yield true when consumer is registered', function (done) {
+      var groupId = uuid.v4();
+      var consumerId = uuid.v4();
+
+      zk.registerConsumer(groupId, consumerId, [{topic: 'fake-topic'}], function () {
+        zk.isConsumerRegistered(groupId, consumerId, function (registered) {
+          registered.should.be.eql(true);
+          done();
+        });
+      });
+    });
+
+    it('should yield false when consumer is unregistered', function (done) {
+      var groupId = uuid.v4();
+      var consumerId = uuid.v4();
+
+      zk.registerConsumer(groupId, consumerId, [{topic: 'fake-topic'}], function () {
+        zk.isConsumerRegistered(groupId, 'some-unknown-id', function (registered) {
+          registered.should.be.eql(false);
+          done();
+        });
+      });
+    });
+
+    it('should yield false when consumer is unregistered and group does not exist', function (done) {
+      var groupId = uuid.v4();
+      var consumerId = uuid.v4();
+      zk.isConsumerRegistered(groupId, consumerId, function (registered) {
+        registered.should.be.eql(false);
+        done();
+      });
+    });
+  });
+
   describe('#listPartitions', function () {
     function createTopicWithPartitions (topic, numberOfPartitions, cb) {
       var trans = zk.client.transaction().create('/brokers/topics/' + topic).create('/brokers/topics/' + topic + '/partitions');
