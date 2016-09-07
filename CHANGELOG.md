@@ -1,5 +1,9 @@
 # kafka-node CHANGELOG
 
+## 2016-09-07, Version 0.5.7
+- Fix regression when calling consumer's `setOffset` fails to set the given offset [#457](https://github.com/SOHU-Co/kafka-node/pull/457)
+- Improved zookeeeper connection loss recovery to verify consumer is still registered [#458](https://github.com/SOHU-Co/kafka-node/pull/458)
+
 ## 2016-08-17, Version 0.5.6
 - Fix older version of node issue introduced in last version [#447](https://github.com/SOHU-Co/kafka-node/pull/447)
 
