@@ -4,6 +4,7 @@ var Zookeeper = require('../lib/zookeeper').Zookeeper;
 var host = process.env['KAFKA_TEST_HOST'] || '';
 var zk;
 var uuid = require('node-uuid');
+var should = require('should');
 
 // Helper method
 function randomId () {
@@ -34,7 +35,8 @@ describe('Zookeeper', function () {
       var consumerId = uuid.v4();
 
       zk.registerConsumer(groupId, consumerId, [{topic: 'fake-topic'}], function () {
-        zk.isConsumerRegistered(groupId, consumerId, function (registered) {
+        zk.isConsumerRegistered(groupId, consumerId, function (error, registered) {
+          should(error).be.empty;
           registered.should.be.eql(true);
           done();
         });
@@ -46,7 +48,8 @@ describe('Zookeeper', function () {
       var consumerId = uuid.v4();
 
       zk.registerConsumer(groupId, consumerId, [{topic: 'fake-topic'}], function () {
-        zk.isConsumerRegistered(groupId, 'some-unknown-id', function (registered) {
+        zk.isConsumerRegistered(groupId, 'some-unknown-id', function (error, registered) {
+          should(error).be.empty;
           registered.should.be.eql(false);
           done();
         });
@@ -56,7 +59,8 @@ describe('Zookeeper', function () {
     it('should yield false when consumer is unregistered and group does not exist', function (done) {
       var groupId = uuid.v4();
       var consumerId = uuid.v4();
-      zk.isConsumerRegistered(groupId, consumerId, function (registered) {
+      zk.isConsumerRegistered(groupId, consumerId, function (error, registered) {
+        should(error).be.empty;
         registered.should.be.eql(false);
         done();
       });
