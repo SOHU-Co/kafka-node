@@ -312,6 +312,61 @@ describe('HighLevelConsumer', function () {
     });
   });
 
+  describe('Verify no duplicate messages are being consumed', function () {
+    this.timeout(26000);
+    var _ = require('lodash');
+    var Client = require('../lib/Client');
+    var Producer = require('../lib/Producer');
+    var uuid = require('node-uuid');
+    var host = process.env['KAFKA_TEST_HOST'] || '';
+    var topic = 'DuplicateMessageTest';
+    var numberOfMessages = 20000;
+
+    var highLevelConsumer;
+
+    function sendUUIDMessages (times, topic, done) {
+      var client = new Client(host, uuid.v4());
+      var producer = new Producer(client, { requireAcks: 1 });
+
+      producer.on('ready', function () {
+        var messages = _.times(times, uuid.v4);
+        producer.send([{topic: topic, messages: messages}], done);
+      });
+    }
+
+    beforeEach(function (done) {
+      sendUUIDMessages(numberOfMessages, topic, done);
+    });
+
+    afterEach(function (done) {
+      highLevelConsumer.close(true, done);
+    });
+
+    [1 * 1024, 10 * 1024, 11 * 1024, 12 * 1024, 12300, 12350, 12370, 12371, 12372, 12373, 12375, 12385, 12400, 12500, 12.5 * 1024,
+      13 * 1024, 15 * 1024, 20 * 1024, 50 * 1024, 100 * 1024, 1024 * 1024].forEach(verifyNoDupes);
+
+    function verifyNoDupes (fetchMaxBytes) {
+      it('should not receive duplicate messages for ' + numberOfMessages + ' messages using fetchMaxBytes: ' + fetchMaxBytes, function (done) {
+        var client = new Client(host, uuid.v4());
+        highLevelConsumer = new HighLevelConsumer(client, [ {topic: topic} ], {fetchMaxWaitMs: 10, fetchMaxBytes: fetchMaxBytes});
+        var map = Object.create(null);
+        var count = 0;
+
+        highLevelConsumer.on('message', function (message) {
+          if (map[message.value]) {
+            done('duplicate message');
+            return;
+          }
+          map[message.value] = true;
+
+          if (++count === numberOfMessages) {
+            done();
+          }
+        });
+      });
+    }
+  });
+
   describe('rebalance', function () {
     var client,
       highLevelConsumer,
