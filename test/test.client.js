@@ -276,6 +276,26 @@ describe('Client', function () {
     });
   });
 
+  describe('Discover Group Coordinator', function () {
+    beforeEach(function (done) {
+      client = new Client(host);
+      client.once('connect', done);
+    });
+
+    afterEach(function (done) {
+      client.close(done);
+    });
+
+    it('#sendGroupCoordinatorRequest', function (done) {
+      client.sendGroupCoordinatorRequest('RebalanceTopic', function (error, response) {
+        should(error).be.null;
+        response.coordinatorPort.should.be.eql(9092);
+        response.coordinatorHost.should.be.eql(host);
+        done();
+      });
+    });
+  });
+
   describe('#constructor', function () {
     function validateThrowsInvalidConfigError (clientId) {
       should.throws(function () {
