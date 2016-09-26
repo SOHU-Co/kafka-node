@@ -1,5 +1,4 @@
 var should = require('should');
-var sinon = require('sinon');
 var ConsumerGroup = require('../lib/ConsumerGroup');
 var host = process.env['KAFKA_TEST_HOST'] || '';
 var _ = require('lodash');
@@ -25,8 +24,7 @@ describe('ConsumerGroup', function () {
       error.errorCode = 15;
 
       var differentError = new GroupLoadInProgress();
-      differentError.errorCode = 14
-
+      differentError.errorCode = 14;
 
       consumerGroup.options.retries = 5;
 
@@ -39,7 +37,7 @@ describe('ConsumerGroup', function () {
       consumerGroup._timeouts.should.have.length(5);
 
       results.should.be.length(3);
-      results.forEach(function(result, index) {
+      results.forEach(function (result, index) {
         result.should.eql(consumerGroup._timeouts[index]);
       });
 
@@ -52,7 +50,7 @@ describe('ConsumerGroup', function () {
       consumerGroup._timeouts.should.have.length(5);
 
       results.should.be.length(5);
-      results.forEach(function(result, index) {
+      results.forEach(function (result, index) {
         result.should.eql(consumerGroup._timeouts[index]);
       });
     });
@@ -71,7 +69,7 @@ describe('ConsumerGroup', function () {
 
       consumerGroup._timeouts.should.have.length(5);
       results.pop().should.be.false;
-      results.forEach(function(result, index) {
+      results.forEach(function (result, index) {
         result.should.eql(consumerGroup._timeouts[index]);
       });
     });
