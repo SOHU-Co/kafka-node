@@ -14,7 +14,7 @@ describe('HighLevelConsumer', function () {
     beforeEach(function () {
       client = new FakeClient();
       consumer = new HighLevelConsumer(client, [], {groupId: 'mygroup'});
-      leaveGroupStub = sinon.stub(consumer, '_leaveGroup').yields();
+      leaveGroupStub = sinon.stub(consumer, 'leaveGroup').yields();
       commitStub = sinon.stub(consumer, 'commit').yields();
       clientCloseSpy = sinon.spy(client, 'close');
     });
@@ -57,7 +57,7 @@ describe('HighLevelConsumer', function () {
     });
   });
 
-  describe('#_leaveGroup', function () {
+  describe('#leaveGroup', function () {
     var client, consumer, unregisterSpy, releasePartitionsStub;
 
     beforeEach(function () {
@@ -70,7 +70,7 @@ describe('HighLevelConsumer', function () {
 
     it('should releases partitions and unregister it self', function (done) {
       consumer.topicPayloads = [{topic: 'fake-topic', partition: 0, offset: 0, maxBytes: 1048576, metadata: 'm'}];
-      consumer._leaveGroup(function (error) {
+      consumer.leaveGroup(function (error) {
         sinon.assert.calledOnce(unregisterSpy);
         sinon.assert.calledOnce(releasePartitionsStub);
         done(error);
@@ -79,7 +79,7 @@ describe('HighLevelConsumer', function () {
 
     it('should only unregister it self', function (done) {
       consumer.topicPayloads = [];
-      consumer._leaveGroup(function (error) {
+      consumer.leaveGroup(function (error) {
         sinon.assert.notCalled(releasePartitionsStub);
         sinon.assert.calledOnce(unregisterSpy);
         done(error);
