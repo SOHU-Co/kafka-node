@@ -21,6 +21,7 @@ Kafka-node is a Node.js client with Zookeeper integration for Apache Kafka 0.8.1
   - [HighLevelProducer](#highlevelproducer)
   - [Consumer](#consumer)
   - [HighLevelConsumer](#highlevelconsumer)
+  - [ConsumerGroup](#consumergroup)
   - [Offset](#offset)
 - [Troubleshooting / FAQ](#troubleshooting--faq)
   - [HighLevelProducer with KeyedPartitioner errors on first send](#highlevelproducer-with-keyedpartitioner-errors-on-first-send)
@@ -40,6 +41,7 @@ Kafka-node is a Node.js client with Zookeeper integration for Apache Kafka 0.8.1
 * Producer and High Level Producer
 * Manage topic Offsets
 * SSL connections to brokers (Kafka 0.9+)
+* Consumer Groups managed by Kafka coordinator (Kafka 0.9+)
 
 # Install Kafka
 Follow the [instructions](http://kafka.apache.org/documentation.html#quickstart) on the Kafka wiki to build Kafka 0.8 and get a test broker up and running.
@@ -538,6 +540,151 @@ Example:
 consumer.close(true, cb);
 consumer.close(cb); //force is disabled
 ```
+
+## ConsumerGroup
+
+The new consumer group uses Kafka broker coordinators instead of Zookeeper to manage consumer groups. Supported in Kafka 0.9+ and up only. 
+
+### ConsumerGroup(options, topics)
+
+```js
+var options = {
+  host: 'zookeeper:2181',
+  groupId: 'ExampleTestGroup',
+  sessionTimeout: 15000,
+  // An array of partition assignment protocols ordered by preference.
+  // 'roundrobin' or 'range' string for built ins (see below to pass in custom assignment protocol) 
+  protocol: ['roundrobin'],
+  fromOffset: 'latest' // What offsets to start reading from for new groups 
+};
+
+var consumerGroup = new ConsumerGroup(options, ['RebalanceTopic', 'RebalanceTest']);
+```
+
+### Custom Partition Assignment Protocol
+
+You can pass a custom assignment strategy to the `protocol` array with the interface:
+
+#### function :: assign (topicPartition, groupMembers, callback)
+**topicPartition**
+
+```json
+{
+  "RebalanceTopic": [
+    "0",
+    "1",
+    "2"
+  ],
+  "RebalanceTest": [
+    "0",
+    "1",
+    "2"
+  ]
+}
+```
+
+**groupMembers**
+
+```json
+[
+  {
+    "subscription": [
+      "RebalanceTopic",
+      "RebalanceTest"
+    ],
+    "version": 0,
+    "id": "consumer1-8db1b117-61c6-4f91-867d-20ccd1ad8b3d"
+  },
+  {
+    "subscription": [
+      "RebalanceTopic",
+      "RebalanceTest"
+    ],
+    "version": 0,
+    "id": "consumer3-bf2d11f4-1c73-4a39-b498-cfe76eb65bea"
+  },
+  {
+    "subscription": [
+      "RebalanceTopic",
+      "RebalanceTest"
+    ],
+    "version": 0,
+    "id": "consumer2-9781058e-fad4-40e8-a69c-69afbae05184"
+  }
+]
+```
+
+**callback(error, result)**
+
+***result***
+
+```json
+[
+  {
+    "memberId": "consumer3-bf2d11f4-1c73-4a39-b498-cfe76eb65bea",
+    "topicPartitions": {
+      "RebalanceTopic": [
+        "2"
+      ],
+      "RebalanceTest": [
+        "2"
+      ]
+    },
+    "version": 0
+  },
+  {
+    "memberId": "consumer2-9781058e-fad4-40e8-a69c-69afbae05184",
+    "topicPartitions": {
+      "RebalanceTopic": [
+        "1"
+      ],
+      "RebalanceTest": [
+        "1"
+      ]
+    },
+    "version": 0
+  },
+  {
+    "memberId": "consumer1-8db1b117-61c6-4f91-867d-20ccd1ad8b3d",
+    "topicPartitions": {
+      "RebalanceTopic": [
+        "0"
+      ],
+      "RebalanceTest": [
+        "0"
+      ]
+    },
+    "version": 0
+  }
+]
+```
+
+#### string :: name 
+#### integer :: version
+
+### Auto migration from the v0.8 based highLevelConsumer
+
+There are option to turn on automatic migration from existing `highLevelConsumer` group. This is useful to preserve the previous committed offsets for your group.
+
+We support two use cases:
+
+1. You have downtime and your old HLC consumers are no longer available
+2. Where the old HLC group is still up and working and you are doing a rolling deploy
+
+For case 1 use below setting:
+
+```json
+{
+	migrateHLC: true, // default is false
+	migrateRolling: false // default is true
+}
+```
+
+For case 2 change `migrateRolling` to `true`. If `migrateRolling` option on it will monitor `zk` nodes for ownership the old HLC group topics otherwise before the ConsumerGroup connects it will save the previous offsets from zookeeper and kickoff ConsumerGroup connect and use the offsets specified in zookeeper.
+
+* Group names should be consistent
+* Only offsets for Topics that were in the highLevelConsumer will be migrated over offsets for new topics will follow the `fromOffset` setting
+
 
 ## Offset
 ### Offset(client)
