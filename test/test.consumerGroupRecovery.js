@@ -2,23 +2,44 @@
 
 var should = require('should');
 var _ = require('lodash');
+var sinon = require('sinon');
 var ConsumerGroupRecovery = require('../lib/ConsumerGroupRecovery');
 var GroupCoordinatorNotAvailable = require('../lib/errors/GroupCoordinatorNotAvailableError');
 var GroupLoadInProgress = require('../lib/errors/GroupLoadInProgressError');
+var EventEmitter = require('events').EventEmitter
 
 describe('ConsumerGroupRecovery', function () {
-  describe('#getRetryTimeout', function () {
-    var consumerGroupRecovery;
+  var consumerGroupRecovery, fakeClient;
 
-    beforeEach(function () {
-      consumerGroupRecovery = new ConsumerGroupRecovery({
-        options: {
-          retries: 10,
-          retryFactor: 1.8
-        }
-      });
+  beforeEach(function () {
+    fakeClient = new EventEmitter();
+    Object.assign(fakeClient, {
+      stopHeartbeats: sinon.stub(),
+      options: {
+        retries: 10,
+        retryFactor: 1.8
+      }
     });
+    consumerGroupRecovery = new ConsumerGroupRecovery(fakeClient);
+  });
 
+  describe('#tryToRecoverFrom', function () {
+    it('should emit error on the client when calling trying to recover from a unknown error', function (done) {
+      var testError = new Error('My test error');
+
+      fakeClient.once('error', function (error) {
+        error.should.be.eql(testError);
+        done();
+      });
+
+      consumerGroupRecovery.tryToRecoverFrom(testError, 'test');
+      sinon.assert.calledOnce(fakeClient.stopHeartbeats);
+      fakeClient.ready.should.be.false;
+      consumerGroupRecovery.lastError.should.be.eql(testError);
+    });
+  });
+
+  describe('#getRetryTimeout', function () {
     it('should reset backoff timeouts when calling with different error', function () {
       var error = new GroupCoordinatorNotAvailable();
       error.errorCode = 15;
