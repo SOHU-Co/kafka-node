@@ -565,6 +565,9 @@ var consumerGroup = new ConsumerGroup(options, ['RebalanceTopic', 'RebalanceTest
 
 You can pass a custom assignment strategy to the `protocol` array with the interface:
 
+#### string :: name 
+#### integer :: version
+#### object :: userData
 #### function :: assign (topicPartition, groupMembers, callback)
 **topicPartition**
 
@@ -659,8 +662,6 @@ You can pass a custom assignment strategy to the `protocol` array with the inter
 ]
 ```
 
-#### string :: name 
-#### integer :: version
 
 ### Auto migration from the v0.8 based highLevelConsumer
 
