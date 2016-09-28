@@ -543,7 +543,7 @@ consumer.close(cb); //force is disabled
 
 ## ConsumerGroup
 
-The new consumer group uses Kafka broker coordinators instead of Zookeeper to manage consumer groups. Supported in Kafka 0.9+ and up only. 
+The new consumer group uses Kafka broker coordinators instead of Zookeeper to manage consumer groups. This is supported in Kafka version 0.9 and above only.
 
 ### ConsumerGroup(options, topics)
 
@@ -673,14 +673,14 @@ We support two use cases:
 
 For case 1 use below setting:
 
-```json
+```js
 {
 	migrateHLC: true, // default is false
 	migrateRolling: false // default is true
 }
 ```
 
-For case 2 change `migrateRolling` to `true`. If `migrateRolling` option on it will monitor `zk` nodes for ownership the old HLC group topics otherwise before the ConsumerGroup connects it will save the previous offsets from zookeeper and kickoff ConsumerGroup connect and use the offsets specified in zookeeper.
+For case 2 setting `migrateRolling` to `true` will allow the ConsumerGroup to start monitoring `zk` nodes for when topic ownership are relinquished by the old HLC consumer. Once this is done the ConsumerGroup will connect and the previous HLC offsets from zookeeper will be migrated automatically to the new Kafka broker based coordinator.
 
 * Group names should be consistent
 * Only offsets for Topics that were in the highLevelConsumer will be migrated over offsets for new topics will follow the `fromOffset` setting
