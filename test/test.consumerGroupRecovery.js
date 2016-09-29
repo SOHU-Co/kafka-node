@@ -6,7 +6,7 @@ var sinon = require('sinon');
 var ConsumerGroupRecovery = require('../lib/ConsumerGroupRecovery');
 var GroupCoordinatorNotAvailable = require('../lib/errors/GroupCoordinatorNotAvailableError');
 var GroupLoadInProgress = require('../lib/errors/GroupLoadInProgressError');
-var EventEmitter = require('events').EventEmitter
+var EventEmitter = require('events').EventEmitter;
 
 describe('ConsumerGroupRecovery', function () {
   var consumerGroupRecovery, fakeClient;
