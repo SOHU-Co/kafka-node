@@ -10,7 +10,17 @@ var uuid = require('node-uuid');
 var _ = require('lodash');
 var host = process.env['KAFKA_TEST_HOST'] || '';
 
-describe('Integrated HLC Rebalance', function () {
+describe('Integrated Reblance', function () {
+  describe('HLC', function () {
+    testRebalance('test/helpers/child-hlc');
+  });
+
+  describe('ConsumerGroup', function () {
+    testRebalance('test/helpers/child-cg');
+  });
+});
+
+function testRebalance (forkPath) {
   var producer;
   var topic = 'RebalanceTopic';
   var rearer;
@@ -35,7 +45,7 @@ describe('Integrated HLC Rebalance', function () {
   });
 
   beforeEach(function (done) {
-    rearer = new Childrearer();
+    rearer = new Childrearer(forkPath);
 
     // make sure there are no other consumers on this topic before starting test
     producer.client.zk.getConsumersPerTopic(groupId, function (error, data) {
@@ -200,4 +210,4 @@ describe('Integrated HLC Rebalance', function () {
       });
     }, 1000);
   });
-});
+};

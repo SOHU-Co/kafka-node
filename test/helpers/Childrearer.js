@@ -5,10 +5,11 @@ var fork = require('child_process').fork;
 var async = require('async');
 var _ = require('lodash');
 
-function Childrearer () {
+function Childrearer (forkPath) {
   EventEmitter.call(this);
   this.children = [];
   this.id = 0;
+  this.forkPath = forkPath || '';
 }
 
 util.inherits(Childrearer, EventEmitter);
@@ -90,7 +91,7 @@ Childrearer.prototype._raiseChild = function () {
   var self = this;
   var childNumber = this.nextId();
   debug('forking child %d', childNumber);
-  var child = fork('test/helpers/child-hlc', ['--groupId=' + this.groupId, '--topic=' + this.topic, '--consumerId=' + 'child_' + childNumber]);
+  var child = fork(this.forkPath, ['--groupId=' + this.groupId, '--topic=' + this.topic, '--consumerId=' + 'child_' + childNumber]);
   child._childNum = childNumber;
   child.on('message', function (data) {
     if (data.message) {
