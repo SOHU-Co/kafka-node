@@ -543,7 +543,16 @@ consumer.close(cb); //force is disabled
 
 ## ConsumerGroup
 
-The new consumer group uses Kafka broker coordinators instead of Zookeeper to manage consumer groups. This is supported in Kafka version 0.9 and above only.
+The new consumer group uses Kafka broker coordinators instead of Zookeeper to manage consumer groups. This is supported in **Kafka version 0.9** and above only.
+
+### Coming from the highLevelConsumer
+
+API is very similar to highLevelConsumer with exceptions noted below:
+
+* In an effort to make the API simpler you no longer need to create a `client` this is done inside the ConsumerGroup
+* consumer ID do not need to be defined. There's a new ID to represent consumers called `member ID` and this is assigned to consumer after joining the group
+* Offsets and group members, and ownership information is no longer stored in Zookeeper
+* `ConsumerGroup` does not emit a `registered` event
 
 ### ConsumerGroup(options, topics)
 
