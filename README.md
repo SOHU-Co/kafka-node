@@ -547,11 +547,11 @@ The new consumer group uses Kafka broker coordinators instead of Zookeeper to ma
 
 ### Coming from the highLevelConsumer
 
-API is very similar to highLevelConsumer with exceptions noted below:
+API is very similar to `HighLevelConsumer` with some exceptions noted below:
 
-* In an effort to make the API simpler you no longer need to create a `client` this is done inside the ConsumerGroup
-* consumer ID do not need to be defined. There's a new ID to represent consumers called `member ID` and this is assigned to consumer after joining the group
-* Offsets and group members, and ownership information is no longer stored in Zookeeper
+* In an effort to make the API simpler you no longer need to create a `client` this is done inside the `ConsumerGroup`
+* consumer ID do not need to be defined. There's a new ID to represent consumers called *member ID* and this is assigned to consumer after joining the group
+* Offsets, group members, and ownership details is not stored in Zookeeper
 * `ConsumerGroup` does not emit a `registered` event
 
 ### ConsumerGroup(options, topics)
@@ -567,8 +567,8 @@ var options = {
   // An array of partition assignment protocols ordered by preference.
   // 'roundrobin' or 'range' string for built ins (see below to pass in custom assignment protocol) 
   protocol: ['roundrobin'],
-  fromOffset: 'latest', // Read the latest offsets to for new groups (defaults to the earliest available offset)
-  migrateHLC: false,   // see Migration section below
+  fromOffset: 'latest', // for new groups read messages from the latest offsets (defaults to the earliest available offset)
+  migrateHLC: false,    // for details please see Migration section below
   migrateRolling: true
 };
 
@@ -683,7 +683,7 @@ You can pass a custom assignment strategy to the `protocol` array with the inter
 
 ### Auto migration from the v0.8 based highLevelConsumer
 
-We have two option to turn on automatic migration from existing `highLevelConsumer` group. This is useful to preserve the previous committed offsets for your group.
+We have two options for automatic migration from existing `highLevelConsumer` group. This is useful to preserve the previous committed offsets for your group.
 
 We support two use cases:
 

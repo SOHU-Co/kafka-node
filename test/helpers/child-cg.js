@@ -5,7 +5,13 @@ var ConsumerGroup = kafka.ConsumerGroup;
 var argv = require('optimist').argv;
 var topic = argv.topic || 'topic1';
 var host = process.env['KAFKA_TEST_HOST'] || '';
-var options = { host: host, autoCommit: true, fetchMaxWaitMs: 1000, fetchMaxBytes: 1024 * 1024 };
+var options = {
+  host: host,
+  autoCommit: true,
+  fetchMaxWaitMs: 1000,
+  fetchMaxBytes: 1024 * 1024,
+  sessionTimeout: 8000
+};
 var debug = require('debug')('kafka-node:Child-ConsumerGroup');
 
 if (argv.groupId) {
