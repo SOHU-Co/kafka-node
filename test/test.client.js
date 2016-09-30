@@ -8,6 +8,7 @@ var FakeSocket = require('./mocks/mockSocket');
 var InvalidConfigError = require('../lib/errors/InvalidConfigError');
 var proxyquire = require('proxyquire').noCallThru();
 var sinon = require('sinon');
+var retry = require('retry');
 
 describe('Client', function () {
   var client = null;
@@ -287,11 +288,17 @@ describe('Client', function () {
     });
 
     it('#sendGroupCoordinatorRequest', function (done) {
-      client.sendGroupCoordinatorRequest('RebalanceTopic', function (error, response) {
-        should(error).be.null;
-        response.coordinatorPort.should.be.eql(9092);
-        response.coordinatorHost.should.be.eql(host);
-        done();
+      var operation = retry.operation();
+      operation.attempt(function () {
+        client.sendGroupCoordinatorRequest('ExampleTopic', function (error, response) {
+          if (operation.retry(error)) {
+            return;
+          }
+          should(error).be.null;
+          response.coordinatorPort.should.be.eql(9092);
+          response.coordinatorHost.should.be.eql(host);
+          done();
+        });
       });
     });
   });
