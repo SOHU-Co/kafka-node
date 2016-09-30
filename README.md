@@ -412,7 +412,7 @@ consumer.close(cb); //force is disabled
 
 ```js
 {
-    // Consumer group id, deafult `kafka-node-group`
+    // Consumer group id, default `kafka-node-group`
     groupId: 'kafka-node-group',
     // Optional consumer id, defaults to groupId + uuid
     id: 'my-consumer-id',
