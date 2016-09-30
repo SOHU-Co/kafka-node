@@ -559,15 +559,24 @@ API is very similar to highLevelConsumer with exceptions noted below:
 ```js
 var options = {
   host: 'zookeeper:2181',
+  zk : undefined,   // put client zk settings if you need them (see Client)
+  batch: undefined, // put client batch settings if you need them (see Client)
+  ssl: true, // optional (defaults to false) or tls options hash
   groupId: 'ExampleTestGroup',
   sessionTimeout: 15000,
   // An array of partition assignment protocols ordered by preference.
   // 'roundrobin' or 'range' string for built ins (see below to pass in custom assignment protocol) 
   protocol: ['roundrobin'],
-  fromOffset: 'latest' // What offsets to start reading from for new groups 
+  fromOffset: 'latest', // Read the latest offsets to for new groups (defaults to the earliest available offset)
+  migrateHLC: false,   // see Migration section below
+  migrateRolling: true
 };
 
 var consumerGroup = new ConsumerGroup(options, ['RebalanceTopic', 'RebalanceTest']);
+
+// Or for a single topic pass in a string
+
+var consumerGroup = new ConsumerGroup(options, 'RebalanceTopic');
 ```
 
 ### Custom Partition Assignment Protocol
@@ -674,12 +683,12 @@ You can pass a custom assignment strategy to the `protocol` array with the inter
 
 ### Auto migration from the v0.8 based highLevelConsumer
 
-There are option to turn on automatic migration from existing `highLevelConsumer` group. This is useful to preserve the previous committed offsets for your group.
+We have two option to turn on automatic migration from existing `highLevelConsumer` group. This is useful to preserve the previous committed offsets for your group.
 
 We support two use cases:
 
 1. You have downtime and your old HLC consumers are no longer available
-2. Where the old HLC group is still up and working and you are doing a rolling deploy
+2. Where the old HLC group is still up and working and you are doing a rolling deploy with zero downtime
 
 For case 1 use below setting:
 

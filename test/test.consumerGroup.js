@@ -1,11 +1,79 @@
 'use strict';
 
-var sinon = require('sinon');
-var should = require('should');
-var ConsumerGroup = require('../lib/ConsumerGroup');
-var host = process.env['KAFKA_TEST_HOST'] || '';
+const sinon = require('sinon');
+const should = require('should');
+const ConsumerGroup = require('../lib/ConsumerGroup');
+const host = process.env['KAFKA_TEST_HOST'] || '';
+const proxyquire = require('proxyquire').noCallThru();
+const EventEmitter = require('events').EventEmitter;
 
 describe('ConsumerGroup', function () {
+  describe('#constructor', function () {
+    var ConsumerGroup;
+    var fakeClient = sinon.stub().returns(new EventEmitter());
+
+    beforeEach(function () {
+      ConsumerGroup = proxyquire('../lib/ConsumerGroup', {
+        './client': fakeClient
+      });
+    });
+
+    it('should pass batch ConsumerGroup option to Client', function () {
+      const batch = {
+        noAckBatchAge: 10000
+      };
+
+      // eslint-disable-next-line no-new
+      new ConsumerGroup({
+        host: 'myhost',
+        id: 'myClientId',
+        batch: batch,
+        connnectOnReady: false
+      }, 'SampleTopic');
+
+      sinon.assert.calledWithExactly(fakeClient, 'myhost', 'myClientId', undefined, batch, undefined);
+    });
+
+    it('should pass zookeeper ConsumerGroup option to Client', function () {
+      const zkOptions = {
+        sessionTimeout: 10000
+      };
+
+      // eslint-disable-next-line no-new
+      new ConsumerGroup({
+        host: 'myhost',
+        id: 'myClientId',
+        zk: zkOptions,
+        connnectOnReady: false
+      }, 'SampleTopic');
+
+      sinon.assert.calledWithExactly(fakeClient, 'myhost', 'myClientId', zkOptions, undefined, undefined);
+    });
+
+    it('should setup SSL ConsumerGroup option ssl is true', function () {
+      // eslint-disable-next-line no-new
+      new ConsumerGroup({
+        host: 'myhost',
+        id: 'myClientId',
+        ssl: true,
+        connnectOnReady: false
+      }, 'SampleTopic');
+      sinon.assert.calledWithExactly(fakeClient, 'myhost', 'myClientId', undefined, undefined, {});
+    });
+
+    it('should pass SSL client options through ConsumerGroup option', function () {
+      const ssl = { rejectUnauthorized: false };
+      // eslint-disable-next-line no-new
+      new ConsumerGroup({
+        host: 'myhost',
+        id: 'myClientId',
+        ssl: ssl,
+        connnectOnReady: false
+      }, 'SampleTopic');
+      sinon.assert.calledWithExactly(fakeClient, 'myhost', 'myClientId', undefined, undefined, ssl);
+    });
+  });
+
   describe('#scheduleReconnect', function () {
     var consumerGroup, sandbox;
 
@@ -13,7 +81,7 @@ describe('ConsumerGroup', function () {
       consumerGroup = new ConsumerGroup({
         host: host,
         connnectOnReady: false
-      }, ['TestTopic']);
+      }, 'TestTopic');
 
       sandbox = sinon.sandbox.create();
       sandbox.stub(consumerGroup, 'connect');
