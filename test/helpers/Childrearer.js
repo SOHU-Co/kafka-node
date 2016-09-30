@@ -9,7 +9,7 @@ function Childrearer (forkPath) {
   EventEmitter.call(this);
   this.children = [];
   this.id = 0;
-  this.forkPath = forkPath || '';
+  this.forkPath = forkPath || 'test/helpers/child-hlc';
 }
 
 util.inherits(Childrearer, EventEmitter);

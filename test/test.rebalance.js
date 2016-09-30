@@ -210,4 +210,4 @@ function testRebalance (forkPath) {
       });
     }, 1000);
   });
-};
+}

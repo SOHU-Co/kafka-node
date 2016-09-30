@@ -5,7 +5,6 @@ var should = require('should');
 var ConsumerGroup = require('../lib/ConsumerGroup');
 var host = process.env['KAFKA_TEST_HOST'] || '';
 
-
 describe('ConsumerGroup', function () {
   describe('#scheduleReconnect', function () {
     var consumerGroup, sandbox;
@@ -22,7 +21,7 @@ describe('ConsumerGroup', function () {
 
     afterEach(function () {
       sandbox.restore();
-    })
+    });
 
     it('should throw an exception if passed in a empty timeout', function () {
       should.throws(function () {
