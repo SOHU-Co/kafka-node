@@ -708,14 +708,7 @@ Reference to issue [#339](https://github.com/SOHU-Co/kafka-node/issues/339)
 
 ### Install Docker
 
-On the Mac you can either install `docker-machine` or [Docker for Mac](https://docs.docker.com/engine/installation/mac/).
-
-Docker machine:
-
-```bash
-brew install docker docker-machine docker-compose
-docker-machine create --driver virtualbox dev
-```
+On the Mac install [Docker for Mac](https://docs.docker.com/engine/installation/mac/).
 
 ### Start Docker and Run Tests
 
