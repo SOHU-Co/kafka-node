@@ -29,6 +29,7 @@ Kafka-node is a Node.js client with Zookeeper integration for Apache Kafka 0.8.1
   - [FailedToRebalanceConsumerError: Exception: NODE_EXISTS[-110]](#failedtorebalanceconsumererror-exception-node_exists-110)
   - [HighLevelConsumer does not consume on all partitions](#highlevelconsumer-does-not-consume-on-all-partitions)
   - [How to throttle messages / control the concurrency of processing messages](#how-to-throttle-messages--control-the-concurrency-of-processing-messages)
+  - [How do I consume binary data?](#how-do-i-consume-binary-data)
 - [Running Tests](#running-tests)
 - [LICENSE - "MIT"](#license---mit)
 
@@ -703,6 +704,12 @@ Reference to issue [#339](https://github.com/SOHU-Co/kafka-node/issues/339)
 1. Create a `async.queue` with message processor and concurrency of one (the message processor itself is wrapped with `setImmediate` so it will not freeze up the event loop)
 2. Set the `queue.drain` to resume the consumer
 3. The handler for consumer's `message` event pauses the consumer and pushes the message to the queue.
+
+## How do I consume binary data?
+
+In the consumer set the `encoding` option to `buffer` there not settings on producers needed for this.
+
+Reference to issue [#470](https://github.com/SOHU-Co/kafka-node/issues/470)
 
 # Running Tests
 
