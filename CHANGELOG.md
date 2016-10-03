@@ -1,5 +1,10 @@
 # kafka-node CHANGELOG
 
+## 2016-10-03, Version 0.5.9
+- Fix issue with highLevelConsumers and how consumer groups react to zookeeper redeploys creating a lot of [NODE_EXISTS] errors [#472](https://github.com/SOHU-Co/kafka-node/pull/472)
+- Removed docker-machine support for tests [#474](https://github.com/SOHU-Co/kafka-node/pull/474)
+- Minor fixes and additions to doc [#475](https://github.com/SOHU-Co/kafka-node/pull/475) [#471](https://github.com/SOHU-Co/kafka-node/pull/471) 
+
 ## 2016-09-12, Version 0.5.8
 - Fix duplicate messages consumed on startup this was triggered by unnecessary rebalance (versions affected: *v0.5.4* to *v0.5.7*) [#465](https://github.com/SOHU-Co/kafka-node/pull/465)
 
@@ -36,7 +41,7 @@
 - Fix TypeError: Cannot read property 'sslHost' of undefined [#417](https://github.com/SOHU-Co/kafka-node/pull/417)
 
 ## 2016-07-27, Version 0.5.1
-- Prevent fetch before offset's are updated before a rebalance [#402](https://github.com/SOHU-Co/kafka-node/pull/402) 
+- Prevent fetch before offset's are updated before a rebalance [#402](https://github.com/SOHU-Co/kafka-node/pull/402)
 - Add validation to `groupId` and `clientId` [#405](https://github.com/SOHU-Co/kafka-node/pull/405)
 - Removed unused `autoCommitMsgCount` config option [#406](https://github.com/SOHU-Co/kafka-node/pull/406)
 - Fixed issue where reconnecting brokers emits a `connect` event instead of `reconnect`. [#413](https://github.com/SOHU-Co/kafka-node/pull/413)
