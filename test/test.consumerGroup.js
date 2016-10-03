@@ -28,7 +28,7 @@ describe('ConsumerGroup', function () {
         host: 'myhost',
         id: 'myClientId',
         batch: batch,
-        connnectOnReady: false
+        connectOnReady: false
       }, 'SampleTopic');
 
       sinon.assert.calledWithExactly(fakeClient, 'myhost', 'myClientId', undefined, batch, undefined);
@@ -44,7 +44,7 @@ describe('ConsumerGroup', function () {
         host: 'myhost',
         id: 'myClientId',
         zk: zkOptions,
-        connnectOnReady: false
+        connectOnReady: false
       }, 'SampleTopic');
 
       sinon.assert.calledWithExactly(fakeClient, 'myhost', 'myClientId', zkOptions, undefined, undefined);
@@ -56,7 +56,7 @@ describe('ConsumerGroup', function () {
         host: 'myhost',
         id: 'myClientId',
         ssl: true,
-        connnectOnReady: false
+        connectOnReady: false
       }, 'SampleTopic');
       sinon.assert.calledWithExactly(fakeClient, 'myhost', 'myClientId', undefined, undefined, {});
     });
@@ -68,9 +68,62 @@ describe('ConsumerGroup', function () {
         host: 'myhost',
         id: 'myClientId',
         ssl: ssl,
-        connnectOnReady: false
+        connectOnReady: false
       }, 'SampleTopic');
       sinon.assert.calledWithExactly(fakeClient, 'myhost', 'myClientId', undefined, undefined, ssl);
+    });
+  });
+
+  describe('#sendHeartbeats', function () {
+    var consumerGroup, sandbox;
+
+    beforeEach(function () {
+      consumerGroup = new ConsumerGroup({
+        host: host,
+        connectOnReady: false
+      }, 'TestTopic');
+
+      sandbox = sinon.sandbox.create();
+      sandbox.stub(consumerGroup, 'sendHeartbeat');
+      sandbox.useFakeTimers();
+    });
+
+    afterEach(function () {
+      sandbox.restore();
+    });
+
+    it('throws exception if consumerGroup is not ready', function () {
+      should.throws(function () {
+        consumerGroup.startHeartbeats();
+      });
+    });
+
+    it('should use heartbeatInterval passed into options', function () {
+      consumerGroup.ready = true;
+      sinon.assert.notCalled(consumerGroup.sendHeartbeat);
+      consumerGroup.options.heartbeatInterval = 3000;
+
+      consumerGroup.startHearbeats();
+
+      sinon.assert.calledOnce(consumerGroup.sendHeartbeat);
+      sandbox.clock.tick(2000);
+      sinon.assert.calledOnce(consumerGroup.sendHeartbeat);
+      sandbox.clock.tick(1000);
+      sinon.assert.calledTwice(consumerGroup.sendHeartbeat);
+      sandbox.clock.tick(3000);
+      sinon.assert.calledThrice(consumerGroup.sendHeartbeat);
+    });
+
+    it('should use calculated heartbeatInterval if heartbeatInterval options is omitted', function () {
+      consumerGroup.ready = true;
+      consumerGroup.startHearbeats();
+      sinon.assert.calledOnce(consumerGroup.sendHeartbeat);
+
+      sandbox.clock.tick(9000);
+      sinon.assert.calledOnce(consumerGroup.sendHeartbeat);
+
+      sandbox.clock.tick(1000);
+      sinon.assert.calledTwice(consumerGroup.sendHeartbeat);
     });
   });
 
@@ -80,7 +133,7 @@ describe('ConsumerGroup', function () {
     beforeEach(function () {
       consumerGroup = new ConsumerGroup({
         host: host,
-        connnectOnReady: false
+        connectOnReady: false
       }, 'TestTopic');
 
       sandbox = sinon.sandbox.create();
