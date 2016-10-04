@@ -6,6 +6,7 @@ const ConsumerGroup = require('../lib/ConsumerGroup');
 const host = process.env['KAFKA_TEST_HOST'] || '';
 const proxyquire = require('proxyquire').noCallThru();
 const EventEmitter = require('events').EventEmitter;
+const _ = require('lodash');
 
 describe('ConsumerGroup', function () {
   describe('#constructor', function () {
@@ -124,6 +125,216 @@ describe('ConsumerGroup', function () {
 
       sandbox.clock.tick(1000);
       sinon.assert.calledTwice(consumerGroup.sendHeartbeat);
+    });
+  });
+
+  describe('#handleSyncGroup', function () {
+    var consumerGroup, sandbox;
+    beforeEach(function () {
+      consumerGroup = new ConsumerGroup({
+        host: host,
+        connectOnReady: false
+      }, 'TestTopic');
+      sandbox = sinon.sandbox.create();
+    });
+
+    afterEach(function () {
+      sandbox.restore();
+    });
+
+    describe('HLC Migrator', function () {
+      it('should not fetch from migrator or latestOffset if all offsets have saved previously', function (done) {
+        consumerGroup.options.fromOffset = 'latest';
+        consumerGroup.migrator = {
+          saveHighLevelConsumerOffsets: sandbox.stub()
+        };
+
+        const syncGroupResponse = {
+          partitions: {
+            TestTopic: [0, 2, 3, 4]
+          }
+        };
+
+        const fetchOffsetResponse = {
+          TestTopic: {
+            0: 10,
+            2: 0,
+            3: 9,
+            4: 6
+          }
+        };
+
+        sandbox.stub(consumerGroup, 'fetchOffset').yields(null, fetchOffsetResponse);
+        sandbox.stub(consumerGroup, 'saveLatestOffsets').yields(null);
+
+        consumerGroup.handleSyncGroup(syncGroupResponse, function (error, ownsPartitions) {
+          ownsPartitions.should.be.true;
+          sinon.assert.calledWith(consumerGroup.fetchOffset, syncGroupResponse.partitions);
+
+          sinon.assert.notCalled(consumerGroup.saveLatestOffsets);
+          sinon.assert.notCalled(consumerGroup.migrator.saveHighLevelConsumerOffsets);
+
+          const topicPayloads = _(consumerGroup.topicPayloads);
+
+          topicPayloads.find({topic: 'TestTopic', partition: 0}).offset.should.be.eql(10);
+          topicPayloads.find({topic: 'TestTopic', partition: 2}).offset.should.be.eql(0);
+          topicPayloads.find({topic: 'TestTopic', partition: 3}).offset.should.be.eql(9);
+          topicPayloads.find({topic: 'TestTopic', partition: 4}).offset.should.be.eql(6);
+          done(error);
+        });
+      });
+
+      it('should fetch from migrator and latestOffset if some offsets have not been saved previously', function (done) {
+        const ConsumerGroupMigrator = require('../lib/consumerGroupMigrator');
+        consumerGroup.options.fromOffset = 'latest';
+        consumerGroup.migrator = new ConsumerGroupMigrator(consumerGroup);
+
+        sandbox.stub(consumerGroup.migrator, 'saveHighLevelConsumerOffsets').yields(null);
+
+        const syncGroupResponse = {
+          partitions: {
+            TestTopic: [0, 2, 3, 4]
+          }
+        };
+
+        const latestOffsets = {
+          TestTopic: {
+            0: 10,
+            2: 20,
+            4: 5000
+          }
+        };
+
+        const migrateOffsets = {
+          TestTopic: {
+            0: 10,
+            2: 20,
+            4: 5000
+          }
+        };
+
+        const fetchOffsetResponse = {
+          TestTopic: {
+            0: 10,
+            2: -1,
+            3: 9,
+            4: -1
+          }
+        };
+
+        consumerGroup.latestOffsets = latestOffsets;
+        consumerGroup.migrator.offsets = migrateOffsets;
+        sandbox.stub(consumerGroup, 'fetchOffset').yields(null, fetchOffsetResponse);
+        sandbox.stub(consumerGroup, 'saveLatestOffsets').yields(null);
+
+        consumerGroup.handleSyncGroup(syncGroupResponse, function (error, ownsPartitions) {
+          ownsPartitions.should.be.true;
+          sinon.assert.calledWith(consumerGroup.fetchOffset, syncGroupResponse.partitions);
+
+          sinon.assert.calledOnce(consumerGroup.saveLatestOffsets);
+          sinon.assert.calledOnce(consumerGroup.migrator.saveHighLevelConsumerOffsets);
+
+          const topicPayloads = _(consumerGroup.topicPayloads);
+
+          topicPayloads.find({topic: 'TestTopic', partition: 0}).offset.should.be.eql(10);
+          topicPayloads.find({topic: 'TestTopic', partition: 2}).offset.should.be.eql(20);
+          topicPayloads.find({topic: 'TestTopic', partition: 3}).offset.should.be.eql(9);
+          topicPayloads.find({topic: 'TestTopic', partition: 4}).offset.should.be.eql(5000);
+          done(error);
+        });
+      });
+    });
+
+    describe('options.fromOffset is "latest"', function () {
+      it('should not fetch latestOffset if all offsets have saved previously', function (done) {
+        consumerGroup.options.fromOffset = 'latest';
+
+        const syncGroupResponse = {
+          partitions: {
+            TestTopic: [0, 2, 3, 4]
+          }
+        };
+
+        const fetchOffsetResponse = {
+          TestTopic: {
+            0: 10,
+            2: 0,
+            3: 9,
+            4: 6
+          }
+        };
+
+        sandbox.stub(consumerGroup, 'fetchOffset').yields(null, fetchOffsetResponse);
+        sandbox.stub(consumerGroup, 'saveLatestOffsets').yields(null);
+
+        consumerGroup.handleSyncGroup(syncGroupResponse, function (error, ownsPartitions) {
+          ownsPartitions.should.be.true;
+          sinon.assert.calledWith(consumerGroup.fetchOffset, syncGroupResponse.partitions);
+          sinon.assert.notCalled(consumerGroup.saveLatestOffsets);
+
+          const topicPayloads = _(consumerGroup.topicPayloads);
+
+          topicPayloads.find({topic: 'TestTopic', partition: 0}).offset.should.be.eql(10);
+          topicPayloads.find({topic: 'TestTopic', partition: 2}).offset.should.be.eql(0);
+          topicPayloads.find({topic: 'TestTopic', partition: 3}).offset.should.be.eql(9);
+          topicPayloads.find({topic: 'TestTopic', partition: 4}).offset.should.be.eql(6);
+          done(error);
+        });
+      });
+
+      it('should use latestOffset if offsets have never been saved', function (done) {
+        consumerGroup.options.fromOffset = 'latest';
+
+        const syncGroupResponse = {
+          partitions: {
+            TestTopic: [0, 2, 3, 4]
+          }
+        };
+
+        const fetchOffsetResponse = {
+          TestTopic: {
+            0: 10,
+            2: -1,
+            3: -1,
+            4: -1
+          }
+        };
+
+        const latestOffsets = {
+          TestTopic: {
+            0: 10,
+            2: 3,
+            4: 5000
+          }
+        };
+
+        consumerGroup.latestOffsets = latestOffsets;
+        sandbox.stub(consumerGroup, 'fetchOffset').yields(null, fetchOffsetResponse);
+        sandbox.stub(consumerGroup, 'saveLatestOffsets').yields(null);
+
+        consumerGroup.handleSyncGroup(syncGroupResponse, function (error, ownsPartitions) {
+          ownsPartitions.should.be.true;
+          sinon.assert.calledWith(consumerGroup.fetchOffset, syncGroupResponse.partitions);
+          sinon.assert.calledOnce(consumerGroup.saveLatestOffsets);
+
+          const topicPayloads = _(consumerGroup.topicPayloads);
+
+          topicPayloads.find({topic: 'TestTopic', partition: 3}).offset.should.be.eql(0);
+          topicPayloads.find({topic: 'TestTopic', partition: 2}).offset.should.be.eql(3);
+          topicPayloads.find({topic: 'TestTopic', partition: 0}).offset.should.be.eql(10);
+          topicPayloads.find({topic: 'TestTopic', partition: 4}).offset.should.be.eql(5000);
+          done(error);
+        });
+      });
+    });
+
+    it('should yield false when there are no partitions owned', function (done) {
+      consumerGroup.handleSyncGroup({
+        partitions: {}
+      }, function (error, ownsPartitions) {
+        ownsPartitions.should.be.false;
+        done(error);
+      });
     });
   });
 

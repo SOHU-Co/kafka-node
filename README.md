@@ -36,7 +36,7 @@ Kafka-node is a Node.js client with Zookeeper integration for Apache Kafka 0.8.1
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-# Features
+# Features	
 * Consumer and High Level Consumer
 * Producer and High Level Producer
 * Manage topic Offsets
@@ -551,7 +551,7 @@ API is very similar to `HighLevelConsumer` with some exceptions noted below:
 
 * In an effort to make the API simpler you no longer need to create a `client` this is done inside the `ConsumerGroup`
 * consumer ID do not need to be defined. There's a new ID to represent consumers called *member ID* and this is assigned to consumer after joining the group
-* Offsets, group members, and ownership details is not stored in Zookeeper
+* Offsets, group members, and ownership details are not stored in Zookeeper
 * `ConsumerGroup` does not emit a `registered` event
 
 ### ConsumerGroup(options, topics)
@@ -701,8 +701,9 @@ For case 1 use below setting:
 
 For case 2 setting `migrateRolling` to `true` will allow the ConsumerGroup to start monitoring `zk` nodes for when topic ownership are relinquished by the old HLC consumer. Once this is done the ConsumerGroup will connect and the previous HLC offsets from zookeeper will be migrated automatically to the new Kafka broker based coordinator.
 
-* Group names should be consistent
-* Only offsets for Topics that were in the highLevelConsumer will be migrated over offsets for new topics will follow the `fromOffset` setting
+* Group name should be consistent with old highLevelConsumer
+* Should never overwrite existing offsets
+* Only offsets for Topics that were once in the highLevelConsumer will be migrated over offsets for new topics will follow the `fromOffset` setting
 
 
 ## Offset
