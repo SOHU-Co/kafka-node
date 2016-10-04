@@ -10,7 +10,8 @@ var options = {
   autoCommit: true,
   fetchMaxWaitMs: 1000,
   fetchMaxBytes: 1024 * 1024,
-  sessionTimeout: 8000
+  sessionTimeout: 8000,
+  heartbeatInterval: 500
 };
 var debug = require('debug')('kafka-node:Child-ConsumerGroup');
 
