@@ -2,5 +2,11 @@
 	"extends": "semistandard",
 	"env": {
 		"node": true
-	}
+	},
+  "plugins": [
+    "dependencies"
+  ],
+  "rules": {
+    "dependencies/case-sensitive": 1
+  }
 }
