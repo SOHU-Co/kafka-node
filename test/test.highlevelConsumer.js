@@ -339,7 +339,7 @@ describe('HighLevelConsumer', function () {
     });
 
     afterEach(function (done) {
-      highLevelConsumer.close(true, done);
+      highLevelConsumer && highLevelConsumer.close(true, done);
     });
 
     [1 * 1024, 10 * 1024, 11 * 1024, 12 * 1024, 12300, 12350, 12370, 12371, 12372, 12373, 12375, 12385, 12400, 12500, 12.5 * 1024,

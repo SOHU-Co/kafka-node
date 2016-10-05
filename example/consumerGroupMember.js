@@ -39,10 +39,8 @@ function onMessage (message) {
   console.log('%s read msg Topic="%s" Partition=%s Offset=%d', this.client.clientId, message.topic, message.partition, message.offset);
 }
 
-process.on('SIGINT', function () {
+process.once('SIGINT', function () {
   async.each([consumerGroup, consumerGroup2, consumerGroup3], function (consumer, callback) {
     consumer.close(true, callback);
-  }, function () {
-    process.exit();
   });
 });

@@ -2,6 +2,7 @@
 
 const roundRobin = require('../../lib/assignment/roundrobin');
 const _ = require('lodash');
+const should = require('should');
 
 describe('Round Robin Assignment', function () {
   const topicPartition = {
@@ -44,6 +45,7 @@ describe('Round Robin Assignment', function () {
     ];
 
     roundRobin.assign(topicPartition, groupMembers, function (error, assignment) {
+      should(error).be.empty;
       const consumer1 = _.first(assignment);
       consumer1.memberId.should.eql('consumer1');
       Object.keys(consumer1.topicPartitions).should.eql(['RebalanceTopic', 'RebalanceTest']);
@@ -55,7 +57,7 @@ describe('Round Robin Assignment', function () {
       Object.keys(consumer2.topicPartitions).should.eql(['RebalanceTopic', 'RebalanceTest']);
       consumer2.topicPartitions['RebalanceTest'].should.eql(['0', '2']);
       consumer2.topicPartitions['RebalanceTopic'].should.eql(['1']);
-      done(error);
+      done();
     });
   });
 
@@ -88,6 +90,7 @@ describe('Round Robin Assignment', function () {
     ];
 
     roundRobin.assign(topicPartition, groupMembers, function (error, assignment) {
+      should(error).be.empty;
       assignment = _.sortBy(assignment, 'memberId');
 
       const consumer1 = _.first(assignment);
@@ -107,7 +110,7 @@ describe('Round Robin Assignment', function () {
       Object.keys(consumer3.topicPartitions).should.eql(['RebalanceTopic', 'RebalanceTest']);
       consumer3.topicPartitions['RebalanceTest'].should.eql(['2']);
       consumer3.topicPartitions['RebalanceTopic'].should.eql(['2']);
-      done(error);
+      done();
     });
   });
 
@@ -148,6 +151,7 @@ describe('Round Robin Assignment', function () {
     ];
 
     roundRobin.assign(topicPartition, groupMembers, function (error, assignment) {
+      should(error).be.empty;
       assignment = _.sortBy(assignment, 'memberId');
 
       const consumer1 = _.first(assignment);
@@ -170,7 +174,7 @@ describe('Round Robin Assignment', function () {
       const consumer4 = _.last(assignment);
       consumer4.memberId.should.eql('consumer4');
       Object.keys(consumer4.topicPartitions).should.eql(['RebalanceTest']);
-      done(error);
+      done();
     });
   });
 });

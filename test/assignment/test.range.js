@@ -2,6 +2,7 @@
 
 const range = require('../../lib/assignment/range');
 const _ = require('lodash');
+const should = require('should');
 
 describe('Range Assignment', function () {
   const topicPartition = {
@@ -44,6 +45,7 @@ describe('Range Assignment', function () {
 
   it('should partition two topics of three partitions between two consumers', function (done) {
     range.assign(topicPartition, groupMembers, function (error, result) {
+      should(error).be.empty;
       const consumer1 = _.first(result);
       consumer1.memberId.should.eql('consumer1');
       Object.keys(consumer1.topicPartitions).should.eql(['RebalanceTopic', 'RebalanceTest']);
@@ -56,7 +58,7 @@ describe('Range Assignment', function () {
       consumer2.topicPartitions['RebalanceTest'].should.eql([2]);
       consumer2.topicPartitions['RebalanceTopic'].should.eql([2]);
 
-      done(error);
+      done();
     });
   });
 
@@ -72,6 +74,7 @@ describe('Range Assignment', function () {
     });
 
     range.assign(topicPartition, gm, function (error, result) {
+      should(error).be.empty;
       const consumer1 = _.first(result);
       consumer1.memberId.should.eql('consumer1');
       Object.keys(consumer1.topicPartitions).should.eql(['RebalanceTopic', 'RebalanceTest']);
@@ -90,7 +93,7 @@ describe('Range Assignment', function () {
       consumer3.topicPartitions['RebalanceTest'].should.eql([2]);
       consumer3.topicPartitions['RebalanceTopic'].should.eql([2]);
 
-      done(error);
+      done();
     });
   });
 
@@ -115,6 +118,7 @@ describe('Range Assignment', function () {
     );
 
     range.assign(topicPartition, gm, function (error, result) {
+      should(error).be.empty;
       const consumer1 = _.first(result);
       consumer1.memberId.should.eql('consumer1');
       Object.keys(consumer1.topicPartitions).should.eql(['RebalanceTopic', 'RebalanceTest']);
@@ -130,7 +134,7 @@ describe('Range Assignment', function () {
       const consumer4 = _.last(result);
       consumer4.memberId.should.eql('consumer4');
       Object.keys(consumer4.topicPartitions).should.eql([]);
-      done(error);
+      done();
     });
   });
 });
