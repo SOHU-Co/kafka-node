@@ -2,7 +2,7 @@
 
 const sinon = require('sinon');
 const should = require('should');
-const ConsumerGroup = require('../lib/ConsumerGroup');
+const ConsumerGroup = require('../lib/consumerGroup');
 const host = process.env['KAFKA_TEST_HOST'] || '';
 const proxyquire = require('proxyquire').noCallThru();
 const EventEmitter = require('events').EventEmitter;
@@ -14,7 +14,7 @@ describe('ConsumerGroup', function () {
     var fakeClient = sinon.stub().returns(new EventEmitter());
 
     beforeEach(function () {
-      ConsumerGroup = proxyquire('../lib/ConsumerGroup', {
+      ConsumerGroup = proxyquire('../lib/consumerGroup', {
         './client': fakeClient
       });
     });
