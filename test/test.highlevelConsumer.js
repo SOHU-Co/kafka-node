@@ -315,8 +315,8 @@ describe('HighLevelConsumer', function () {
   describe('Verify no duplicate messages are being consumed', function () {
     this.timeout(26000);
     var _ = require('lodash');
-    var Client = require('../lib/Client');
-    var Producer = require('../lib/Producer');
+    var Client = require('../lib/client');
+    var Producer = require('../lib/producer');
     var uuid = require('node-uuid');
     var host = process.env['KAFKA_TEST_HOST'] || '';
     var topic = 'DuplicateMessageTest';
