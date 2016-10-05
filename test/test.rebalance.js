@@ -2,7 +2,7 @@
 
 var kafka = require('..');
 var Client = kafka.Client;
-var HighLevelProducer = kafka.HighLevelProducer;
+var Producer = kafka.Producer;
 var async = require('async');
 var debug = require('debug')('kafka-node:Test-Rebalance');
 var Childrearer = require('./helpers/Childrearer');
@@ -26,16 +26,9 @@ function testRebalance (forkPath) {
   var rearer;
   var groupId = 'rebal_group';
 
-  function sendMessage (topic, message, done) {
-    producer.send([ {topic: topic, messages: [message]} ], function () {
-      debug('sent', message);
-      done();
-    });
-  }
-
   before(function (done) {
     var client = new Client(host);
-    producer = new HighLevelProducer(client);
+    producer = new Producer(client);
     client.on('ready', function () {
       client.refreshMetadata([topic], function (data) {
         client.topicPartitions[topic].should.be.length(3);
@@ -63,19 +56,38 @@ function testRebalance (forkPath) {
   afterEach(function (done) {
     debug('killChildren');
     rearer.closeAll();
-    setTimeout(done, 500);
+    setTimeout(done, 1000);
   });
 
   function sendMessages (messages, done) {
-    async.eachSeries(messages, function (message, cb) {
-      sendMessage(topic, message, cb);
-    }, function (error, results) {
+    const payload = distributeMessages(messages);
+    debug('Sending', payload);
+    producer.send(payload, function (error) {
       if (error) {
-        console.error('Send Error', error);
         return done(error);
       }
       debug('all messages sent');
     });
+  }
+
+  function distributeMessages (messages) {
+    const partitions = [0, 1, 2];
+    var index = 0;
+    var len = partitions.length;
+
+    var partitionBuckets = partitions.map(function (partition) {
+      return {
+        topic: topic,
+        messages: [],
+        partition: partition
+      };
+    });
+
+    messages.forEach(function (message) {
+      partitionBuckets[index++ % len].messages.push(message);
+    });
+
+    return partitionBuckets;
   }
 
   function getConsumerVerifier (messages, expectedPartitionsConsumed, expectedConsumersConsuming, done) {
@@ -149,7 +161,7 @@ function testRebalance (forkPath) {
   });
 
   it('verify two consumer consumes all messages on all partitions after two out of the four consumers are killed right away', function (done) {
-    var messages = generateMessages(4, 'verify 4 c 2 killed');
+    var messages = generateMessages(3, 'verify 4 c 2 killed');
     var verify = getConsumerVerifier(messages, 3, 2, done);
 
     rearer.setVerifier(topic, groupId, verify);
@@ -188,7 +200,7 @@ function testRebalance (forkPath) {
   });
 
   it('verify two consumer consumes all messages on all partitions after two out of the four consumers are killed', function (done) {
-    var messages = generateMessages(4, 'verify 2 c 2 killed');
+    var messages = generateMessages(3, 'verify 2 c 2 killed');
     var verify = getConsumerVerifier(messages, 3, 2, done);
 
     rearer.setVerifier(topic, groupId, verify);
@@ -200,7 +212,7 @@ function testRebalance (forkPath) {
   });
 
   it('verify three consumer consumes all messages on all partitions after three out of the six consumers are killed', function (done) {
-    var messages = generateMessages(4, 'verify 3 c 3 killed');
+    var messages = generateMessages(3, 'verify 3 c 3 killed');
     var verify = getConsumerVerifier(messages, 3, 3, done);
 
     rearer.setVerifier(topic, groupId, verify);
