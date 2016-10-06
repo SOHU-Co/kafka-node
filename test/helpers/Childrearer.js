@@ -51,7 +51,7 @@ Childrearer.prototype.killFirst = function (callback) {
 Childrearer.prototype._killEachChild = function (children, callback) {
   var self = this;
   async.each(children, function (child, callback) {
-    child.once('close', function (code, signal) {
+    child.once('exit', function (code, signal) {
       debug('child %s killed %d %s', this._childNum, code, signal);
       _.pull(self.children, this);
       callback();
