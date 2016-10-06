@@ -184,6 +184,20 @@ describe.only('Zookeeper', function () {
   });
 
   describe('#topicExists', function () {
+    before(function (done) {
+      const kafka = require('..');
+      const Client = kafka.Client;
+      const Producer = kafka.Producer;
+      const client = new Client(host);
+      const producer = new Producer(client);
+      producer.on('ready', function () {
+        producer.createTopics(['_exist_topic_3_test'], function (error) {
+          producer.close();
+          done(error);
+        });
+      });
+    });
+
     it('should return false when topic not exist', function (done) {
       zk.topicExists('_not_exist_topic_test', function (err, existed, topic) {
         existed.should.not.be.ok;
