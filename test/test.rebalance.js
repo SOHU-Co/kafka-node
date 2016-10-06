@@ -48,9 +48,11 @@ function testRebalance (forkPath, checkZkTopic) {
         if (error && error.name === 'NO_NODE') {
           done();
         } else {
-          data.consumerTopicMap.should.be.empty;
-          data.topicConsumerMap.should.be.empty;
-          data.topicPartitionMap.should.be.empty;
+          if (data) {
+            data.consumerTopicMap.should.be.empty;
+            data.topicConsumerMap.should.be.empty;
+            data.topicPartitionMap.should.be.empty;
+          }
           done(error);
         }
       });
@@ -61,8 +63,7 @@ function testRebalance (forkPath, checkZkTopic) {
 
   afterEach(function (done) {
     debug('killChildren');
-    rearer.closeAll();
-    setTimeout(done, 1000);
+    rearer.closeAll(done);
   });
 
   function sendMessages (messages, done) {

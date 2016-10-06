@@ -24,10 +24,13 @@ Childrearer.prototype.nextId = function () {
   return ++this.id;
 };
 
-Childrearer.prototype.closeAll = function () {
-  this.children.forEach(function (child) {
+Childrearer.prototype.closeAll = function (callback) {
+  async.each(this.children, function (child, callback) {
+    child.once('exit', function () {
+      callback(null);
+    });
     child.kill();
-  });
+  }, callback);
 };
 
 Childrearer.prototype.kill = function (numberOfChildren, callback) {
