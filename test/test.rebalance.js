@@ -109,7 +109,7 @@ function testRebalance (forkPath) {
         if (consumedBy.length === expectedConsumersConsuming) {
           verified();
         } else {
-          verified('Received messages but not by the expected ' + expectedConsumersConsuming + ' consumers: '+JSON.stringify(consumedBy));
+          verified('Received messages but not by the expected ' + expectedConsumersConsuming + ' consumers: ' + JSON.stringify(consumedBy));
         }
       }
     };
