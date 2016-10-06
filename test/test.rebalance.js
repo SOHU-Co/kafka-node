@@ -111,10 +111,10 @@ function testRebalance (forkPath, checkZkTopic) {
       }
       if (processedMessages >= messages.length) {
         var consumedBy = Object.keys(consumedByConsumer);
-        if (consumedBy.length === expectedConsumersConsuming) {
+        if (consumedBy.length >= expectedConsumersConsuming) {
           verified();
         } else {
-          verified('Received messages but not by the expected ' + expectedConsumersConsuming + ' consumers: ' + JSON.stringify(consumedBy));
+          verified(new Error('Received messages but not by the expected ' + expectedConsumersConsuming + ' consumers: ' + JSON.stringify(consumedBy)));
         }
       }
     };
@@ -186,7 +186,7 @@ function testRebalance (forkPath, checkZkTopic) {
 
   it('verify three consumer consumes all messages on all partitions after one that is unassigned is killed', function (done) {
     var messages = generateMessages(3, 'verify 2 c 2 killed');
-    var verify = getConsumerVerifier(messages, 3, 3, done);
+    var verify = getConsumerVerifier(messages, 3, 2, done);
 
     rearer.setVerifier(topic, groupId, verify);
 
