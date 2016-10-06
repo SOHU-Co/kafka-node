@@ -10,8 +10,8 @@ var uuid = require('node-uuid');
 var _ = require('lodash');
 var host = process.env['KAFKA_TEST_HOST'] || '';
 
-describe('Integrated Reblance', function () {
-  this.retries(10);
+describe.only('Integrated Reblance', function () {
+  this.retries(4);
 
   describe('HLC', function () {
     testRebalance('test/helpers/child-hlc');

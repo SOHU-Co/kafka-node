@@ -11,7 +11,9 @@ function randomId () {
   return Math.floor(Math.random() * 10000);
 }
 
-describe('Zookeeper', function () {
+describe.only('Zookeeper', function () {
+  this.retries(4);
+
   beforeEach(function () {
     zk = new Zookeeper(host);
   });
