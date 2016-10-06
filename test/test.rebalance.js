@@ -26,7 +26,7 @@ function testRebalance (forkPath, checkZkTopic) {
   var producer;
   var topic = 'RebalanceTopic';
   var rearer;
-  var groupId = 'rebal_group';
+  var groupId;
 
   before(function (done) {
     var client = new Client(host);
@@ -40,6 +40,7 @@ function testRebalance (forkPath, checkZkTopic) {
   });
 
   beforeEach(function (done) {
+    groupId = uuid.v4();
     rearer = new Childrearer(forkPath);
 
     if (checkZkTopic) {
