@@ -1,15 +1,15 @@
 'use strict';
 
-var sinon = require('sinon');
-var should = require('should');
-var ConsumerGroup = require('../lib/consumerGroup');
-var host = process.env['KAFKA_TEST_HOST'] || '';
-var proxyquire = require('proxyquire').noCallThru();
-var EventEmitter = require('events').EventEmitter;
-var _ = require('lodash');
+const sinon = require('sinon');
+const should = require('should');
+const ConsumerGroup = require('../lib/consumerGroup');
+const host = process.env['KAFKA_TEST_HOST'] || '';
+const proxyquire = require('proxyquire').noCallThru();
+const EventEmitter = require('events').EventEmitter;
+const _ = require('lodash');
 
 describe('ConsumerGroup', function () {
-  describe('#varructor', function () {
+  describe('#constructor', function () {
     var ConsumerGroup;
     var fakeClient = sinon.stub().returns(new EventEmitter());
 
@@ -20,7 +20,7 @@ describe('ConsumerGroup', function () {
     });
 
     it('should pass batch ConsumerGroup option to Client', function () {
-      var batch = {
+      const batch = {
         noAckBatchAge: 10000
       };
 
@@ -36,7 +36,7 @@ describe('ConsumerGroup', function () {
     });
 
     it('should pass zookeeper ConsumerGroup option to Client', function () {
-      var zkOptions = {
+      const zkOptions = {
         sessionTimeout: 10000
       };
 
@@ -63,7 +63,7 @@ describe('ConsumerGroup', function () {
     });
 
     it('should pass SSL client options through ConsumerGroup option', function () {
-      var ssl = { rejectUnauthorized: false };
+      const ssl = { rejectUnauthorized: false };
       // eslint-disable-next-line no-new
       new ConsumerGroup({
         host: 'myhost',
@@ -149,13 +149,13 @@ describe('ConsumerGroup', function () {
           saveHighLevelConsumerOffsets: sandbox.stub()
         };
 
-        var syncGroupResponse = {
+        const syncGroupResponse = {
           partitions: {
             TestTopic: [0, 2, 3, 4]
           }
         };
 
-        var fetchOffsetResponse = {
+        const fetchOffsetResponse = {
           TestTopic: {
             0: 10,
             2: 0,
@@ -174,7 +174,7 @@ describe('ConsumerGroup', function () {
           sinon.assert.notCalled(consumerGroup.saveLatestOffsets);
           sinon.assert.notCalled(consumerGroup.migrator.saveHighLevelConsumerOffsets);
 
-          var topicPayloads = _(consumerGroup.topicPayloads);
+          const topicPayloads = _(consumerGroup.topicPayloads);
 
           topicPayloads.find({topic: 'TestTopic', partition: 0}).offset.should.be.eql(10);
           topicPayloads.find({topic: 'TestTopic', partition: 2}).offset.should.be.eql(0);
@@ -185,19 +185,19 @@ describe('ConsumerGroup', function () {
       });
 
       it('should fetch from migrator and latestOffset if some offsets have not been saved previously', function (done) {
-        var ConsumerGroupMigrator = require('../lib/consumerGroupMigrator');
+        const ConsumerGroupMigrator = require('../lib/consumerGroupMigrator');
         consumerGroup.options.fromOffset = 'latest';
         consumerGroup.migrator = new ConsumerGroupMigrator(consumerGroup);
 
         sandbox.stub(consumerGroup.migrator, 'saveHighLevelConsumerOffsets').yields(null);
 
-        var syncGroupResponse = {
+        const syncGroupResponse = {
           partitions: {
             TestTopic: [0, 2, 3, 4]
           }
         };
 
-        var latestOffsets = {
+        const latestOffsets = {
           TestTopic: {
             0: 10,
             2: 20,
@@ -205,7 +205,7 @@ describe('ConsumerGroup', function () {
           }
         };
 
-        var migrateOffsets = {
+        const migrateOffsets = {
           TestTopic: {
             0: 10,
             2: 20,
@@ -213,7 +213,7 @@ describe('ConsumerGroup', function () {
           }
         };
 
-        var fetchOffsetResponse = {
+        const fetchOffsetResponse = {
           TestTopic: {
             0: 10,
             2: -1,
@@ -234,7 +234,7 @@ describe('ConsumerGroup', function () {
           sinon.assert.calledOnce(consumerGroup.saveLatestOffsets);
           sinon.assert.calledOnce(consumerGroup.migrator.saveHighLevelConsumerOffsets);
 
-          var topicPayloads = _(consumerGroup.topicPayloads);
+          const topicPayloads = _(consumerGroup.topicPayloads);
 
           topicPayloads.find({topic: 'TestTopic', partition: 0}).offset.should.be.eql(10);
           topicPayloads.find({topic: 'TestTopic', partition: 2}).offset.should.be.eql(20);
@@ -249,13 +249,13 @@ describe('ConsumerGroup', function () {
       it('should not fetch latestOffset if all offsets have saved previously', function (done) {
         consumerGroup.options.fromOffset = 'latest';
 
-        var syncGroupResponse = {
+        const syncGroupResponse = {
           partitions: {
             TestTopic: [0, 2, 3, 4]
           }
         };
 
-        var fetchOffsetResponse = {
+        const fetchOffsetResponse = {
           TestTopic: {
             0: 10,
             2: 0,
@@ -272,7 +272,7 @@ describe('ConsumerGroup', function () {
           sinon.assert.calledWith(consumerGroup.fetchOffset, syncGroupResponse.partitions);
           sinon.assert.notCalled(consumerGroup.saveLatestOffsets);
 
-          var topicPayloads = _(consumerGroup.topicPayloads);
+          const topicPayloads = _(consumerGroup.topicPayloads);
 
           topicPayloads.find({topic: 'TestTopic', partition: 0}).offset.should.be.eql(10);
           topicPayloads.find({topic: 'TestTopic', partition: 2}).offset.should.be.eql(0);
@@ -285,13 +285,13 @@ describe('ConsumerGroup', function () {
       it('should use latestOffset if offsets have never been saved', function (done) {
         consumerGroup.options.fromOffset = 'latest';
 
-        var syncGroupResponse = {
+        const syncGroupResponse = {
           partitions: {
             TestTopic: [0, 2, 3, 4]
           }
         };
 
-        var fetchOffsetResponse = {
+        const fetchOffsetResponse = {
           TestTopic: {
             0: 10,
             2: -1,
@@ -300,7 +300,7 @@ describe('ConsumerGroup', function () {
           }
         };
 
-        var latestOffsets = {
+        const latestOffsets = {
           TestTopic: {
             0: 10,
             2: 3,
@@ -317,7 +317,7 @@ describe('ConsumerGroup', function () {
           sinon.assert.calledWith(consumerGroup.fetchOffset, syncGroupResponse.partitions);
           sinon.assert.calledOnce(consumerGroup.saveLatestOffsets);
 
-          var topicPayloads = _(consumerGroup.topicPayloads);
+          const topicPayloads = _(consumerGroup.topicPayloads);
 
           topicPayloads.find({topic: 'TestTopic', partition: 3}).offset.should.be.eql(0);
           topicPayloads.find({topic: 'TestTopic', partition: 2}).offset.should.be.eql(3);

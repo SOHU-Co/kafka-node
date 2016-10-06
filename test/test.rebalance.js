@@ -60,7 +60,7 @@ function testRebalance (forkPath) {
   });
 
   function sendMessages (messages, done) {
-    var payload = distributeMessages(messages);
+    const payload = distributeMessages(messages);
     debug('Sending', payload);
     producer.send(payload, function (error) {
       if (error) {
@@ -71,7 +71,7 @@ function testRebalance (forkPath) {
   }
 
   function distributeMessages (messages) {
-    var partitions = [0, 1, 2];
+    const partitions = [0, 1, 2];
     var index = 0;
     var len = partitions.length;
 
