@@ -14,15 +14,15 @@ describe.only('Integrated Reblance', function () {
   this.retries(4);
 
   describe('HLC', function () {
-    testRebalance('test/helpers/child-hlc');
+    testRebalance('test/helpers/child-hlc', true);
   });
 
   describe('ConsumerGroup', function () {
-    testRebalance('test/helpers/child-cg');
+    testRebalance('test/helpers/child-cg', false);
   });
 });
 
-function testRebalance (forkPath) {
+function testRebalance (forkPath, checkZkTopic) {
   var producer;
   var topic = 'RebalanceTopic';
   var rearer;
@@ -42,17 +42,21 @@ function testRebalance (forkPath) {
   beforeEach(function (done) {
     rearer = new Childrearer(forkPath);
 
-    // make sure there are no other consumers on this topic before starting test
-    producer.client.zk.getConsumersPerTopic(groupId, function (error, data) {
-      if (error && error.name === 'NO_NODE') {
-        done();
-      } else {
-        data.consumerTopicMap.should.be.empty;
-        data.topicConsumerMap.should.be.empty;
-        data.topicPartitionMap.should.be.empty;
-        done(error);
-      }
-    });
+    if (checkZkTopic) {
+      // make sure there are no other consumers on this topic before starting test
+      producer.client.zk.getConsumersPerTopic(groupId, function (error, data) {
+        if (error && error.name === 'NO_NODE') {
+          done();
+        } else {
+          data.consumerTopicMap.should.be.empty;
+          data.topicConsumerMap.should.be.empty;
+          data.topicPartitionMap.should.be.empty;
+          done(error);
+        }
+      });
+    } else {
+      done();
+    }
   });
 
   afterEach(function (done) {
