@@ -11,7 +11,8 @@ var options = {
   fetchMaxWaitMs: 1000,
   fetchMaxBytes: 1024 * 1024,
   sessionTimeout: 8000,
-  heartbeatInterval: 250
+  heartbeatInterval: 250,
+  retryMinTimeout: 250
 };
 var debug = require('debug')('kafka-node:Child-ConsumerGroup');
 
