@@ -14,8 +14,9 @@ function randomId () {
 describe.only('Zookeeper', function () {
   this.retries(4);
 
-  beforeEach(function () {
+  beforeEach(function (done) {
     zk = new Zookeeper(host);
+    zk.client.once('connected', done);
   });
 
   afterEach(function () {
