@@ -310,7 +310,7 @@ describe('Zookeeper', function () {
       var topic = '_exist_topic_3_test';
 
       zk.deletePartitionOwnership(groupId, topic, 0, function (error) {
-        error.should.be.defined;
+        error.should.not.be.null;
         done();
       });
     });
