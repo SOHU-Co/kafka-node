@@ -38,7 +38,7 @@ describe('Range Assignment', function () {
   ];
 
   it('should have required fields', function () {
-    range.assign.should.be.function;
+    range.should.have.property('assign').which.is.a.Function;
     range.name.should.be.eql('range');
     range.version.should.be.eql(0);
   });

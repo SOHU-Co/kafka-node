@@ -19,7 +19,7 @@ describe('Round Robin Assignment', function () {
   };
 
   it('should have required fields', function () {
-    roundRobin.assign.should.be.function;
+    roundRobin.should.have.property('assign').which.is.a.Function;
     roundRobin.name.should.be.eql('roundrobin');
     roundRobin.version.should.be.eql(0);
   });

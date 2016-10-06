@@ -373,7 +373,7 @@ describe('ConsumerGroup', function () {
       sandbox.useFakeTimers();
       should(consumerGroup.reconnectTimer).be.undefined;
       consumerGroup.scheduleReconnect(1000);
-      should(consumerGroup.reconnectTimer).exist;
+      should(consumerGroup.reconnectTimer).not.be.empty;
       sandbox.clock.tick(1000);
       should(consumerGroup.reconnectTimer).be.null;
       sinon.assert.calledOnce(consumerGroup.connect);
