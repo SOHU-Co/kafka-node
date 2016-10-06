@@ -104,8 +104,13 @@ function testRebalance (forkPath) {
         processedMessages++;
         consumedByConsumer[data.id] = true;
       }
-      if (processedMessages >= messages.length && Object.keys(consumedByConsumer).length === expectedConsumersConsuming) {
-        verified();
+      if (processedMessages >= messages.length) {
+        var consumedBy = Object.keys(consumedByConsumer);
+        if (consumedBy.length === expectedConsumersConsuming) {
+          verified();
+        } else {
+          verified('Received messages but not by the expected ' + expectedConsumersConsuming + ' consumers: '+JSON.stringify(consumedBy));
+        }
       }
     };
   }
