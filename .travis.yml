@@ -11,7 +11,7 @@ services:
   - docker
 env:
   global:
-    - DOCKER_VERSION=1.11.2-0~trusty
+    - DOCKER_VERSION=1.12.1-0~trusty
     - DOCKER_COMPOSE_VERSION=1.7.1
     # - DEBUG=kafka-node:*
     - KAFKA_ADVERTISED_HOST_NAME=127.0.0.1
