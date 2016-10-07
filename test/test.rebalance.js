@@ -9,6 +9,7 @@ var Childrearer = require('./helpers/Childrearer');
 var uuid = require('node-uuid');
 var _ = require('lodash');
 var host = process.env['KAFKA_TEST_HOST'] || '';
+const retry = require('retry');
 
 describe.only('Integrated Reblance', function () {
   this.retries(4);
@@ -43,18 +44,33 @@ function testRebalance (forkPath, checkZkTopic) {
     rearer = new Childrearer(forkPath);
 
     if (checkZkTopic) {
-      // make sure there are no other consumers on this topic before starting test
-      producer.client.zk.getConsumersPerTopic(groupId, function (error, data) {
-        if (error && error.name === 'NO_NODE') {
-          done();
-        } else {
-          if (data) {
-            data.consumerTopicMap.should.be.empty;
-            data.topicConsumerMap.should.be.empty;
-            data.topicPartitionMap.should.be.empty;
+      const operation = retry.operation({
+        minTimeout: 200,
+        factor: 1.5
+      });
+
+      operation.attempt(function (attempt) {
+        // make sure there are no other consumers on this topic before starting test
+        producer.client.zk.getConsumersPerTopic(groupId, function (error, data) {
+          if (error && error.name === 'NO_NODE') {
+            done();
+          } else {
+            if (operation.retry(error)) {
+              return;
+            }
+
+            if (error) {
+              return done(operation.mainError());
+            }
+
+            if (data) {
+              data.consumerTopicMap.should.be.empty;
+              data.topicConsumerMap.should.be.empty;
+              data.topicPartitionMap.should.be.empty;
+            }
+            done();
           }
-          done(error);
-        }
+        });
       });
     } else {
       done();
@@ -225,7 +241,7 @@ function testRebalance (forkPath, checkZkTopic) {
 
   it('verify three consumer consumes all messages on all partitions after three out of the six consumers are killed', function (done) {
     var messages = generateMessages(3, 'verify 3 c 3 killed');
-    var verify = getConsumerVerifier(messages, 3, 3, done);
+    var verify = getConsumerVerifier(messages, 3, 2, done);
 
     rearer.setVerifier(topic, groupId, verify);
     rearer.raise(6, function () {
