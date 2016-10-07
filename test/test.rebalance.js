@@ -53,31 +53,30 @@ function testRebalance (forkPath, checkZkTopic) {
         // make sure there are no other consumers on this topic before starting test
         producer.client.zk.getConsumersPerTopic(groupId, function (error, data) {
           if (error && error.name === 'NO_NODE') {
-            done();
-          } else {
-            if (operation.retry(error)) {
-              return;
-            }
+            return done();
+          }
 
-            if (error) {
-              return done(operation.mainError());
-            }
+          if (operation.retry(error)) {
+            return;
+          }
 
-            if (data) {
-              try {
-                data.consumerTopicMap.should.be.empty;
-                data.topicConsumerMap.should.be.empty;
-                data.topicPartitionMap.should.be.empty;
-              } catch (err) {
-                if (operation.retry(error)) {
-                  return;
-                }
-                done(err);
+          if (error) {
+            return done(operation.mainError());
+          }
+
+          if (data) {
+            try {
+              data.consumerTopicMap.should.be.empty;
+              data.topicConsumerMap.should.be.empty;
+              data.topicPartitionMap.should.be.empty;
+            } catch (err) {
+              if (operation.retry(err)) {
+                return;
               }
-            } else {
-              done();
+              done(err);
             }
           }
+          done();
         });
       });
     } else {
