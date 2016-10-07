@@ -64,11 +64,19 @@ function testRebalance (forkPath, checkZkTopic) {
             }
 
             if (data) {
-              data.consumerTopicMap.should.be.empty;
-              data.topicConsumerMap.should.be.empty;
-              data.topicPartitionMap.should.be.empty;
+              try {
+                data.consumerTopicMap.should.be.empty;
+                data.topicConsumerMap.should.be.empty;
+                data.topicPartitionMap.should.be.empty;
+              } catch (err) {
+                if (operation.retry(error)) {
+                  return;
+                }
+                done(err);
+              }
+            } else {
+              done();
             }
-            done();
           }
         });
       });
