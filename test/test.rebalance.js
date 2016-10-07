@@ -11,7 +11,7 @@ var _ = require('lodash');
 var host = process.env['KAFKA_TEST_HOST'] || '';
 const retry = require('retry');
 
-describe.only('Integrated Reblance', function () {
+describe('Integrated Reblance', function () {
   this.retries(4);
 
   describe('HLC', function () {
