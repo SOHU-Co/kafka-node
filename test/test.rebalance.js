@@ -29,6 +29,9 @@ function testRebalance (forkPath, checkZkTopic) {
   var groupId = 'rebal_group';
 
   before(function (done) {
+    if (process.env.TRAVIS) {
+      return this.skip();
+    }
     var client = new Client(host);
     producer = new Producer(client);
     client.on('ready', function () {
