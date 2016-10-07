@@ -12,9 +12,8 @@ var host = process.env['KAFKA_TEST_HOST'] || '';
 const retry = require('retry');
 
 describe('Integrated Reblance', function () {
-  this.retries(4);
-
   describe('HLC', function () {
+    this.retries(5);
     testRebalance('test/helpers/child-hlc', true);
   });
 
