@@ -1,5 +1,23 @@
 # kafka-node CHANGELOG
 
+## 2016-10-10, Version 1.0.0
+
+Major version change since we're dropping support for Node older than v4.
+
+Added a new Consumer called [Consumer Group](https://github.com/SOHU-Co/kafka-node#consumergroup) this is supported in Kafka 0.9 and greater. [#477](https://github.com/SOHU-Co/kafka-node/pull/477) 
+
+* Add group membership API protocols 
+* Add consumerGroup roundrobin assignment
+* Add documentation for ConsumerGroup
+* Implemented range assignment strategy
+* New consumer group should still emit rebalanced and rebalancing events
+* Refactor HLC rebalancing test to run against ConsumerGroup as well
+* Add migration from existing HLC offsets in ConsumerGroups
+* Implement rolling migration of HLC offsets for consumer groups
+* Dropping support for node 0.12 and only supporting 4 and above. Updating to version 1.0.0
+* Upgrade mocha
+* Migrator: cover the cases of slow rebalances by adding verification by checking check four times make sure the zookeeper ownership did not come back
+
 ## 2016-10-03, Version 0.5.9
 - Fix issue with highLevelConsumers and how consumer groups react to zookeeper redeploys creating a lot of [NODE_EXISTS] errors [#472](https://github.com/SOHU-Co/kafka-node/pull/472)
 - Removed docker-machine support for tests [#474](https://github.com/SOHU-Co/kafka-node/pull/474)
