@@ -8,6 +8,7 @@ var FakeSocket = require('./mocks/mockSocket');
 var InvalidConfigError = require('../lib/errors/InvalidConfigError');
 var proxyquire = require('proxyquire').noCallThru();
 var sinon = require('sinon');
+var retry = require('retry');
 
 describe('Client', function () {
   var client = null;
@@ -273,6 +274,32 @@ describe('Client', function () {
       zk.emit('brokersChanged', brokers);
       client.brokerMetadata.should.not.have.property('1001');
       sinon.assert.calledTwice(client.setupBrokerProfiles);
+    });
+  });
+
+  describe('Discover Group Coordinator', function () {
+    beforeEach(function (done) {
+      client = new Client(host);
+      client.once('connect', done);
+    });
+
+    afterEach(function (done) {
+      client.close(done);
+    });
+
+    it('#sendGroupCoordinatorRequest', function (done) {
+      var operation = retry.operation();
+      operation.attempt(function () {
+        client.sendGroupCoordinatorRequest('ExampleTopic', function (error, response) {
+          if (operation.retry(error)) {
+            return;
+          }
+          should(error).be.null;
+          response.coordinatorPort.should.be.eql(9092);
+          response.coordinatorHost.should.be.eql(host);
+          done();
+        });
+      });
     });
   });
 

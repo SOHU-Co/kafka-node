@@ -1,16 +1,20 @@
 'use strict';
 
 var kafka = require('../../');
-var HighLevelConsumer = kafka.HighLevelConsumer;
-var Client = kafka.Client;
+var ConsumerGroup = kafka.ConsumerGroup;
 var argv = require('optimist').argv;
 var topic = argv.topic || 'topic1';
-var uuid = require('node-uuid');
 var host = process.env['KAFKA_TEST_HOST'] || '';
-var client = new Client(host, 'child-' + uuid.v4(), {sessionTimeout: 1000});
-var topics = [{topic: topic}];
-var options = { autoCommit: true, fetchMaxWaitMs: 1000, fetchMaxBytes: 1024 * 1024 };
-var debug = require('debug')('kafka-node:Child-HLC');
+var options = {
+  host: host,
+  autoCommit: true,
+  fetchMaxWaitMs: 1000,
+  fetchMaxBytes: 1024 * 1024,
+  sessionTimeout: 8000,
+  heartbeatInterval: 250,
+  retryMinTimeout: 250
+};
+var debug = require('debug')('kafka-node:Child-ConsumerGroup');
 
 if (argv.groupId) {
   options.groupId = argv.groupId;
@@ -20,11 +24,11 @@ if (argv.consumerId) {
   options.id = argv.consumerId;
 }
 
-var consumer = new HighLevelConsumer(client, topics, options);
+var consumer = new ConsumerGroup(options, [topic]);
 
 consumer.on('message', function (message) {
   var out = {
-    id: consumer.id,
+    id: consumer.client.clientId,
     message: message
   };
   process.send(out);
@@ -35,29 +39,24 @@ consumer.on('error', function (err) {
 });
 
 consumer.on('rebalanced', function () {
-  debug('%s rebalanced!', consumer.id);
+  debug('%s rebalanced!', consumer.client.clientId);
   sendEvent('rebalanced');
 });
 
 consumer.on('rebalancing', function () {
-  debug('%s is rebalancing', consumer.id);
-});
-
-consumer.on('registered', function () {
-  debug('%s registered', consumer.id);
-  sendEvent('registered');
+  debug('%s is rebalancing', consumer.client.clientId);
 });
 
 function sendEvent (event) {
   process.send({
-    id: consumer.id,
+    id: consumer.client.clientId,
     event: event
   });
 }
 
 function close (signal) {
   return function () {
-    debug('closing the consumer (%s) [%s].', signal, consumer.id);
+    debug('closing the consumer (%s) [%s].', signal, consumer.client.clientId);
     consumer.close(true, function () {
       process.exit();
     });

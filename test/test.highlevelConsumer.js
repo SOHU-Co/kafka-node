@@ -14,7 +14,7 @@ describe('HighLevelConsumer', function () {
     beforeEach(function () {
       client = new FakeClient();
       consumer = new HighLevelConsumer(client, [], {groupId: 'mygroup'});
-      leaveGroupStub = sinon.stub(consumer, '_leaveGroup').yields();
+      leaveGroupStub = sinon.stub(consumer, 'leaveGroup').yields();
       commitStub = sinon.stub(consumer, 'commit').yields();
       clientCloseSpy = sinon.spy(client, 'close');
     });
@@ -57,7 +57,7 @@ describe('HighLevelConsumer', function () {
     });
   });
 
-  describe('#_leaveGroup', function () {
+  describe('#leaveGroup', function () {
     var client, consumer, unregisterSpy, releasePartitionsStub;
 
     beforeEach(function () {
@@ -70,7 +70,7 @@ describe('HighLevelConsumer', function () {
 
     it('should releases partitions and unregister it self', function (done) {
       consumer.topicPayloads = [{topic: 'fake-topic', partition: 0, offset: 0, maxBytes: 1048576, metadata: 'm'}];
-      consumer._leaveGroup(function (error) {
+      consumer.leaveGroup(function (error) {
         sinon.assert.calledOnce(unregisterSpy);
         sinon.assert.calledOnce(releasePartitionsStub);
         done(error);
@@ -79,7 +79,7 @@ describe('HighLevelConsumer', function () {
 
     it('should only unregister it self', function (done) {
       consumer.topicPayloads = [];
-      consumer._leaveGroup(function (error) {
+      consumer.leaveGroup(function (error) {
         sinon.assert.notCalled(releasePartitionsStub);
         sinon.assert.calledOnce(unregisterSpy);
         done(error);
@@ -315,8 +315,8 @@ describe('HighLevelConsumer', function () {
   describe('Verify no duplicate messages are being consumed', function () {
     this.timeout(26000);
     var _ = require('lodash');
-    var Client = require('../lib/Client');
-    var Producer = require('../lib/Producer');
+    var Client = require('../lib/client');
+    var Producer = require('../lib/producer');
     var uuid = require('node-uuid');
     var host = process.env['KAFKA_TEST_HOST'] || '';
     var topic = 'DuplicateMessageTest';
@@ -339,7 +339,7 @@ describe('HighLevelConsumer', function () {
     });
 
     afterEach(function (done) {
-      highLevelConsumer.close(true, done);
+      highLevelConsumer && highLevelConsumer.close(true, done);
     });
 
     [1 * 1024, 10 * 1024, 11 * 1024, 12 * 1024, 12300, 12350, 12370, 12371, 12372, 12373, 12375, 12385, 12400, 12500, 12.5 * 1024,

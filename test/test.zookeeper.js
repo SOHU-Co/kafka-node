@@ -12,8 +12,11 @@ function randomId () {
 }
 
 describe('Zookeeper', function () {
-  beforeEach(function () {
+  this.retries(4);
+
+  beforeEach(function (done) {
     zk = new Zookeeper(host);
+    zk.client.once('connected', done);
   });
 
   afterEach(function () {
@@ -181,6 +184,20 @@ describe('Zookeeper', function () {
   });
 
   describe('#topicExists', function () {
+    before(function (done) {
+      const kafka = require('..');
+      const Client = kafka.Client;
+      const Producer = kafka.Producer;
+      const client = new Client(host);
+      const producer = new Producer(client);
+      producer.on('ready', function () {
+        producer.createTopics(['_exist_topic_3_test'], function (error) {
+          producer.close();
+          done(error);
+        });
+      });
+    });
+
     it('should return false when topic not exist', function (done) {
       zk.topicExists('_not_exist_topic_test', function (err, existed, topic) {
         existed.should.not.be.ok;
@@ -310,7 +327,7 @@ describe('Zookeeper', function () {
       var topic = '_exist_topic_3_test';
 
       zk.deletePartitionOwnership(groupId, topic, 0, function (error) {
-        error.should.be.defined;
+        error.should.not.be.null;
         done();
       });
     });

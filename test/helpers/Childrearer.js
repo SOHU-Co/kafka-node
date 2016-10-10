@@ -5,10 +5,11 @@ var fork = require('child_process').fork;
 var async = require('async');
 var _ = require('lodash');
 
-function Childrearer () {
+function Childrearer (forkPath) {
   EventEmitter.call(this);
   this.children = [];
   this.id = 0;
+  this.forkPath = forkPath || 'test/helpers/child-hlc';
 }
 
 util.inherits(Childrearer, EventEmitter);
@@ -23,10 +24,13 @@ Childrearer.prototype.nextId = function () {
   return ++this.id;
 };
 
-Childrearer.prototype.closeAll = function () {
-  this.children.forEach(function (child) {
+Childrearer.prototype.closeAll = function (callback) {
+  async.each(this.children, function (child, callback) {
+    child.once('exit', function () {
+      callback(null);
+    });
     child.kill();
-  });
+  }, callback);
 };
 
 Childrearer.prototype.kill = function (numberOfChildren, callback) {
@@ -47,7 +51,7 @@ Childrearer.prototype.killFirst = function (callback) {
 Childrearer.prototype._killEachChild = function (children, callback) {
   var self = this;
   async.each(children, function (child, callback) {
-    child.once('close', function (code, signal) {
+    child.once('exit', function (code, signal) {
       debug('child %s killed %d %s', this._childNum, code, signal);
       _.pull(self.children, this);
       callback();
@@ -90,7 +94,7 @@ Childrearer.prototype._raiseChild = function () {
   var self = this;
   var childNumber = this.nextId();
   debug('forking child %d', childNumber);
-  var child = fork('test/helpers/child-hlc', ['--groupId=' + this.groupId, '--topic=' + this.topic, '--consumerId=' + 'child_' + childNumber]);
+  var child = fork(this.forkPath, ['--groupId=' + this.groupId, '--topic=' + this.topic, '--consumerId=' + 'child_' + childNumber]);
   child._childNum = childNumber;
   child.on('message', function (data) {
     if (data.message) {

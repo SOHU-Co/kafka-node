@@ -2,30 +2,38 @@
 
 var kafka = require('..');
 var Client = kafka.Client;
-var HighLevelProducer = kafka.HighLevelProducer;
+var Producer = kafka.Producer;
 var async = require('async');
 var debug = require('debug')('kafka-node:Test-Rebalance');
 var Childrearer = require('./helpers/Childrearer');
 var uuid = require('node-uuid');
 var _ = require('lodash');
 var host = process.env['KAFKA_TEST_HOST'] || '';
+const retry = require('retry');
 
-describe('Integrated HLC Rebalance', function () {
+describe('Integrated Reblance', function () {
+  describe('HLC', function () {
+    this.retries(5);
+    testRebalance('test/helpers/child-hlc', true);
+  });
+
+  describe('ConsumerGroup', function () {
+    testRebalance('test/helpers/child-cg', false);
+  });
+});
+
+function testRebalance (forkPath, checkZkTopic) {
   var producer;
   var topic = 'RebalanceTopic';
   var rearer;
   var groupId = 'rebal_group';
 
-  function sendMessage (topic, message, done) {
-    producer.send([ {topic: topic, messages: [message]} ], function () {
-      debug('sent', message);
-      done();
-    });
-  }
-
   before(function (done) {
+    if (process.env.TRAVIS) {
+      return this.skip();
+    }
     var client = new Client(host);
-    producer = new HighLevelProducer(client);
+    producer = new Producer(client);
     client.on('ready', function () {
       client.refreshMetadata([topic], function (data) {
         client.topicPartitions[topic].should.be.length(3);
@@ -35,37 +43,83 @@ describe('Integrated HLC Rebalance', function () {
   });
 
   beforeEach(function (done) {
-    rearer = new Childrearer();
+    rearer = new Childrearer(forkPath);
 
-    // make sure there are no other consumers on this topic before starting test
-    producer.client.zk.getConsumersPerTopic(groupId, function (error, data) {
-      if (error && error.name === 'NO_NODE') {
-        done();
-      } else {
-        data.consumerTopicMap.should.be.empty;
-        data.topicConsumerMap.should.be.empty;
-        data.topicPartitionMap.should.be.empty;
-        done(error);
-      }
-    });
+    if (checkZkTopic) {
+      const operation = retry.operation({
+        minTimeout: 200,
+        factor: 1.5
+      });
+
+      operation.attempt(function (attempt) {
+        // make sure there are no other consumers on this topic before starting test
+        producer.client.zk.getConsumersPerTopic(groupId, function (error, data) {
+          if (error && error.name === 'NO_NODE') {
+            return done();
+          }
+
+          if (operation.retry(error)) {
+            return;
+          }
+
+          if (error) {
+            return done(operation.mainError());
+          }
+
+          if (data) {
+            try {
+              data.consumerTopicMap.should.be.empty;
+              data.topicConsumerMap.should.be.empty;
+              data.topicPartitionMap.should.be.empty;
+            } catch (err) {
+              if (operation.retry(err)) {
+                return;
+              }
+              done(err);
+            }
+          }
+          done();
+        });
+      });
+    } else {
+      done();
+    }
   });
 
   afterEach(function (done) {
     debug('killChildren');
-    rearer.closeAll();
-    setTimeout(done, 500);
+    rearer.closeAll(done);
   });
 
   function sendMessages (messages, done) {
-    async.eachSeries(messages, function (message, cb) {
-      sendMessage(topic, message, cb);
-    }, function (error, results) {
+    const payload = distributeMessages(messages);
+    debug('Sending', payload);
+    producer.send(payload, function (error) {
       if (error) {
-        console.error('Send Error', error);
         return done(error);
       }
       debug('all messages sent');
     });
+  }
+
+  function distributeMessages (messages) {
+    const partitions = [0, 1, 2];
+    var index = 0;
+    var len = partitions.length;
+
+    var partitionBuckets = partitions.map(function (partition) {
+      return {
+        topic: topic,
+        messages: [],
+        partition: partition
+      };
+    });
+
+    messages.forEach(function (message) {
+      partitionBuckets[index++ % len].messages.push(message);
+    });
+
+    return partitionBuckets;
   }
 
   function getConsumerVerifier (messages, expectedPartitionsConsumed, expectedConsumersConsuming, done) {
@@ -80,8 +134,13 @@ describe('Integrated HLC Rebalance', function () {
         processedMessages++;
         consumedByConsumer[data.id] = true;
       }
-      if (processedMessages >= messages.length && Object.keys(consumedByConsumer).length === expectedConsumersConsuming) {
-        verified();
+      if (processedMessages >= messages.length) {
+        var consumedBy = Object.keys(consumedByConsumer);
+        if (consumedBy.length >= expectedConsumersConsuming) {
+          verified();
+        } else {
+          verified(new Error('Received messages but not by the expected ' + expectedConsumersConsuming + ' consumers: ' + JSON.stringify(consumedBy)));
+        }
       }
     };
   }
@@ -139,7 +198,7 @@ describe('Integrated HLC Rebalance', function () {
   });
 
   it('verify two consumer consumes all messages on all partitions after two out of the four consumers are killed right away', function (done) {
-    var messages = generateMessages(4, 'verify 4 c 2 killed');
+    var messages = generateMessages(3, 'verify 4 c 2 killed');
     var verify = getConsumerVerifier(messages, 3, 2, done);
 
     rearer.setVerifier(topic, groupId, verify);
@@ -152,7 +211,7 @@ describe('Integrated HLC Rebalance', function () {
 
   it('verify three consumer consumes all messages on all partitions after one that is unassigned is killed', function (done) {
     var messages = generateMessages(3, 'verify 2 c 2 killed');
-    var verify = getConsumerVerifier(messages, 3, 3, done);
+    var verify = getConsumerVerifier(messages, 3, 2, done);
 
     rearer.setVerifier(topic, groupId, verify);
 
@@ -178,7 +237,7 @@ describe('Integrated HLC Rebalance', function () {
   });
 
   it('verify two consumer consumes all messages on all partitions after two out of the four consumers are killed', function (done) {
-    var messages = generateMessages(4, 'verify 2 c 2 killed');
+    var messages = generateMessages(3, 'verify 2 c 2 killed');
     var verify = getConsumerVerifier(messages, 3, 2, done);
 
     rearer.setVerifier(topic, groupId, verify);
@@ -190,8 +249,8 @@ describe('Integrated HLC Rebalance', function () {
   });
 
   it('verify three consumer consumes all messages on all partitions after three out of the six consumers are killed', function (done) {
-    var messages = generateMessages(4, 'verify 3 c 3 killed');
-    var verify = getConsumerVerifier(messages, 3, 3, done);
+    var messages = generateMessages(3, 'verify 3 c 3 killed');
+    var verify = getConsumerVerifier(messages, 3, 2, done);
 
     rearer.setVerifier(topic, groupId, verify);
     rearer.raise(6, function () {
@@ -200,4 +259,4 @@ describe('Integrated HLC Rebalance', function () {
       });
     }, 1000);
   });
-});
+}
