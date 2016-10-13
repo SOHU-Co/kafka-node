@@ -9,7 +9,7 @@
     "broker"
   ],
   "bugs": "https://github.com/SOHU-co/kafka-node/issues",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "kafka.js",
   "license": "MIT",
   "dependencies": {

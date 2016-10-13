@@ -1,5 +1,9 @@
 # kafka-node CHANGELOG
 
+## 2016-10-13, Version 1.0.1
+
+- Fix missing support in [Consumer Group](https://github.com/SOHU-Co/kafka-node#consumergroup) for fromOffset using `earliest` and `none` [#483](https://github.com/SOHU-Co/kafka-node/pull/483)
+
 ## 2016-10-10, Version 1.0.0
 
 Major version change since we're dropping support for Node older than v4.
