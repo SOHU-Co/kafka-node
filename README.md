@@ -569,7 +569,11 @@ var options = {
   // An array of partition assignment protocols ordered by preference.
   // 'roundrobin' or 'range' string for built ins (see below to pass in custom assignment protocol) 
   protocol: ['roundrobin'],
-  fromOffset: 'latest', // for new groups read messages from the latest offsets (defaults to the earliest available offset)
+  
+  // Offsets to use for new groups other options could be 'earliest' or 'none' (none will emit an error if no offsets were saved)
+  // equivalent to Java client's auto.offset.reset
+  fromOffset: 'latest', // default
+  
   migrateHLC: false,    // for details please see Migration section below
   migrateRolling: true
 };

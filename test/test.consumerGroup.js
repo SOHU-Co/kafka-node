@@ -73,6 +73,29 @@ describe('ConsumerGroup', function () {
       }, 'SampleTopic');
       sinon.assert.calledWithExactly(fakeClient, 'myhost', 'myClientId', undefined, undefined, ssl);
     });
+
+    it('should throw an error if using an invalid fromOffset', function () {
+      [true, false, '', 0, 1, 'blah'].forEach(offset => {
+        should.throws(() => {
+          // eslint-disable-next-line no-new
+          new ConsumerGroup({
+            fromOffset: offset
+          });
+        });
+      });
+    });
+
+    it('should not throw an error if using an valid fromOffset', function () {
+      ['earliest', 'latest', 'none'].forEach(offset => {
+        should.doesNotThrow(() => {
+          // eslint-disable-next-line no-new
+          new ConsumerGroup({
+            fromOffset: offset,
+            connectOnReady: false
+          }, 'TestTopic');
+        });
+      });
+    });
   });
 
   describe('#sendHeartbeats', function () {
@@ -165,13 +188,13 @@ describe('ConsumerGroup', function () {
         };
 
         sandbox.stub(consumerGroup, 'fetchOffset').yields(null, fetchOffsetResponse);
-        sandbox.stub(consumerGroup, 'saveLatestOffsets').yields(null);
+        sandbox.stub(consumerGroup, 'saveDefaultOffsets').yields(null);
 
         consumerGroup.handleSyncGroup(syncGroupResponse, function (error, ownsPartitions) {
           ownsPartitions.should.be.true;
           sinon.assert.calledWith(consumerGroup.fetchOffset, syncGroupResponse.partitions);
 
-          sinon.assert.notCalled(consumerGroup.saveLatestOffsets);
+          sinon.assert.notCalled(consumerGroup.saveDefaultOffsets);
           sinon.assert.notCalled(consumerGroup.migrator.saveHighLevelConsumerOffsets);
 
           const topicPayloads = _(consumerGroup.topicPayloads);
@@ -197,7 +220,7 @@ describe('ConsumerGroup', function () {
           }
         };
 
-        const latestOffsets = {
+        const defaultOffsets = {
           TestTopic: {
             0: 10,
             2: 20,
@@ -222,16 +245,16 @@ describe('ConsumerGroup', function () {
           }
         };
 
-        consumerGroup.latestOffsets = latestOffsets;
+        consumerGroup.defaultOffsets = defaultOffsets;
         consumerGroup.migrator.offsets = migrateOffsets;
         sandbox.stub(consumerGroup, 'fetchOffset').yields(null, fetchOffsetResponse);
-        sandbox.stub(consumerGroup, 'saveLatestOffsets').yields(null);
+        sandbox.stub(consumerGroup, 'saveDefaultOffsets').yields(null);
 
         consumerGroup.handleSyncGroup(syncGroupResponse, function (error, ownsPartitions) {
           ownsPartitions.should.be.true;
           sinon.assert.calledWith(consumerGroup.fetchOffset, syncGroupResponse.partitions);
 
-          sinon.assert.calledOnce(consumerGroup.saveLatestOffsets);
+          sinon.assert.calledOnce(consumerGroup.saveDefaultOffsets);
           sinon.assert.calledOnce(consumerGroup.migrator.saveHighLevelConsumerOffsets);
 
           const topicPayloads = _(consumerGroup.topicPayloads);
@@ -241,6 +264,34 @@ describe('ConsumerGroup', function () {
           topicPayloads.find({topic: 'TestTopic', partition: 3}).offset.should.be.eql(9);
           topicPayloads.find({topic: 'TestTopic', partition: 4}).offset.should.be.eql(5000);
           done(error);
+        });
+      });
+    });
+
+    describe('options.fromOffset is "none"', function () {
+      it('should yield error when there is not saved offsets', function (done) {
+        consumerGroup.options.fromOffset = 'none';
+        const syncGroupResponse = {
+          partitions: {
+            TestTopic: [0, 2, 3, 4]
+          }
+        };
+
+        const fetchOffsetResponse = {
+          TestTopic: {
+            0: 10,
+            2: -1,
+            3: -1,
+            4: -1
+          }
+        };
+
+        sandbox.stub(consumerGroup, 'fetchOffset').yields(null, fetchOffsetResponse);
+        sandbox.stub(consumerGroup, 'saveDefaultOffsets').yields(null);
+        consumerGroup.handleSyncGroup(syncGroupResponse, function (error, ownsPartitions) {
+          should(ownsPartitions).be.undefined;
+          error.should.be.a.Error;
+          done();
         });
       });
     });
@@ -265,12 +316,12 @@ describe('ConsumerGroup', function () {
         };
 
         sandbox.stub(consumerGroup, 'fetchOffset').yields(null, fetchOffsetResponse);
-        sandbox.stub(consumerGroup, 'saveLatestOffsets').yields(null);
+        sandbox.stub(consumerGroup, 'saveDefaultOffsets').yields(null);
 
         consumerGroup.handleSyncGroup(syncGroupResponse, function (error, ownsPartitions) {
           ownsPartitions.should.be.true;
           sinon.assert.calledWith(consumerGroup.fetchOffset, syncGroupResponse.partitions);
-          sinon.assert.notCalled(consumerGroup.saveLatestOffsets);
+          sinon.assert.notCalled(consumerGroup.saveDefaultOffsets);
 
           const topicPayloads = _(consumerGroup.topicPayloads);
 
@@ -300,7 +351,7 @@ describe('ConsumerGroup', function () {
           }
         };
 
-        const latestOffsets = {
+        const defaultOffsets = {
           TestTopic: {
             0: 10,
             2: 3,
@@ -308,14 +359,14 @@ describe('ConsumerGroup', function () {
           }
         };
 
-        consumerGroup.latestOffsets = latestOffsets;
+        consumerGroup.defaultOffsets = defaultOffsets;
         sandbox.stub(consumerGroup, 'fetchOffset').yields(null, fetchOffsetResponse);
-        sandbox.stub(consumerGroup, 'saveLatestOffsets').yields(null);
+        sandbox.stub(consumerGroup, 'saveDefaultOffsets').yields(null);
 
         consumerGroup.handleSyncGroup(syncGroupResponse, function (error, ownsPartitions) {
           ownsPartitions.should.be.true;
           sinon.assert.calledWith(consumerGroup.fetchOffset, syncGroupResponse.partitions);
-          sinon.assert.calledOnce(consumerGroup.saveLatestOffsets);
+          sinon.assert.calledOnce(consumerGroup.saveDefaultOffsets);
 
           const topicPayloads = _(consumerGroup.topicPayloads);
 

@@ -5,8 +5,8 @@ var consumerOptions = {
   host: '127.0.0.1:2181',
   groupId: 'ExampleTestGroup',
   sessionTimeout: 15000,
-  protocol: ['range'],
-  fromOffset: 'latest'
+  protocol: ['roundrobin'],
+  fromOffset: 'earliest' // equivalent of auto.offset.reset valid values are 'none', 'latest', 'earliest'
 };
 
 var topics = ['RebalanceTopic', 'RebalanceTest'];
