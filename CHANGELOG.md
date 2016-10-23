@@ -1,5 +1,8 @@
 # kafka-node CHANGELOG
 
+## 2016-10-22, Version 1.0.2
+- Fix issue in [Consumer Group](https://github.com/SOHU-Co/kafka-node#consumergroup) where using the migrator with no previous HLC offsets will set initial offsets to -1 [#490](https://github.com/SOHU-Co/kafka-node/pull/490)
+
 ## 2016-10-13, Version 1.0.1
 
 - Fix missing support in [Consumer Group](https://github.com/SOHU-Co/kafka-node#consumergroup) for fromOffset using `earliest` and `none` [#483](https://github.com/SOHU-Co/kafka-node/pull/483)
