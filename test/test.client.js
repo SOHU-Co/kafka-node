@@ -360,7 +360,6 @@ describe('Client', function () {
 
     describe('#brokerForLeader', function () {
       it('should not throw exception when leader does not exist', function () {
-
         client.brokerProfiles = Object.create(null);
 
         should.doesNotThrow(function () {
