@@ -358,6 +358,16 @@ describe('Client', function () {
       client.once('connect', done);
     });
 
+    describe('#brokerForLeader', function () {
+      it('should not throw exception when leader does not exist', function () {
+        client.brokerProfiles = Object.create(null);
+
+        should.doesNotThrow(function () {
+          should(client.brokerForLeader(1001)).be.undefined;
+        });
+      });
+    });
+
     describe('#reconnectBroker', function () {
       var emptyFn = function () {};
 
