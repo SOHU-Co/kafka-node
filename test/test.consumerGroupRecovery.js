@@ -1,41 +1,67 @@
 'use strict';
 
-var should = require('should');
-var _ = require('lodash');
-var sinon = require('sinon');
-var ConsumerGroupRecovery = require('../lib/consumerGroupRecovery');
-var GroupCoordinatorNotAvailable = require('../lib/errors/GroupCoordinatorNotAvailableError');
-var GroupLoadInProgress = require('../lib/errors/GroupLoadInProgressError');
-var EventEmitter = require('events').EventEmitter;
+const should = require('should');
+const _ = require('lodash');
+const sinon = require('sinon');
+const ConsumerGroupRecovery = require('../lib/consumerGroupRecovery');
+const GroupCoordinatorNotAvailable = require('../lib/errors/GroupCoordinatorNotAvailableError');
+const GroupLoadInProgress = require('../lib/errors/GroupLoadInProgressError');
+const BrokerNotAvailableError = require('../lib/errors').BrokerNotAvailableError;
+const EventEmitter = require('events');
 
 describe('ConsumerGroupRecovery', function () {
-  var consumerGroupRecovery, fakeClient;
+  var consumerGroupRecovery, fakeConsumerGroup;
 
   beforeEach(function () {
-    fakeClient = new EventEmitter();
-    Object.assign(fakeClient, {
+    fakeConsumerGroup = new EventEmitter();
+    fakeConsumerGroup.client = new EventEmitter();
+    fakeConsumerGroup.scheduleReconnect = () => { throw new Error('should be stubbed!'); };
+    Object.assign(fakeConsumerGroup, {
       stopHeartbeats: sinon.stub(),
       options: {
         retries: 10,
-        retryFactor: 1.8
+        retryFactor: 1.8,
+        retryMinTimeout: 1000
       }
     });
-    consumerGroupRecovery = new ConsumerGroupRecovery(fakeClient);
+    consumerGroupRecovery = new ConsumerGroupRecovery(fakeConsumerGroup);
   });
 
   describe('#tryToRecoverFrom', function () {
     it('should emit error on the client when calling trying to recover from a unknown error', function (done) {
       var testError = new Error('My test error');
 
-      fakeClient.once('error', function (error) {
+      fakeConsumerGroup.once('error', function (error) {
         error.should.be.eql(testError);
         done();
       });
 
       consumerGroupRecovery.tryToRecoverFrom(testError, 'test');
-      sinon.assert.calledOnce(fakeClient.stopHeartbeats);
-      fakeClient.ready.should.be.false;
+
+      sinon.assert.calledOnce(fakeConsumerGroup.stopHeartbeats);
+      fakeConsumerGroup.ready.should.be.false;
       consumerGroupRecovery.lastError.should.be.eql(testError);
+    });
+
+    it('should try to recover from a BrokerNotAvailableError', function () {
+      const brokerNotAvailableError = new BrokerNotAvailableError('test error');
+
+      fakeConsumerGroup.client.coordinatorId = 1234;
+
+      fakeConsumerGroup.once('error', function (error) {
+        error.should.not.be.eql(brokerNotAvailableError);
+      });
+
+      sinon.stub(fakeConsumerGroup, 'scheduleReconnect');
+
+      consumerGroupRecovery.tryToRecoverFrom(brokerNotAvailableError, 'test');
+
+      sinon.assert.calledOnce(fakeConsumerGroup.stopHeartbeats);
+      fakeConsumerGroup.ready.should.be.false;
+      consumerGroupRecovery.lastError.should.be.eql(brokerNotAvailableError);
+
+      sinon.assert.calledOnce(fakeConsumerGroup.scheduleReconnect);
+      should(fakeConsumerGroup.client.coordinatorId).be.undefined;
     });
   });
 
