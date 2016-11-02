@@ -28,6 +28,7 @@ Kafka-node is a Node.js client with Zookeeper integration for Apache Kafka 0.8.1
 - [Troubleshooting / FAQ](#troubleshooting--faq)
   - [HighLevelProducer with KeyedPartitioner errors on first send](#highlevelproducer-with-keyedpartitioner-errors-on-first-send)
   - [How do I debug an issue?](#how-do-i-debug-an-issue)
+  - [How do I get a list of all topics?](#how-do-i-get-a-list-of-all-topics)
   - [For a new consumer how do I start consuming from the latest message in a partition?](#for-a-new-consumer-how-do-i-start-consuming-from-the-latest-message-in-a-partition)
   - [FailedToRebalanceConsumerError: Exception: NODE_EXISTS[-110]](#failedtorebalanceconsumererror-exception-node_exists-110)
   - [HighLevelConsumer does not consume on all partitions](#highlevelconsumer-does-not-consume-on-all-partitions)
@@ -839,8 +840,21 @@ This module uses the [debug module](https://github.com/visionmedia/debug) so you
 export DEBUG=kafka-node:*
 ```
 
+## How do I get a list of all topics?
+
+Call `client.loadMetadataForTopics` with a blank topic array to get the entire list of available topics (and available brokers).
+
+```js
+client.loadMetadataForTopics([], function (error, results) {
+  console.log('%j', _.get(results, '1.metadata'));
+});
+```
 
 ## For a new consumer how do I start consuming from the latest message in a partition?
+
+If you are using the new `ConsumerGroup` simply set `'latest'` to `fromOffset` option.
+
+Otherwise:
 
 1. Call `offset.fetchLatestOffsets` to get fetch the latest offset
 2. Consume from returned offset
