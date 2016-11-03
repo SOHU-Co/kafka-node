@@ -224,6 +224,10 @@ describe('Consumer', function () {
         client.close(done);
       });
 
+      afterEach(function () {
+        client.removeAllListeners();
+      });
+
       describe('events', function () {
         it('should emit message when get new message', function (done) {
           if (suiteTimeout) { this.timeout(suiteTimeout); }
