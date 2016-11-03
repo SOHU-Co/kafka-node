@@ -1,5 +1,9 @@
 # kafka-node CHANGELOG
 
+## 2016-11-03, Version 1.0.5
+- Update doc added how to list all topics [#503](https://github.com/SOHU-Co/kafka-node/pull/503)
+- Fix uncaught exceptions that can occur when using ConsumerGroup [#505](https://github.com/SOHU-Co/kafka-node/pull/505)
+
 ## 2016-11-01, Version 1.0.4
 - Fix issue where an exception is thrown in `client.brokerForLeader` when connection with broker is lost in ConsumerGroup it should retry instead [#498](https://github.com/SOHU-Co/kafka-node/pull/498)
 - Fix issue where invalid characters could be used in createTopics call [#495](https://github.com/SOHU-Co/kafka-node/pull/495) [#492](https://github.com/SOHU-Co/kafka-node/pull/492)
