@@ -121,7 +121,7 @@ describe('ConsumerGroup', function () {
       sandbox.stub(consumerGroup.client, 'sendHeartbeatRequest').yields(new UnknownMemberId('test'));
 
       should.doesNotThrow(function () {
-        consumerGroup.connect()
+        consumerGroup.connect();
         consumerGroup.once('connect', function () {
           consumerGroup.close(done);
         });
