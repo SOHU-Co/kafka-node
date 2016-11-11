@@ -98,6 +98,37 @@ describe('ConsumerGroup', function () {
     });
   });
 
+  describe('#close', function () {
+    let sandbox, consumerGroup;
+
+    beforeEach(function () {
+      sandbox = sinon.sandbox.create();
+      consumerGroup = new ConsumerGroup({
+        host: host,
+        connectOnReady: false,
+        sessionTimeout: 8000,
+        heartbeatInterval: 250,
+        retryMinTimeout: 250
+      }, 'TestTopic');
+    });
+
+    afterEach(function () {
+      sandbox.restore();
+    });
+
+    it('should not throw an exception when closing immediately after an UnknownMemberId error', function (done) {
+      const UnknownMemberId = require('../lib/errors/UnknownMemberIdError');
+      sandbox.stub(consumerGroup.client, 'sendHeartbeatRequest').yields(new UnknownMemberId('test'));
+
+      should.doesNotThrow(function () {
+        consumerGroup.connect();
+        consumerGroup.once('connect', function () {
+          consumerGroup.close(done);
+        });
+      });
+    });
+  });
+
   describe('#sendHeartbeats', function () {
     var consumerGroup, sandbox;
 
