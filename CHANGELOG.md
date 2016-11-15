@@ -1,5 +1,8 @@
 # kafka-node CHANGELOG
 
+## 2016-11-15, Version 1.0.6
+- Fix leave group exception that can occur in [Consumer Group](https://github.com/SOHU-Co/kafka-node#consumergroup) [#513](https://github.com/SOHU-Co/kafka-node/pull/513)
+
 ## 2016-11-03, Version 1.0.5
 - Update doc added how to list all topics [#503](https://github.com/SOHU-Co/kafka-node/pull/503)
 - Fix uncaught exceptions that can occur when using ConsumerGroup [#505](https://github.com/SOHU-Co/kafka-node/pull/505)
