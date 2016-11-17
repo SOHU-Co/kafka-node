@@ -204,18 +204,13 @@ describe('Consumer', function () {
             EXISTS_TOPIC_2,
             EXISTS_GZIP,
             EXISTS_SNAPPY
-          ], false, function (err, created) {
+          ], true, function (err) {
             if (err) return done(err);
-
-            function useNewTopics () {
-              producer.send([
-                { topic: EXISTS_TOPIC_2, messages: 'hello kafka' },
-                { topic: EXISTS_GZIP, messages: 'hello gzip', attributes: 1 },
-                { topic: EXISTS_SNAPPY, messages: SNAPPY_MESSAGE, attributes: 2 }
-              ], done);
-            }
-            // Ensure leader selection happened
-            setTimeout(useNewTopics, 1000);
+            producer.send([
+              { topic: EXISTS_TOPIC_2, messages: 'hello kafka' },
+              { topic: EXISTS_GZIP, messages: 'hello gzip', attributes: 1 },
+              { topic: EXISTS_SNAPPY, messages: SNAPPY_MESSAGE, attributes: 2 }
+            ], done);
           });
         });
       });

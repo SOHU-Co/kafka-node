@@ -27,9 +27,9 @@ describe('No Ack Producer', function () {
         producer = new Producer(client);
         batchProducer = new Producer(batchClient);
         producer.on('ready', function () {
-          producer.createTopics([EXISTS_TOPIC_4], false, function (err, created) {
+          producer.createTopics([EXISTS_TOPIC_4], true, function (err) {
             if (err) return callback(err);
-            setTimeout(callback, 500);
+            callback();
           });
           broker = Object.keys(client.brokers)[0];
         });

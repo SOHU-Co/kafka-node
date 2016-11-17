@@ -10,11 +10,6 @@ var client, producer, noAckProducer, producerKeyed;
 
 var host = process.env['KAFKA_TEST_HOST'] || '';
 
-// Helper method
-function randomId () {
-  return Math.floor(Math.random() * 10000);
-}
-
 [
   {
     name: 'PLAINTEXT HighLevelProducer'
@@ -45,9 +40,9 @@ function randomId () {
 
       producer.on('ready', function () {
         producerKeyed.on('ready', function () {
-          producer.createTopics([EXISTS_TOPIC_3], false, function (err, created) {
+          producer.createTopics([EXISTS_TOPIC_3], true, function (err) {
             if (err) return done(err);
-            setTimeout(done, 500);
+            done();
           });
         });
       });
@@ -146,41 +141,6 @@ function randomId () {
         producerKeyed.send([{ key: '12345', partition: 0, topic: EXISTS_TOPIC_3, messages: 'hello kafka' }], function (err, message) {
           message.should.be.ok;
           message[EXISTS_TOPIC_3]['0'].should.be.above(0);
-          done(err);
-        });
-      });
-    });
-
-    describe('#createTopics', function () {
-      var client, producer;
-
-      before(function (done) {
-        client = new Client(host);
-        producer = new HighLevelProducer(client);
-        producer.on('ready', done);
-      });
-
-      after(function (done) {
-        producer.close(done);
-      });
-
-      it('should return All requests sent when async is true', function (done) {
-        producer.createTopics(['_exist_topic_' + randomId() + '_test'], true, function (err, data) {
-          data.should.equal('All requests sent');
-          done(err);
-        });
-      });
-
-      it('async should be true if not present', function (done) {
-        producer.createTopics(['_exist_topic_' + randomId() + '_test'], function (err, data) {
-          data.should.equal('All requests sent');
-          done(err);
-        });
-      });
-
-      it('should return All created when async is false', function (done) {
-        producer.createTopics(['_exist_topic_' + randomId() + '_test'], false, function (err, data) {
-          data.should.equal('All created');
           done(err);
         });
       });
