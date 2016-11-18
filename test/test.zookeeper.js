@@ -3,7 +3,7 @@
 var Zookeeper = require('../lib/zookeeper').Zookeeper;
 var host = process.env['KAFKA_TEST_HOST'] || '';
 var zk;
-var uuid = require('node-uuid');
+var uuid = require('uuid');
 var should = require('should');
 
 // Helper method

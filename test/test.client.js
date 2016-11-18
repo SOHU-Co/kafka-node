@@ -1,7 +1,7 @@
 var host = process.env['KAFKA_TEST_HOST'] || '';
 var kafka = require('..');
 var Client = kafka.Client;
-var uuid = require('node-uuid');
+var uuid = require('uuid');
 var should = require('should');
 var FakeZookeeper = require('./mocks/mockZookeeper');
 var FakeSocket = require('./mocks/mockSocket');

@@ -2,7 +2,7 @@
 
 var kafka = require('..');
 var HighLevelProducer = kafka.HighLevelProducer;
-var uuid = require('node-uuid');
+var uuid = require('uuid');
 var Client = kafka.Client;
 var KeyedMessage = kafka.KeyedMessage;
 
