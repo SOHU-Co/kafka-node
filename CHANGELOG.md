@@ -1,5 +1,15 @@
 # kafka-node CHANGELOG
 
+## 2016-11-18, Version 1.0.7
+- Fix issue where `createTopics` using the `async` set to `false` was not synchronous. [#519](https://github.com/SOHU-Co/kafka-node/pull/519)
+
+   **NOTE**: The behavior now is if `async` is true the callback is not actually called until all the topics are confirmed to have been created by Kafka. The previous behavior the callback would be called after the first request (which does not guarantee the topics have been created). This wasn't consistent with what the doc said. 
+
+- Fix issue where messages are lost when sending a batch of keyed messages using the highLevelPartitioner [#521](https://github.com/SOHU-Co/kafka-node/pull/521)
+- Upgrade UUID package [#520](https://github.com/SOHU-Co/kafka-node/pull/520)
+- Check for in loops using `hasOwnProperty` to defend against insane libraries that update the prototype of `Object` [#485](https://github.com/SOHU-Co/kafka-node/pull/485)
+- Refactor `HighLevelProducer` and `Producer` [#508](https://github.com/SOHU-Co/kafka-node/pull/508)
+
 ## 2016-11-15, Version 1.0.6
 - Fix leave group exception that can occur in [Consumer Group](https://github.com/SOHU-Co/kafka-node#consumergroup) [#513](https://github.com/SOHU-Co/kafka-node/pull/513)
 
@@ -122,7 +132,7 @@ Added a new Consumer called [Consumer Group](https://github.com/SOHU-Co/kafka-no
 ## 2015-04-23, Version 0.2.26
 - Fix: add callback to consumer.autoCommit method [#198](https://github.com/SOHU-Co/kafka-node/pull/198)
 - Emit an error when there is a problem with the socket connection to the kafka broker [#196](https://github.com/SOHU-Co/kafka-node/pull/196)
-- Fix: emit the error instead of slient swallow it [#193](https://github.com/SOHU-Co/kafka-node/pull/193)
+- Fix: emit the error instead of silent swallow it [#193](https://github.com/SOHU-Co/kafka-node/pull/193)
 - Typo in error message [#189](https://github.com/SOHU-Co/kafka-node/pull/189)
 
 ## 2015-04-01, Version 0.2.25
