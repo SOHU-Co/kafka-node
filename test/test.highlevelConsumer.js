@@ -317,7 +317,7 @@ describe('HighLevelConsumer', function () {
     var _ = require('lodash');
     var Client = require('../lib/client');
     var Producer = require('../lib/producer');
-    var uuid = require('node-uuid');
+    var uuid = require('uuid');
     var host = process.env['KAFKA_TEST_HOST'] || '';
     var topic = 'DuplicateMessageTest';
     var numberOfMessages = 20000;
