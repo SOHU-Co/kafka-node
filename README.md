@@ -1,10 +1,12 @@
 Kafka-node
 ==========
 
-[![NPM](https://nodei.co/npm/kafka-node.png)](https://nodei.co/npm/kafka-node/)
-[![NPM](https://nodei.co/npm-dl/kafka-node.png?height=3)](https://nodei.co/npm/kafka-node/)
 [![Build Status](https://travis-ci.org/SOHU-Co/kafka-node.svg?branch=master)](https://travis-ci.org/SOHU-Co/kafka-node)
 [![Coverage Status](https://coveralls.io/repos/github/SOHU-Co/kafka-node/badge.svg?branch=master)](https://coveralls.io/github/SOHU-Co/kafka-node?branch=master)
+
+[![NPM](https://nodei.co/npm/kafka-node.png)](https://nodei.co/npm/kafka-node/)
+[![NPM](https://nodei.co/npm-dl/kafka-node.png?height=3)](https://nodei.co/npm/kafka-node/)
+
 
 Kafka-node is a Node.js client with Zookeeper integration for Apache Kafka 0.8.1 and later.
 
@@ -21,24 +23,28 @@ Kafka-node is a Node.js client with Zookeeper integration for Apache Kafka 0.8.1
   - [HighLevelProducer](#highlevelproducer)
   - [Consumer](#consumer)
   - [HighLevelConsumer](#highlevelconsumer)
+  - [ConsumerGroup](#consumergroup)
   - [Offset](#offset)
 - [Troubleshooting / FAQ](#troubleshooting--faq)
   - [HighLevelProducer with KeyedPartitioner errors on first send](#highlevelproducer-with-keyedpartitioner-errors-on-first-send)
   - [How do I debug an issue?](#how-do-i-debug-an-issue)
+  - [How do I get a list of all topics?](#how-do-i-get-a-list-of-all-topics)
   - [For a new consumer how do I start consuming from the latest message in a partition?](#for-a-new-consumer-how-do-i-start-consuming-from-the-latest-message-in-a-partition)
   - [FailedToRebalanceConsumerError: Exception: NODE_EXISTS[-110]](#failedtorebalanceconsumererror-exception-node_exists-110)
   - [HighLevelConsumer does not consume on all partitions](#highlevelconsumer-does-not-consume-on-all-partitions)
   - [How to throttle messages / control the concurrency of processing messages](#how-to-throttle-messages--control-the-concurrency-of-processing-messages)
+  - [How do I produce and consume binary data?](#how-do-i-produce-and-consume-binary-data)
 - [Running Tests](#running-tests)
 - [LICENSE - "MIT"](#license---mit)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-# Features
+# Features	
 * Consumer and High Level Consumer
 * Producer and High Level Producer
 * Manage topic Offsets
 * SSL connections to brokers (Kafka 0.9+)
+* Consumer Groups managed by Kafka coordinator (Kafka 0.9+)
 
 # Install Kafka
 Follow the [instructions](http://kafka.apache.org/documentation.html#quickstart) on the Kafka wiki to build Kafka 0.8 and get a test broker up and running.
@@ -412,7 +418,7 @@ consumer.close(cb); //force is disabled
 
 ```js
 {
-    // Consumer group id, deafult `kafka-node-group`
+    // Consumer group id, default `kafka-node-group`
     groupId: 'kafka-node-group',
     // Optional consumer id, defaults to groupId + uuid
     id: 'my-consumer-id',
@@ -537,6 +543,175 @@ Example:
 consumer.close(true, cb);
 consumer.close(cb); //force is disabled
 ```
+
+## ConsumerGroup
+
+The new consumer group uses Kafka broker coordinators instead of Zookeeper to manage consumer groups. This is supported in **Kafka version 0.9** and above only.
+
+### Coming from the highLevelConsumer
+
+API is very similar to `HighLevelConsumer` with some exceptions noted below:
+
+* In an effort to make the API simpler you no longer need to create a `client` this is done inside the `ConsumerGroup`
+* consumer ID do not need to be defined. There's a new ID to represent consumers called *member ID* and this is assigned to consumer after joining the group
+* Offsets, group members, and ownership details are not stored in Zookeeper
+* `ConsumerGroup` does not emit a `registered` event
+
+### ConsumerGroup(options, topics)
+
+```js
+var options = {
+  host: 'zookeeper:2181',
+  zk : undefined,   // put client zk settings if you need them (see Client)
+  batch: undefined, // put client batch settings if you need them (see Client)
+  ssl: true, // optional (defaults to false) or tls options hash
+  groupId: 'ExampleTestGroup',
+  sessionTimeout: 15000,
+  // An array of partition assignment protocols ordered by preference.
+  // 'roundrobin' or 'range' string for built ins (see below to pass in custom assignment protocol) 
+  protocol: ['roundrobin'],
+  
+  // Offsets to use for new groups other options could be 'earliest' or 'none' (none will emit an error if no offsets were saved)
+  // equivalent to Java client's auto.offset.reset
+  fromOffset: 'latest', // default
+  
+  migrateHLC: false,    // for details please see Migration section below
+  migrateRolling: true
+};
+
+var consumerGroup = new ConsumerGroup(options, ['RebalanceTopic', 'RebalanceTest']);
+
+// Or for a single topic pass in a string
+
+var consumerGroup = new ConsumerGroup(options, 'RebalanceTopic');
+```
+
+### Custom Partition Assignment Protocol
+
+You can pass a custom assignment strategy to the `protocol` array with the interface:
+
+#### string :: name 
+#### integer :: version
+#### object :: userData
+#### function :: assign (topicPartition, groupMembers, callback)
+**topicPartition**
+
+```json
+{
+  "RebalanceTopic": [
+    "0",
+    "1",
+    "2"
+  ],
+  "RebalanceTest": [
+    "0",
+    "1",
+    "2"
+  ]
+}
+```
+
+**groupMembers**
+
+```json
+[
+  {
+    "subscription": [
+      "RebalanceTopic",
+      "RebalanceTest"
+    ],
+    "version": 0,
+    "id": "consumer1-8db1b117-61c6-4f91-867d-20ccd1ad8b3d"
+  },
+  {
+    "subscription": [
+      "RebalanceTopic",
+      "RebalanceTest"
+    ],
+    "version": 0,
+    "id": "consumer3-bf2d11f4-1c73-4a39-b498-cfe76eb65bea"
+  },
+  {
+    "subscription": [
+      "RebalanceTopic",
+      "RebalanceTest"
+    ],
+    "version": 0,
+    "id": "consumer2-9781058e-fad4-40e8-a69c-69afbae05184"
+  }
+]
+```
+
+**callback(error, result)**
+
+***result***
+
+```json
+[
+  {
+    "memberId": "consumer3-bf2d11f4-1c73-4a39-b498-cfe76eb65bea",
+    "topicPartitions": {
+      "RebalanceTopic": [
+        "2"
+      ],
+      "RebalanceTest": [
+        "2"
+      ]
+    },
+    "version": 0
+  },
+  {
+    "memberId": "consumer2-9781058e-fad4-40e8-a69c-69afbae05184",
+    "topicPartitions": {
+      "RebalanceTopic": [
+        "1"
+      ],
+      "RebalanceTest": [
+        "1"
+      ]
+    },
+    "version": 0
+  },
+  {
+    "memberId": "consumer1-8db1b117-61c6-4f91-867d-20ccd1ad8b3d",
+    "topicPartitions": {
+      "RebalanceTopic": [
+        "0"
+      ],
+      "RebalanceTest": [
+        "0"
+      ]
+    },
+    "version": 0
+  }
+]
+```
+
+
+### Auto migration from the v0.8 based highLevelConsumer
+
+We have two options for automatic migration from existing `highLevelConsumer` group. This is useful to preserve the previous committed offsets for your group.
+
+We support two use cases:
+
+1. You have downtime and your old HLC consumers are no longer available
+2. Where the old HLC group is still up and working and you are doing a rolling deploy with zero downtime
+
+For case 1 use below setting:
+
+```js
+{
+	migrateHLC: true, // default is false
+	migrateRolling: false // default is true
+}
+```
+
+For case 2 setting `migrateRolling` to `true` will allow the ConsumerGroup to start monitoring `zk` nodes for when topic ownership are relinquished by the old HLC consumer. Once this is done the ConsumerGroup will connect and the previous HLC offsets from zookeeper will be migrated automatically to the new Kafka broker based coordinator.
+
+* Group name should be consistent with old highLevelConsumer
+* Should never overwrite existing offsets
+* Only offsets for Topics that were once in the highLevelConsumer will be migrated over offsets for new topics will follow the `fromOffset` setting
+
 
 ## Offset
 ### Offset(client)
@@ -665,8 +840,21 @@ This module uses the [debug module](https://github.com/visionmedia/debug) so you
 export DEBUG=kafka-node:*
 ```
 
+## How do I get a list of all topics?
+
+Call `client.loadMetadataForTopics` with a blank topic array to get the entire list of available topics (and available brokers).
+
+```js
+client.loadMetadataForTopics([], function (error, results) {
+  console.log('%j', _.get(results, '1.metadata'));
+});
+```
 
 ## For a new consumer how do I start consuming from the latest message in a partition?
+
+If you are using the new `ConsumerGroup` simply set `'latest'` to `fromOffset` option.
+
+Otherwise:
 
 1. Call `offset.fetchLatestOffsets` to get fetch the latest offset
 2. Consume from returned offset
@@ -704,18 +892,27 @@ Reference to issue [#339](https://github.com/SOHU-Co/kafka-node/issues/339)
 2. Set the `queue.drain` to resume the consumer
 3. The handler for consumer's `message` event pauses the consumer and pushes the message to the queue.
 
+## How do I produce and consume binary data?
+
+### Consume
+In the consumer set the `encoding` option to `buffer`.
+
+### Produce
+Set the `messages` attribute in the `payload` to a `Buffer`. `TypedArrays` such as `Uint8Array` are not supported and need to be converted to a `Buffer`. 
+
+```js
+{
+ messages: Buffer.from(data.buffer)
+} 
+```
+
+Reference to issue [#470](https://github.com/SOHU-Co/kafka-node/issues/470) [#514](https://github.com/SOHU-Co/kafka-node/issues/514)
+
 # Running Tests
 
 ### Install Docker
 
-On the Mac you can either install `docker-machine` or [Docker for Mac](https://docs.docker.com/engine/installation/mac/).
-
-Docker machine:
-
-```bash
-brew install docker docker-machine docker-compose
-docker-machine create --driver virtualbox dev
-```
+On the Mac install [Docker for Mac](https://docs.docker.com/engine/installation/mac/).
 
 ### Start Docker and Run Tests
 

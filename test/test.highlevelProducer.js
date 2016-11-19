@@ -2,18 +2,14 @@
 
 var kafka = require('..');
 var HighLevelProducer = kafka.HighLevelProducer;
-var uuid = require('node-uuid');
+var uuid = require('uuid');
 var Client = kafka.Client;
 var KeyedMessage = kafka.KeyedMessage;
-
+const _ = require('lodash');
+const assert = require('assert');
 var client, producer, noAckProducer, producerKeyed;
 
 var host = process.env['KAFKA_TEST_HOST'] || '';
-
-// Helper method
-function randomId () {
-  return Math.floor(Math.random() * 10000);
-}
 
 [
   {
@@ -45,9 +41,9 @@ function randomId () {
 
       producer.on('ready', function () {
         producerKeyed.on('ready', function () {
-          producer.createTopics([EXISTS_TOPIC_3], false, function (err, created) {
+          producer.createTopics([EXISTS_TOPIC_3], true, function (err) {
             if (err) return done(err);
-            setTimeout(done, 500);
+            done();
           });
         });
       });
@@ -55,6 +51,58 @@ function randomId () {
 
     after(function (done) {
       producer.close(done);
+    });
+
+    describe('#buildPayloads', function () {
+      function assertMessage (result, topic, partition, value) {
+        assert(_.chain(result)
+          .find({topic: topic, partition: partition})
+          .result('messages')
+          .pluck('value')
+          .includes(value)
+          .value()
+        , `Value "${value}" is not in topic "${topic}" partition ${partition}`);
+      }
+
+      it('should normalize payload by topic parition', function () {
+        const topicMetadata = {
+          jolly: [0, 1, 2],
+          christmas: [0, 1, 2],
+          coal: [0]
+        };
+
+        const payload = [
+          {topic: 'jolly', partition: 0, messages: 'jolly-test-0'},
+          {topic: 'jolly', partition: 1, messages: 'jolly-test-1'},
+          {topic: 'jolly', partition: 2, messages: 'jolly-test-2'},
+          {topic: 'jolly', partition: 1, messages: 'jolly-test-3'},
+          {topic: 'christmas', partition: 0, messages: 'christmas-test-0'},
+          {topic: 'christmas', partition: 1, messages: 'christmas-test-1'},
+          {topic: 'christmas', partition: 2, messages: 'christmas-test-2'},
+          {topic: 'christmas', partition: 0, messages: 'christmas-test-3'},
+          {topic: 'christmas', partition: 1, messages: 'christmas-test-4'},
+          {topic: 'christmas', partition: 2, messages: 'christmas-test-5'},
+          {topic: 'coal', partition: 0, messages: 'coal-test'}
+        ];
+
+        const requestPayload = producer.buildPayloads(payload, topicMetadata);
+
+        Object.keys(requestPayload).length.should.be.eql(7);
+
+        assertMessage(requestPayload, 'jolly', 0, 'jolly-test-0');
+        assertMessage(requestPayload, 'jolly', 1, 'jolly-test-1');
+        assertMessage(requestPayload, 'jolly', 1, 'jolly-test-3');
+        assertMessage(requestPayload, 'jolly', 2, 'jolly-test-2');
+
+        assertMessage(requestPayload, 'christmas', 0, 'christmas-test-0');
+        assertMessage(requestPayload, 'christmas', 1, 'christmas-test-1');
+        assertMessage(requestPayload, 'christmas', 2, 'christmas-test-2');
+        assertMessage(requestPayload, 'christmas', 0, 'christmas-test-3');
+        assertMessage(requestPayload, 'christmas', 1, 'christmas-test-4');
+        assertMessage(requestPayload, 'christmas', 2, 'christmas-test-5');
+
+        assertMessage(requestPayload, 'coal', 0, 'coal-test');
+      });
     });
 
     describe('#send', function () {
@@ -146,41 +194,6 @@ function randomId () {
         producerKeyed.send([{ key: '12345', partition: 0, topic: EXISTS_TOPIC_3, messages: 'hello kafka' }], function (err, message) {
           message.should.be.ok;
           message[EXISTS_TOPIC_3]['0'].should.be.above(0);
-          done(err);
-        });
-      });
-    });
-
-    describe('#createTopics', function () {
-      var client, producer;
-
-      before(function (done) {
-        client = new Client(host);
-        producer = new HighLevelProducer(client);
-        producer.on('ready', done);
-      });
-
-      after(function (done) {
-        producer.close(done);
-      });
-
-      it('should return All requests sent when async is true', function (done) {
-        producer.createTopics(['_exist_topic_' + randomId() + '_test'], true, function (err, data) {
-          data.should.equal('All requests sent');
-          done(err);
-        });
-      });
-
-      it('async should be true if not present', function (done) {
-        producer.createTopics(['_exist_topic_' + randomId() + '_test'], function (err, data) {
-          data.should.equal('All requests sent');
-          done(err);
-        });
-      });
-
-      it('should return All created when async is false', function (done) {
-        producer.createTopics(['_exist_topic_' + randomId() + '_test'], false, function (err, data) {
-          data.should.equal('All created');
           done(err);
         });
       });

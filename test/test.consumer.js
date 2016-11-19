@@ -6,7 +6,7 @@ var Producer = require(libPath + 'producer');
 var Offset = require(libPath + 'offset');
 var Client = require(libPath + 'client');
 var should = require('should');
-var uuid = require('node-uuid');
+var uuid = require('uuid');
 var TopicsNotExistError = require(libPath + 'errors').TopicsNotExistError;
 var FakeClient = require('./mocks/mockClient');
 var InvalidConfigError = require('../lib/errors/InvalidConfigError');
@@ -204,24 +204,23 @@ describe('Consumer', function () {
             EXISTS_TOPIC_2,
             EXISTS_GZIP,
             EXISTS_SNAPPY
-          ], false, function (err, created) {
+          ], true, function (err) {
             if (err) return done(err);
-
-            function useNewTopics () {
-              producer.send([
-                { topic: EXISTS_TOPIC_2, messages: 'hello kafka' },
-                { topic: EXISTS_GZIP, messages: 'hello gzip', attributes: 1 },
-                { topic: EXISTS_SNAPPY, messages: SNAPPY_MESSAGE, attributes: 2 }
-              ], done);
-            }
-            // Ensure leader selection happened
-            setTimeout(useNewTopics, 1000);
+            producer.send([
+              { topic: EXISTS_TOPIC_2, messages: 'hello kafka' },
+              { topic: EXISTS_GZIP, messages: 'hello gzip', attributes: 1 },
+              { topic: EXISTS_SNAPPY, messages: SNAPPY_MESSAGE, attributes: 2 }
+            ], done);
           });
         });
       });
 
       after(function (done) {
         client.close(done);
+      });
+
+      afterEach(function () {
+        client.removeAllListeners();
       });
 
       describe('events', function () {

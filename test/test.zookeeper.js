@@ -3,7 +3,8 @@
 var Zookeeper = require('../lib/zookeeper').Zookeeper;
 var host = process.env['KAFKA_TEST_HOST'] || '';
 var zk;
-var uuid = require('node-uuid');
+var uuid = require('uuid');
+var should = require('should');
 
 // Helper method
 function randomId () {
@@ -11,8 +12,11 @@ function randomId () {
 }
 
 describe('Zookeeper', function () {
-  beforeEach(function () {
+  this.retries(4);
+
+  beforeEach(function (done) {
     zk = new Zookeeper(host);
+    zk.client.once('connected', done);
   });
 
   afterEach(function () {
@@ -23,6 +27,44 @@ describe('Zookeeper', function () {
     it('should emit init event', function (done) {
       zk.once('init', function (brokers) {
         Object.keys(brokers).length.should.eql(1);
+        done();
+      });
+    });
+  });
+
+  describe('#isConsumerRegistered', function () {
+    it('should yield true when consumer is registered', function (done) {
+      var groupId = uuid.v4();
+      var consumerId = uuid.v4();
+
+      zk.registerConsumer(groupId, consumerId, [{topic: 'fake-topic'}], function () {
+        zk.isConsumerRegistered(groupId, consumerId, function (error, registered) {
+          should(error).be.empty;
+          registered.should.be.eql(true);
+          done();
+        });
+      });
+    });
+
+    it('should yield false when consumer is unregistered', function (done) {
+      var groupId = uuid.v4();
+      var consumerId = uuid.v4();
+
+      zk.registerConsumer(groupId, consumerId, [{topic: 'fake-topic'}], function () {
+        zk.isConsumerRegistered(groupId, 'some-unknown-id', function (error, registered) {
+          should(error).be.empty;
+          registered.should.be.eql(false);
+          done();
+        });
+      });
+    });
+
+    it('should yield false when consumer is unregistered and group does not exist', function (done) {
+      var groupId = uuid.v4();
+      var consumerId = uuid.v4();
+      zk.isConsumerRegistered(groupId, consumerId, function (error, registered) {
+        should(error).be.empty;
+        registered.should.be.eql(false);
         done();
       });
     });
@@ -142,6 +184,20 @@ describe('Zookeeper', function () {
   });
 
   describe('#topicExists', function () {
+    before(function (done) {
+      const kafka = require('..');
+      const Client = kafka.Client;
+      const Producer = kafka.Producer;
+      const client = new Client(host);
+      const producer = new Producer(client);
+      producer.on('ready', function () {
+        producer.createTopics(['_exist_topic_3_test'], function (error) {
+          producer.close();
+          done(error);
+        });
+      });
+    });
+
     it('should return false when topic not exist', function (done) {
       zk.topicExists('_not_exist_topic_test', function (err, existed, topic) {
         existed.should.not.be.ok;
@@ -271,7 +327,7 @@ describe('Zookeeper', function () {
       var topic = '_exist_topic_3_test';
 
       zk.deletePartitionOwnership(groupId, topic, 0, function (error) {
-        error.should.be.defined;
+        error.should.not.be.null;
         done();
       });
     });

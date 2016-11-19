@@ -1,13 +1,18 @@
+'use strict';
+
 var host = process.env['KAFKA_TEST_HOST'] || '';
 var kafka = require('..');
 var Client = kafka.Client;
-var uuid = require('node-uuid');
+var uuid = require('uuid');
 var should = require('should');
 var FakeZookeeper = require('./mocks/mockZookeeper');
 var FakeSocket = require('./mocks/mockSocket');
 var InvalidConfigError = require('../lib/errors/InvalidConfigError');
 var proxyquire = require('proxyquire').noCallThru();
 var sinon = require('sinon');
+var retry = require('retry');
+const _ = require('lodash');
+const async = require('async');
 
 describe('Client', function () {
   var client = null;
@@ -276,6 +281,32 @@ describe('Client', function () {
     });
   });
 
+  describe('Discover Group Coordinator', function () {
+    beforeEach(function (done) {
+      client = new Client(host);
+      client.once('connect', done);
+    });
+
+    afterEach(function (done) {
+      client.close(done);
+    });
+
+    it('#sendGroupCoordinatorRequest', function (done) {
+      var operation = retry.operation();
+      operation.attempt(function () {
+        client.sendGroupCoordinatorRequest('ExampleTopic', function (error, response) {
+          if (operation.retry(error)) {
+            return;
+          }
+          should(error).be.null;
+          response.coordinatorPort.should.be.eql(9092);
+          response.coordinatorHost.should.be.eql(host);
+          done();
+        });
+      });
+    });
+  });
+
   describe('#constructor', function () {
     function validateThrowsInvalidConfigError (clientId) {
       should.throws(function () {
@@ -329,6 +360,70 @@ describe('Client', function () {
       var clientId = 'kafka-node-client-' + uuid.v4();
       client = new Client(host, clientId, undefined, undefined, {rejectUnauthorized: false});
       client.once('connect', done);
+    });
+
+    describe('#brokerForLeader', function () {
+      it('should not throw exception when leader does not exist', function () {
+        client.brokerProfiles = Object.create(null);
+
+        should.doesNotThrow(function () {
+          should(client.brokerForLeader(1001)).be.undefined;
+        });
+      });
+    });
+
+    describe('#createTopics', function () {
+      function verifyTopics (topics, callback) {
+        async.each(topics, function (topic, callback) {
+          client.zk.topicExists(topic, function (error, exists, topic) {
+            if (error) {
+              return callback(error);
+            }
+            exists.should.be.true;
+            callback();
+          });
+        }, callback);
+      }
+
+      it('should create given kafka topics', function (done) {
+        const topics = _.times(3, uuid.v4);
+        client.createTopics(topics, true, function (error) {
+          if (error) {
+            return done(error);
+          }
+          verifyTopics(topics, done);
+        });
+      });
+
+      it('should yield synchronously', function (done) {
+        let called = false;
+        const topics = _.times(3, uuid.v4);
+        client.createTopics(topics, false, function (error) {
+          if (error) {
+            return done(error);
+          }
+          if (!called) {
+            return done();
+          }
+          done('Called asynchronously');
+        });
+        called = true;
+      });
+
+      it('should yield asynchronously', function (done) {
+        let called = false;
+        const topics = _.times(3, uuid.v4);
+        client.createTopics(topics, true, function (error) {
+          if (error) {
+            return done(error);
+          }
+          if (called) {
+            return done();
+          }
+          done('Called synchronously');
+        });
+        called = true;
+      });
     });
 
     describe('#reconnectBroker', function () {

@@ -1,5 +1,6 @@
 exports.HighLevelConsumer = require('./lib/highLevelConsumer');
 exports.HighLevelProducer = require('./lib/highLevelProducer');
+exports.ConsumerGroup = require('./lib/consumerGroup');
 exports.Consumer = require('./lib/consumer');
 exports.Producer = require('./lib/producer');
 exports.Client = require('./lib/client');
