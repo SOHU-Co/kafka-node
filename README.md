@@ -876,7 +876,7 @@ process.on('SIGINT', function () {
 });
 ```
 
-Alternatively, you to avoid this issue entirely by omitting the HLC's `id` and a unique one will be generated for you.
+Alternatively, you can avoid this issue entirely by omitting the HLC's `id` and a unique one will be generated for you.
 
 Reference issue [#90](https://github.com/SOHU-Co/kafka-node/issues/90)
 
