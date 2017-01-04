@@ -1,5 +1,12 @@
 # kafka-node CHANGELOG
 
+## 2017-1-4, Version 1.1.0
+
+- Fixed issue with unhandled error while using Offset [#543](https://github.com/SOHU-Co/kafka-node/pull/543)
+- HighLevelConsumer now allows a configurable retry options used for rebalancing this is found under the `rebalanceRetry` option key [#542](https://github.com/SOHU-Co/kafka-node/pull/542)
+- Fixed issue in HighLevelConsumer where an offset of 0 for new topics was not committed [#529](https://github.com/SOHU-Co/kafka-node/pull/529)
+- Upgraded `nested-error-stacks` dependency for node 7 compatibility [#540](https://github.com/SOHU-Co/kafka-node/pull/540)
+
 ## 2016-11-18, Version 1.0.7
 - Fix issue where `createTopics` using the `async` set to `false` was not synchronous. [#519](https://github.com/SOHU-Co/kafka-node/pull/519)
 
