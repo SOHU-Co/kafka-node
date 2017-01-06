@@ -158,7 +158,7 @@ describe('ConsumerGroup', function () {
       sinon.assert.notCalled(consumerGroup.sendHeartbeat);
       consumerGroup.options.heartbeatInterval = 3000;
 
-      consumerGroup.startHearbeats();
+      consumerGroup.startHeartbeats();
 
       sinon.assert.calledOnce(consumerGroup.sendHeartbeat);
       sandbox.clock.tick(2000);
@@ -171,7 +171,7 @@ describe('ConsumerGroup', function () {
 
     it('should use calculated heartbeatInterval if heartbeatInterval options is omitted', function () {
       consumerGroup.ready = true;
-      consumerGroup.startHearbeats();
+      consumerGroup.startHeartbeats();
       sinon.assert.calledOnce(consumerGroup.sendHeartbeat);
 
       sandbox.clock.tick(9000);
