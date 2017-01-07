@@ -108,7 +108,8 @@ describe('ConsumerGroup', function () {
         connectOnReady: false,
         sessionTimeout: 8000,
         heartbeatInterval: 250,
-        retryMinTimeout: 250
+        retryMinTimeout: 250,
+        heartbeatTimeoutMs: 200
       }, 'TestTopic');
     });
 
@@ -195,18 +196,6 @@ describe('ConsumerGroup', function () {
       sinon.assert.calledTwice(consumerGroup.sendHeartbeat);
       sandbox.clock.tick(3000);
       sinon.assert.calledThrice(consumerGroup.sendHeartbeat);
-    });
-
-    it('should use calculated heartbeatInterval if heartbeatInterval options is omitted', function () {
-      consumerGroup.ready = true;
-      consumerGroup.startHeartbeats();
-      sinon.assert.calledOnce(consumerGroup.sendHeartbeat);
-
-      sandbox.clock.tick(9000);
-      sinon.assert.calledOnce(consumerGroup.sendHeartbeat);
-
-      sandbox.clock.tick(1000);
-      sinon.assert.calledTwice(consumerGroup.sendHeartbeat);
     });
   });
 
