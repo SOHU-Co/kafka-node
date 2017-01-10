@@ -3,7 +3,7 @@
 const sinon = require('sinon');
 const should = require('should');
 const Heartbeat = require('../lib/consumerGroupHeartbeat');
-const HeartbeatTimeout = require('../lib/errors/HeartbeatTimeout.js');
+const HeartbeatTimeout = require('../lib/errors/HeartbeatTimeoutError');
 
 describe('Consumer Group Heartbeat', function () {
   let sandbox;
@@ -21,7 +21,7 @@ describe('Consumer Group Heartbeat', function () {
       sendHeartbeatRequest: sandbox.stub().yieldsAsync(new Error('busted'))
     };
 
-    const heartbeat = new Heartbeat(mockClient, 2000, function (error) {
+    const heartbeat = new Heartbeat(mockClient, function (error) {
       error.message.should.eql('busted');
       sinon.assert.calledWithExactly(mockClient.sendHeartbeatRequest, 'groupId', 1, 'fake-member-id', sinon.match.func);
       heartbeat.pending.should.be.false;
@@ -38,7 +38,7 @@ describe('Consumer Group Heartbeat', function () {
       sendHeartbeatRequest: sandbox.stub().yieldsAsync(null)
     };
 
-    const heartbeat = new Heartbeat(mockClient, 2000, function (error) {
+    const heartbeat = new Heartbeat(mockClient, function (error) {
       should(error).be.null;
       sinon.assert.calledWithExactly(mockClient.sendHeartbeatRequest, 'groupId', 1, 'fake-member-id', sinon.match.func);
       heartbeat.pending.should.be.false;
@@ -51,15 +51,11 @@ describe('Consumer Group Heartbeat', function () {
   });
 
   it('should call heartbeat handler with instance of TimeoutError if heartbeat timed out', function (done) {
-    const hrTimeStub = sandbox.stub(process, 'hrtime');
-    hrTimeStub.onFirstCall().returns([12, 1234]);
-    hrTimeStub.onSecondCall().returns([14, 1234]);
-
     const mockClient = {
       sendHeartbeatRequest: sandbox.stub()
     };
 
-    const heartbeat = new Heartbeat(mockClient, 2000, function (error) {
+    const heartbeat = new Heartbeat(mockClient, function (error) {
       error.should.be.an.instanceOf(HeartbeatTimeout);
       sinon.assert.calledWithExactly(mockClient.sendHeartbeatRequest, 'groupId', 1, 'fake-member-id', sinon.match.func);
       heartbeat.pending.should.be.false;
