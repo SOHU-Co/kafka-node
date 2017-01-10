@@ -108,7 +108,8 @@ describe('ConsumerGroup', function () {
         connectOnReady: false,
         sessionTimeout: 8000,
         heartbeatInterval: 250,
-        retryMinTimeout: 250
+        retryMinTimeout: 250,
+        heartbeatTimeoutMs: 200
       }, 'TestTopic');
     });
 
@@ -138,7 +139,7 @@ describe('ConsumerGroup', function () {
     });
   });
 
-  describe('#sendHeartbeats', function () {
+  describe('Sending Heartbeats', function () {
     var consumerGroup, sandbox;
 
     beforeEach(function () {
@@ -148,7 +149,9 @@ describe('ConsumerGroup', function () {
       }, 'TestTopic');
 
       sandbox = sinon.sandbox.create();
-      sandbox.stub(consumerGroup, 'sendHeartbeat');
+      sandbox.stub(consumerGroup, 'sendHeartbeat').returns({
+        verifyResolved: sandbox.stub().returns(true)
+      });
       sandbox.useFakeTimers();
     });
 
@@ -162,12 +165,38 @@ describe('ConsumerGroup', function () {
       });
     });
 
+    it('should not continue to send heartbeats if last one never resolved', function () {
+      consumerGroup.ready = true;
+      sinon.assert.notCalled(consumerGroup.sendHeartbeat);
+
+      consumerGroup.sendHeartbeat.restore();
+
+      const verifyResolvedStub = sandbox.stub().returns(false);
+      sandbox.stub(consumerGroup, 'sendHeartbeat').returns({
+        verifyResolved: verifyResolvedStub
+      });
+
+      consumerGroup.options.heartbeatInterval = 3000;
+
+      consumerGroup.startHeartbeats();
+      sinon.assert.calledOnce(consumerGroup.sendHeartbeat);
+
+      sandbox.clock.tick(2000);
+      sinon.assert.calledOnce(consumerGroup.sendHeartbeat);
+
+      sandbox.clock.tick(1000);
+      sinon.assert.calledOnce(consumerGroup.sendHeartbeat);
+
+      sandbox.clock.tick(1000);
+      sinon.assert.calledOnce(consumerGroup.sendHeartbeat);
+    });
+
     it('should use heartbeatInterval passed into options', function () {
       consumerGroup.ready = true;
       sinon.assert.notCalled(consumerGroup.sendHeartbeat);
       consumerGroup.options.heartbeatInterval = 3000;
 
-      consumerGroup.startHearbeats();
+      consumerGroup.startHeartbeats();
 
       sinon.assert.calledOnce(consumerGroup.sendHeartbeat);
       sandbox.clock.tick(2000);
@@ -176,18 +205,6 @@ describe('ConsumerGroup', function () {
       sinon.assert.calledTwice(consumerGroup.sendHeartbeat);
       sandbox.clock.tick(3000);
       sinon.assert.calledThrice(consumerGroup.sendHeartbeat);
-    });
-
-    it('should use calculated heartbeatInterval if heartbeatInterval options is omitted', function () {
-      consumerGroup.ready = true;
-      consumerGroup.startHearbeats();
-      sinon.assert.calledOnce(consumerGroup.sendHeartbeat);
-
-      sandbox.clock.tick(9000);
-      sinon.assert.calledOnce(consumerGroup.sendHeartbeat);
-
-      sandbox.clock.tick(1000);
-      sinon.assert.calledTwice(consumerGroup.sendHeartbeat);
     });
   });
 
