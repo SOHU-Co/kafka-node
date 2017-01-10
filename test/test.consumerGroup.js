@@ -116,6 +116,15 @@ describe('ConsumerGroup', function () {
       sandbox.restore();
     });
 
+    it('make an attempt to leave the group but do not error out when it fails', function (done) {
+      const NotCoordinatorForGroup = require('../lib/errors/NotCoordinatorForGroupError');
+      sandbox.stub(consumerGroup, 'leaveGroup').yields(new NotCoordinatorForGroup());
+      consumerGroup.connect();
+      consumerGroup.once('connect', function () {
+        consumerGroup.close(done);
+      });
+    });
+
     it('should not throw an exception when closing immediately after an UnknownMemberId error', function (done) {
       const UnknownMemberId = require('../lib/errors/UnknownMemberIdError');
       sandbox.stub(consumerGroup.client, 'sendHeartbeatRequest').yields(new UnknownMemberId('test'));
