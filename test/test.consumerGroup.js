@@ -119,7 +119,10 @@ describe('ConsumerGroup', function () {
     it('make an attempt to leave the group but do not error out when it fails', function (done) {
       const NotCoordinatorForGroup = require('../lib/errors/NotCoordinatorForGroupError');
       sandbox.stub(consumerGroup, 'leaveGroup').yields(new NotCoordinatorForGroup());
-      consumerGroup.close(done);
+      consumerGroup.connect();
+      consumerGroup.once('connect', function () {
+        consumerGroup.close(done);
+      });
     });
 
     it('should not throw an exception when closing immediately after an UnknownMemberId error', function (done) {
