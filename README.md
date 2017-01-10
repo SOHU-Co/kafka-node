@@ -404,6 +404,8 @@ consumer.close(cb); //force is disabled
 ```
 
 ## HighLevelConsumer
+⚠️ ***This consumer has been deprecated in the latest version of Kafka (0.10.1) and is likely to be removed in the future. Please use the ConsumerGroup instead.***
+
 ### HighLevelConsumer(client, payloads, options)
 * `client`: client which keeps a connection with the Kafka server.
 * `payloads`: **Array**,array of `FetchRequest`, `FetchRequest` is a JSON object like:
