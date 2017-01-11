@@ -1,6 +1,14 @@
 # kafka-node CHANGELOG
 
-## 2017-1-4, Version 1.1.0
+## 2017-01-11, Version 1.2.0
+
+**Consumer Group Changes**
+
+- Fix issue where an error in a leaving group during close will prevent a consumer from being closed. [#551](https://github.com/SOHU-Co/kafka-node/pull/551)
+- Fix issue with heartbeat where consumer will continue to send heartbeats at regular intervals even when previous ones did not resolve [#547](https://github.com/SOHU-Co/kafka-node/pull/547)
+- Add ability for ConsumerGroup to recover from stale offsets. This is configured by the new `outOfRangeOffset` option which takes same values as `fromOffset`. [#553](https://github.com/SOHU-Co/kafka-node/pull/553)
+
+## 2017-01-04, Version 1.1.0
 
 - Fixed issue with unhandled error while using Offset [#543](https://github.com/SOHU-Co/kafka-node/pull/543)
 - HighLevelConsumer now allows a configurable retry options used for rebalancing this is found under the `rebalanceRetry` option key [#542](https://github.com/SOHU-Co/kafka-node/pull/542)
