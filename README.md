@@ -577,6 +577,8 @@ var options = {
   // equivalent to Java client's auto.offset.reset
   fromOffset: 'latest', // default
   
+  // how to recover from OutOfRangeOffset error (where save offset is past server retention) accepts same value as fromOffset
+  outOfRangeOffset: 'earliest', // default
   migrateHLC: false,    // for details please see Migration section below
   migrateRolling: true
 };

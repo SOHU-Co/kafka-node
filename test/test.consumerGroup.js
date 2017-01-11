@@ -74,6 +74,29 @@ describe('ConsumerGroup', function () {
       sinon.assert.calledWithExactly(fakeClient, 'myhost', 'myClientId', undefined, undefined, ssl);
     });
 
+    it('should throw an error if using an invalid outOfRangeOffset', function () {
+      [true, false, '', 0, 1, 'blah'].forEach(offset => {
+        should.throws(() => {
+          // eslint-disable-next-line no-new
+          new ConsumerGroup({
+            outOfRangeOffset: offset
+          });
+        });
+      });
+    });
+
+    it('should not throw an error if using an valid outOfRangeOffset', function () {
+      ['earliest', 'latest', 'none'].forEach(offset => {
+        should.doesNotThrow(() => {
+          // eslint-disable-next-line no-new
+          new ConsumerGroup({
+            outOfRangeOffset: offset,
+            connectOnReady: false
+          }, 'TestTopic');
+        });
+      });
+    });
+
     it('should throw an error if using an invalid fromOffset', function () {
       [true, false, '', 0, 1, 'blah'].forEach(offset => {
         should.throws(() => {
@@ -95,6 +118,131 @@ describe('ConsumerGroup', function () {
           }, 'TestTopic');
         });
       });
+    });
+  });
+
+  describe('Offset Out Of Range', function () {
+    const InvalidConsumerOffsetError = require('../lib/errors/InvalidConsumerOffsetError');
+
+    let consumerGroup = null;
+    let sandbox = null;
+
+    beforeEach(function () {
+      sandbox = sinon.sandbox.create();
+      consumerGroup = new ConsumerGroup({
+        host: host,
+        connectOnReady: false,
+        sessionTimeout: 8000,
+        heartbeatInterval: 250,
+        retryMinTimeout: 250,
+        heartbeatTimeoutMs: 200
+      }, 'TestTopic');
+    });
+
+    afterEach(function () {
+      sandbox.restore();
+    });
+
+    it('should emit error on outOfRangeOffset event if outOfRangeOffset option is none', function (done) {
+      sandbox.spy(consumerGroup, 'pause');
+      consumerGroup.on('error', function (error) {
+        error.should.be.an.instanceOf(InvalidConsumerOffsetError);
+        sinon.assert.calledOnce(consumerGroup.pause);
+        done();
+      });
+
+      consumerGroup.options.outOfRangeOffset = 'none';
+      consumerGroup.emit('offsetOutOfRange', {topic: 'test-topic', partition: '0'});
+    });
+
+    it('should emit error if fetchOffset fails', function (done) {
+      const TOPIC_NAME = 'test-topic';
+
+      sandbox.stub(consumerGroup, 'resume');
+
+      consumerGroup.once('error', function (error) {
+        error.should.be.an.instanceOf(InvalidConsumerOffsetError);
+        sinon.assert.notCalled(consumerGroup.resume);
+        sinon.assert.notCalled(consumerGroup.setOffset);
+        done();
+      });
+
+      consumerGroup.offset = { fetch: function () {} };
+      sandbox.spy(consumerGroup, 'setOffset');
+      sandbox.stub(consumerGroup.offset, 'fetch').yields(new Error('something went wrong'));
+
+      consumerGroup.topicPayloads = [{
+        topic: TOPIC_NAME,
+        partition: '0',
+        offset: 1
+      }];
+
+      consumerGroup.options.outOfRangeOffset = 'latest';
+      consumerGroup.emit('offsetOutOfRange', {topic: TOPIC_NAME, partition: '0'});
+    });
+
+    it('should set offset to latest if outOfRangeOffset is latest', function (done) {
+      const TOPIC_NAME = 'test-topic';
+      const NEW_OFFSET = 657;
+
+      sandbox.stub(consumerGroup, 'resume', function () {
+        sinon.assert.calledOnce(consumerGroup.pause);
+        sinon.assert.calledWithExactly(consumerGroup.offset.fetch, [{topic: TOPIC_NAME, partition: '0', time: -1}], sinon.match.func);
+        sinon.assert.calledWithExactly(consumerGroup.setOffset, TOPIC_NAME, '0', NEW_OFFSET);
+        consumerGroup.topicPayloads[0].offset.should.be.eql(NEW_OFFSET);
+        done();
+      });
+
+      consumerGroup.offset = { fetch: function () {} };
+
+      sandbox.spy(consumerGroup, 'setOffset');
+      sandbox.stub(consumerGroup, 'pause');
+
+      sandbox.stub(consumerGroup.offset, 'fetch').yields(null, {
+        'test-topic': {
+          '0': [NEW_OFFSET]
+        }
+      });
+
+      consumerGroup.topicPayloads = [{
+        topic: TOPIC_NAME,
+        partition: '0',
+        offset: 1
+      }];
+
+      consumerGroup.options.outOfRangeOffset = 'latest';
+      consumerGroup.emit('offsetOutOfRange', {topic: TOPIC_NAME, partition: '0'});
+    });
+
+    it('should set offset to earliest if outOfRangeOffset is earliest', function (done) {
+      const TOPIC_NAME = 'test-topic';
+      const NEW_OFFSET = 500;
+
+      sandbox.stub(consumerGroup, 'resume', function () {
+        sinon.assert.calledWithExactly(consumerGroup.offset.fetch, [{topic: TOPIC_NAME, partition: '0', time: -2}], sinon.match.func);
+        sinon.assert.calledWithExactly(consumerGroup.setOffset, TOPIC_NAME, '0', NEW_OFFSET);
+        consumerGroup.topicPayloads[0].offset.should.be.eql(NEW_OFFSET);
+        done();
+      });
+
+      consumerGroup.offset = { fetch: function () {} };
+
+      sandbox.spy(consumerGroup, 'setOffset');
+
+      sandbox.stub(consumerGroup.offset, 'fetch').yields(null, {
+        'test-topic': {
+          '0': [NEW_OFFSET]
+        }
+      });
+
+      consumerGroup.topicPayloads = [{
+        topic: TOPIC_NAME,
+        partition: '0',
+        offset: 1
+      }];
+
+      consumerGroup.options.outOfRangeOffset = 'earliest';
+      consumerGroup.emit('offsetOutOfRange', {topic: TOPIC_NAME, partition: '0'});
     });
   });
 
