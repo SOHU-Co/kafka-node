@@ -287,6 +287,31 @@ describe('ConsumerGroup', function () {
     });
   });
 
+  describe('Long running fetches', function () {
+    let consumerGroup;
+
+    beforeEach(function (done) {
+      consumerGroup = new ConsumerGroup({
+        host: host,
+        groupId: 'longFetchSimulation'
+      }, 'TestTopic');
+      consumerGroup.once('connect', done);
+    });
+
+    afterEach(function (done) {
+      consumerGroup.close(done);
+    });
+
+    it('should not throw out of bounds', function (done) {
+      should.doesNotThrow(function () {
+        consumerGroup.pause();
+        consumerGroup.client.correlationId = 2147483647;
+        consumerGroup.resume();
+        setImmediate(done);
+      });
+    });
+  });
+
   describe('Sending Heartbeats', function () {
     var consumerGroup, sandbox;
 
