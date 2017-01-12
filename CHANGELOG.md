@@ -1,5 +1,9 @@
 # kafka-node CHANGELOG
 
+## 2017-01-12, Version 1.2.1
+
+- Fix potential issue where long running consumers (includes ConsumerGroup, HighLevelConsumer, and Consumer) could throw out of bounds exception during the fetch loop [#556](https://github.com/SOHU-Co/kafka-node/pull/556)
+
 ## 2017-01-11, Version 1.2.0
 
 **Consumer Group Changes**
