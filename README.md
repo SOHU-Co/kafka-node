@@ -39,7 +39,7 @@ Kafka-node is a Node.js client with Zookeeper integration for Apache Kafka 0.8.1
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-# Features	
+# Features
 * Consumer and High Level Consumer
 * Producer and High Level Producer
 * Manage topic Offsets
@@ -570,13 +570,13 @@ var options = {
   groupId: 'ExampleTestGroup',
   sessionTimeout: 15000,
   // An array of partition assignment protocols ordered by preference.
-  // 'roundrobin' or 'range' string for built ins (see below to pass in custom assignment protocol) 
+  // 'roundrobin' or 'range' string for built ins (see below to pass in custom assignment protocol)
   protocol: ['roundrobin'],
-  
+
   // Offsets to use for new groups other options could be 'earliest' or 'none' (none will emit an error if no offsets were saved)
   // equivalent to Java client's auto.offset.reset
   fromOffset: 'latest', // default
-  
+
   // how to recover from OutOfRangeOffset error (where save offset is past server retention) accepts same value as fromOffset
   outOfRangeOffset: 'earliest', // default
   migrateHLC: false,    // for details please see Migration section below
@@ -594,7 +594,7 @@ var consumerGroup = new ConsumerGroup(options, 'RebalanceTopic');
 
 You can pass a custom assignment strategy to the `protocol` array with the interface:
 
-#### string :: name 
+#### string :: name
 #### integer :: version
 #### object :: userData
 #### function :: assign (topicPartition, groupMembers, callback)
@@ -822,6 +822,19 @@ Example
 	});
 ```
 
+### fetchEarliestOffsets(topics, cb)
+
+Example
+
+```js
+	var partition = 0;
+	var topic = 't';
+	offset.fetchEarliestOffsets([topic], function (error, offsets) {
+		if (error)
+			return handleError(error);
+		console.log(offsets[topic][partition]);
+	});
+```
 
 # Troubleshooting / FAQ
 
@@ -888,7 +901,7 @@ Reference issue [#90](https://github.com/SOHU-Co/kafka-node/issues/90)
 
 Your partition will be stuck if the `fetchMaxBytes` is smaller than the message produced.  Increase `fetchMaxBytes` value should resolve this issue.
 
-Reference to issue [#339](https://github.com/SOHU-Co/kafka-node/issues/339) 
+Reference to issue [#339](https://github.com/SOHU-Co/kafka-node/issues/339)
 
 ## How to throttle messages / control the concurrency of processing messages
 
@@ -902,12 +915,12 @@ Reference to issue [#339](https://github.com/SOHU-Co/kafka-node/issues/339)
 In the consumer set the `encoding` option to `buffer`.
 
 ### Produce
-Set the `messages` attribute in the `payload` to a `Buffer`. `TypedArrays` such as `Uint8Array` are not supported and need to be converted to a `Buffer`. 
+Set the `messages` attribute in the `payload` to a `Buffer`. `TypedArrays` such as `Uint8Array` are not supported and need to be converted to a `Buffer`.
 
 ```js
 {
  messages: Buffer.from(data.buffer)
-} 
+}
 ```
 
 Reference to issue [#470](https://github.com/SOHU-Co/kafka-node/issues/470) [#514](https://github.com/SOHU-Co/kafka-node/issues/514)
