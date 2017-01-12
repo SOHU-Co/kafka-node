@@ -404,6 +404,8 @@ consumer.close(cb); //force is disabled
 ```
 
 ## HighLevelConsumer
+⚠️ ***This consumer has been deprecated in the latest version of Kafka (0.10.1) and is likely to be removed in the future. Please use the ConsumerGroup instead.***
+
 ### HighLevelConsumer(client, payloads, options)
 * `client`: client which keeps a connection with the Kafka server.
 * `payloads`: **Array**,array of `FetchRequest`, `FetchRequest` is a JSON object like:
@@ -575,6 +577,8 @@ var options = {
   // equivalent to Java client's auto.offset.reset
   fromOffset: 'latest', // default
   
+  // how to recover from OutOfRangeOffset error (where save offset is past server retention) accepts same value as fromOffset
+  outOfRangeOffset: 'earliest', // default
   migrateHLC: false,    // for details please see Migration section below
   migrateRolling: true
 };

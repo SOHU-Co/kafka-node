@@ -74,6 +74,29 @@ describe('ConsumerGroup', function () {
       sinon.assert.calledWithExactly(fakeClient, 'myhost', 'myClientId', undefined, undefined, ssl);
     });
 
+    it('should throw an error if using an invalid outOfRangeOffset', function () {
+      [true, false, '', 0, 1, 'blah'].forEach(offset => {
+        should.throws(() => {
+          // eslint-disable-next-line no-new
+          new ConsumerGroup({
+            outOfRangeOffset: offset
+          });
+        });
+      });
+    });
+
+    it('should not throw an error if using an valid outOfRangeOffset', function () {
+      ['earliest', 'latest', 'none'].forEach(offset => {
+        should.doesNotThrow(() => {
+          // eslint-disable-next-line no-new
+          new ConsumerGroup({
+            outOfRangeOffset: offset,
+            connectOnReady: false
+          }, 'TestTopic');
+        });
+      });
+    });
+
     it('should throw an error if using an invalid fromOffset', function () {
       [true, false, '', 0, 1, 'blah'].forEach(offset => {
         should.throws(() => {
@@ -98,6 +121,131 @@ describe('ConsumerGroup', function () {
     });
   });
 
+  describe('Offset Out Of Range', function () {
+    const InvalidConsumerOffsetError = require('../lib/errors/InvalidConsumerOffsetError');
+
+    let consumerGroup = null;
+    let sandbox = null;
+
+    beforeEach(function () {
+      sandbox = sinon.sandbox.create();
+      consumerGroup = new ConsumerGroup({
+        host: host,
+        connectOnReady: false,
+        sessionTimeout: 8000,
+        heartbeatInterval: 250,
+        retryMinTimeout: 250,
+        heartbeatTimeoutMs: 200
+      }, 'TestTopic');
+    });
+
+    afterEach(function () {
+      sandbox.restore();
+    });
+
+    it('should emit error on outOfRangeOffset event if outOfRangeOffset option is none', function (done) {
+      sandbox.spy(consumerGroup, 'pause');
+      consumerGroup.on('error', function (error) {
+        error.should.be.an.instanceOf(InvalidConsumerOffsetError);
+        sinon.assert.calledOnce(consumerGroup.pause);
+        done();
+      });
+
+      consumerGroup.options.outOfRangeOffset = 'none';
+      consumerGroup.emit('offsetOutOfRange', {topic: 'test-topic', partition: '0'});
+    });
+
+    it('should emit error if fetchOffset fails', function (done) {
+      const TOPIC_NAME = 'test-topic';
+
+      sandbox.stub(consumerGroup, 'resume');
+
+      consumerGroup.once('error', function (error) {
+        error.should.be.an.instanceOf(InvalidConsumerOffsetError);
+        sinon.assert.notCalled(consumerGroup.resume);
+        sinon.assert.notCalled(consumerGroup.setOffset);
+        done();
+      });
+
+      consumerGroup.offset = { fetch: function () {} };
+      sandbox.spy(consumerGroup, 'setOffset');
+      sandbox.stub(consumerGroup.offset, 'fetch').yields(new Error('something went wrong'));
+
+      consumerGroup.topicPayloads = [{
+        topic: TOPIC_NAME,
+        partition: '0',
+        offset: 1
+      }];
+
+      consumerGroup.options.outOfRangeOffset = 'latest';
+      consumerGroup.emit('offsetOutOfRange', {topic: TOPIC_NAME, partition: '0'});
+    });
+
+    it('should set offset to latest if outOfRangeOffset is latest', function (done) {
+      const TOPIC_NAME = 'test-topic';
+      const NEW_OFFSET = 657;
+
+      sandbox.stub(consumerGroup, 'resume', function () {
+        sinon.assert.calledOnce(consumerGroup.pause);
+        sinon.assert.calledWithExactly(consumerGroup.offset.fetch, [{topic: TOPIC_NAME, partition: '0', time: -1}], sinon.match.func);
+        sinon.assert.calledWithExactly(consumerGroup.setOffset, TOPIC_NAME, '0', NEW_OFFSET);
+        consumerGroup.topicPayloads[0].offset.should.be.eql(NEW_OFFSET);
+        done();
+      });
+
+      consumerGroup.offset = { fetch: function () {} };
+
+      sandbox.spy(consumerGroup, 'setOffset');
+      sandbox.stub(consumerGroup, 'pause');
+
+      sandbox.stub(consumerGroup.offset, 'fetch').yields(null, {
+        'test-topic': {
+          '0': [NEW_OFFSET]
+        }
+      });
+
+      consumerGroup.topicPayloads = [{
+        topic: TOPIC_NAME,
+        partition: '0',
+        offset: 1
+      }];
+
+      consumerGroup.options.outOfRangeOffset = 'latest';
+      consumerGroup.emit('offsetOutOfRange', {topic: TOPIC_NAME, partition: '0'});
+    });
+
+    it('should set offset to earliest if outOfRangeOffset is earliest', function (done) {
+      const TOPIC_NAME = 'test-topic';
+      const NEW_OFFSET = 500;
+
+      sandbox.stub(consumerGroup, 'resume', function () {
+        sinon.assert.calledWithExactly(consumerGroup.offset.fetch, [{topic: TOPIC_NAME, partition: '0', time: -2}], sinon.match.func);
+        sinon.assert.calledWithExactly(consumerGroup.setOffset, TOPIC_NAME, '0', NEW_OFFSET);
+        consumerGroup.topicPayloads[0].offset.should.be.eql(NEW_OFFSET);
+        done();
+      });
+
+      consumerGroup.offset = { fetch: function () {} };
+
+      sandbox.spy(consumerGroup, 'setOffset');
+
+      sandbox.stub(consumerGroup.offset, 'fetch').yields(null, {
+        'test-topic': {
+          '0': [NEW_OFFSET]
+        }
+      });
+
+      consumerGroup.topicPayloads = [{
+        topic: TOPIC_NAME,
+        partition: '0',
+        offset: 1
+      }];
+
+      consumerGroup.options.outOfRangeOffset = 'earliest';
+      consumerGroup.emit('offsetOutOfRange', {topic: TOPIC_NAME, partition: '0'});
+    });
+  });
+
   describe('#close', function () {
     let sandbox, consumerGroup;
 
@@ -108,12 +256,22 @@ describe('ConsumerGroup', function () {
         connectOnReady: false,
         sessionTimeout: 8000,
         heartbeatInterval: 250,
-        retryMinTimeout: 250
+        retryMinTimeout: 250,
+        heartbeatTimeoutMs: 200
       }, 'TestTopic');
     });
 
     afterEach(function () {
       sandbox.restore();
+    });
+
+    it('make an attempt to leave the group but do not error out when it fails', function (done) {
+      const NotCoordinatorForGroup = require('../lib/errors/NotCoordinatorForGroupError');
+      sandbox.stub(consumerGroup, 'leaveGroup').yields(new NotCoordinatorForGroup());
+      consumerGroup.connect();
+      consumerGroup.once('connect', function () {
+        consumerGroup.close(done);
+      });
     });
 
     it('should not throw an exception when closing immediately after an UnknownMemberId error', function (done) {
@@ -129,7 +287,32 @@ describe('ConsumerGroup', function () {
     });
   });
 
-  describe('#sendHeartbeats', function () {
+  describe('Long running fetches', function () {
+    let consumerGroup;
+
+    beforeEach(function (done) {
+      consumerGroup = new ConsumerGroup({
+        host: host,
+        groupId: 'longFetchSimulation'
+      }, 'TestTopic');
+      consumerGroup.once('connect', done);
+    });
+
+    afterEach(function (done) {
+      consumerGroup.close(done);
+    });
+
+    it('should not throw out of bounds', function (done) {
+      should.doesNotThrow(function () {
+        consumerGroup.pause();
+        consumerGroup.client.correlationId = 2147483647;
+        consumerGroup.resume();
+        setImmediate(done);
+      });
+    });
+  });
+
+  describe('Sending Heartbeats', function () {
     var consumerGroup, sandbox;
 
     beforeEach(function () {
@@ -139,7 +322,9 @@ describe('ConsumerGroup', function () {
       }, 'TestTopic');
 
       sandbox = sinon.sandbox.create();
-      sandbox.stub(consumerGroup, 'sendHeartbeat');
+      sandbox.stub(consumerGroup, 'sendHeartbeat').returns({
+        verifyResolved: sandbox.stub().returns(true)
+      });
       sandbox.useFakeTimers();
     });
 
@@ -153,12 +338,38 @@ describe('ConsumerGroup', function () {
       });
     });
 
+    it('should not continue to send heartbeats if last one never resolved', function () {
+      consumerGroup.ready = true;
+      sinon.assert.notCalled(consumerGroup.sendHeartbeat);
+
+      consumerGroup.sendHeartbeat.restore();
+
+      const verifyResolvedStub = sandbox.stub().returns(false);
+      sandbox.stub(consumerGroup, 'sendHeartbeat').returns({
+        verifyResolved: verifyResolvedStub
+      });
+
+      consumerGroup.options.heartbeatInterval = 3000;
+
+      consumerGroup.startHeartbeats();
+      sinon.assert.calledOnce(consumerGroup.sendHeartbeat);
+
+      sandbox.clock.tick(2000);
+      sinon.assert.calledOnce(consumerGroup.sendHeartbeat);
+
+      sandbox.clock.tick(1000);
+      sinon.assert.calledOnce(consumerGroup.sendHeartbeat);
+
+      sandbox.clock.tick(1000);
+      sinon.assert.calledOnce(consumerGroup.sendHeartbeat);
+    });
+
     it('should use heartbeatInterval passed into options', function () {
       consumerGroup.ready = true;
       sinon.assert.notCalled(consumerGroup.sendHeartbeat);
       consumerGroup.options.heartbeatInterval = 3000;
 
-      consumerGroup.startHearbeats();
+      consumerGroup.startHeartbeats();
 
       sinon.assert.calledOnce(consumerGroup.sendHeartbeat);
       sandbox.clock.tick(2000);
@@ -167,18 +378,6 @@ describe('ConsumerGroup', function () {
       sinon.assert.calledTwice(consumerGroup.sendHeartbeat);
       sandbox.clock.tick(3000);
       sinon.assert.calledThrice(consumerGroup.sendHeartbeat);
-    });
-
-    it('should use calculated heartbeatInterval if heartbeatInterval options is omitted', function () {
-      consumerGroup.ready = true;
-      consumerGroup.startHearbeats();
-      sinon.assert.calledOnce(consumerGroup.sendHeartbeat);
-
-      sandbox.clock.tick(9000);
-      sinon.assert.calledOnce(consumerGroup.sendHeartbeat);
-
-      sandbox.clock.tick(1000);
-      sinon.assert.calledTwice(consumerGroup.sendHeartbeat);
     });
   });
 
