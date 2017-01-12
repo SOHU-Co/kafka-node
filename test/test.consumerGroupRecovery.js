@@ -6,6 +6,7 @@ const sinon = require('sinon');
 const ConsumerGroupRecovery = require('../lib/consumerGroupRecovery');
 const GroupCoordinatorNotAvailable = require('../lib/errors/GroupCoordinatorNotAvailableError');
 const GroupLoadInProgress = require('../lib/errors/GroupLoadInProgressError');
+const HeartbeatTimeout = require('../lib/errors/HeartbeatTimeoutError');
 const BrokerNotAvailableError = require('../lib/errors').BrokerNotAvailableError;
 const EventEmitter = require('events');
 
@@ -62,6 +63,24 @@ describe('ConsumerGroupRecovery', function () {
 
       sinon.assert.calledOnce(fakeConsumerGroup.scheduleReconnect);
       should(fakeConsumerGroup.client.coordinatorId).be.undefined;
+    });
+
+    it('should try to recover from a HeartbeatTimeout', function () {
+      const heartbeatTimeout = new HeartbeatTimeout('test error');
+
+      fakeConsumerGroup.once('error', function (error) {
+        error.should.not.be.eql(heartbeatTimeout);
+      });
+
+      sinon.stub(fakeConsumerGroup, 'scheduleReconnect');
+
+      consumerGroupRecovery.tryToRecoverFrom(heartbeatTimeout, 'test');
+
+      sinon.assert.calledOnce(fakeConsumerGroup.stopHeartbeats);
+      fakeConsumerGroup.ready.should.be.false;
+      consumerGroupRecovery.lastError.should.be.eql(heartbeatTimeout);
+
+      sinon.assert.calledOnce(fakeConsumerGroup.scheduleReconnect);
     });
   });
 
