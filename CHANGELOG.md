@@ -1,5 +1,10 @@
 # kafka-node CHANGELOG
 
+## 2017-01-12, Version 1.3.0
+
+- Add `fetchEarliestOffsets` to `Offset` [#544](https://github.com/SOHU-Co/kafka-node/pull/544)
+- Fix issue where consumer heartbeat timeout was not triggering a retry [#559](https://github.com/SOHU-Co/kafka-node/pull/559)
+
 ## 2017-01-12, Version 1.2.1
 
 - Fix potential issue where long running consumers (includes ConsumerGroup, HighLevelConsumer, and Consumer) could throw out of bounds exception during the fetch loop [#556](https://github.com/SOHU-Co/kafka-node/pull/556)
