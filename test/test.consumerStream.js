@@ -41,7 +41,7 @@ before(function (done) {
 describe('ConsumerStream', function () {
   it('should emit message when get new message', function (done) {
     var topics = [ { topic: EXISTS_TOPIC_1 } ];
-    var options = { autoCommit: false, groupId: '_groupId_1_test' };
+    var options = { autoCommit: false, groupId: '_groupId_1_test', fetchMaxBytes: 1024 };
     consumer = new ConsumerStream(client, topics, options);
     var eventCount = {
       message: 0,
