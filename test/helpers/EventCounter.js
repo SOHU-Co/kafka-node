@@ -2,7 +2,7 @@
 
 class EventCounter {
 
-  constructor() {
+  constructor () {
     this.events = {};
   }
 
@@ -14,16 +14,15 @@ class EventCounter {
    * @param {Function} callback - The callback to envoke when the expected number is reached.
    * @returns {Function} - A function that can be called to increment the coutner and collect the result.
    */
-  createEventCounter(eventName, limit, callback) {
+  createEventCounter (eventName, limit, callback) {
     if (!limit) {
       limit = Number.POSITIVE_INFINITY;
     }
     this.events[eventName] = {
       count: 0,
-      events: [],
+      events: []
     };
-    return function() {
-      let args = Array.prototype.slice.call(arguments);
+    return function () {
       this.events[eventName].count++;
       this.events[eventName].events.push(arguments);
       if (this.events[eventName].count === limit) {

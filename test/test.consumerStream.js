@@ -15,31 +15,25 @@ var APPEND_TOPIC_1 = '_append_1' + TOPIC_POSTFIX;
 
 var host = process.env['KAFKA_TEST_HOST'] || '';
 
-function createTopicAndProduceMessages(producer, topic, numberOfMessages, done) {
+function createTopicAndProduceMessages (producer, topic, numberOfMessages, done) {
   if (!done) {
-    done = function() {};
+    done = function () {};
   }
-  function topicsReady (err, created) {
-    if (err) return done(err);
-    setTimeout(useNewTopics, 400);
-  };
-  producer.createTopics([topic], function() {
-      var messages = [];
-      for (var i = 1; i <= numberOfMessages; i++) {
-        messages.push('stream message ' + i);
-      }
-      producer.send([{ topic: topic, messages }], done);
+  producer.createTopics([topic], function () {
+    var messages = [];
+    for (var i = 1; i <= numberOfMessages; i++) {
+      messages.push('stream message ' + i);
+    }
+    producer.send([{ topic: topic, messages }], done);
   });
 }
-
-
 
 describe('ConsumerStream', function () {
   it('should emit both a \'message\' and a \'data\' event for each message', function (done) {
     var client = new Client(host);
     var producer = new Producer(client);
     producer.on('ready', function () {
-      createTopicAndProduceMessages(producer, EXISTS_TOPIC_1, 100, function() {
+      createTopicAndProduceMessages(producer, EXISTS_TOPIC_1, 100, function () {
         var topics = [ { topic: EXISTS_TOPIC_1 } ];
         // Here we set fetchMaxBytes to ensure that we're testing running
         // multiple fetches as the default 1024 * 1024 makes a single fetch.
@@ -48,7 +42,7 @@ describe('ConsumerStream', function () {
         var eventCounter = new EventCounter();
         consumer.on('message', eventCounter.createEventCounter('message'));
         consumer.on('data', eventCounter.createEventCounter('data'));
-        var incrementPipeCount = eventCounter.createEventCounter('pipe', 100, function() {
+        var incrementPipeCount = eventCounter.createEventCounter('pipe', 100, function () {
           should.exist(eventCounter.events.message.events);
           var events = eventCounter.events;
           should.exist(events.message);
@@ -69,19 +63,20 @@ describe('ConsumerStream', function () {
     var client = new Client(host);
     var producer = new Producer(client);
     producer.on('ready', function () {
-      createTopicAndProduceMessages(producer, APPEND_TOPIC_1, 20, function() {
+      createTopicAndProduceMessages(producer, APPEND_TOPIC_1, 20, function () {
         var topics = [ { topic: APPEND_TOPIC_1 } ];
         var options = { autoCommit: false, groupId: '_groupId_2_test' };
         var consumer = new ConsumerStream(client, topics, options);
-        var pipeCount = 0;
         var eventCounter = new EventCounter();
-        var increment = eventCounter.createEventCounter('first', 20, function(error, events) {
+        var increment = eventCounter.createEventCounter('first', 20, function (error, events) {
+          should.not.exist(error);
           events.events.length.should.equal(20);
           events.events[0][0].value.should.equal('stream message 1');
           events.events[0][0].offset.should.equal(0);
           events.events[19][0].value.should.equal('stream message 20');
           events.events[19][0].offset.should.equal(19);
-          var increment = eventCounter.createEventCounter('second', 20, function(error, events) {
+          var increment = eventCounter.createEventCounter('second', 20, function (error, events) {
+            should.not.exist(error);
             events.events.length.should.equal(20);
             events.events[0][0].value.should.equal('stream message 1');
             events.events[0][0].offset.should.equal(20);
@@ -100,5 +95,4 @@ describe('ConsumerStream', function () {
       });
     });
   });
-
 });
