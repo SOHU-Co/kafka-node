@@ -124,8 +124,18 @@ describe('ConsumerGroup', function () {
   describe('Broker offline recovery', function () {
     let sandbox = null;
     let consumerGroup = null;
+    let fakeClient = null;
+    let ConsumerGroup = null;
+
     beforeEach(function () {
       sandbox = sinon.sandbox.create();
+
+      fakeClient = sandbox.stub().returns(new EventEmitter());
+
+      ConsumerGroup = proxyquire('../lib/consumerGroup', {
+        './client': fakeClient
+      });
+
       consumerGroup = new ConsumerGroup({
         host: host,
         connectOnReady: false,
