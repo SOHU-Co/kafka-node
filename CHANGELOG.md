@@ -1,5 +1,10 @@
 # kafka-node CHANGELOG
 
+## 2017-01-17, Version 1.3.1
+- Fix consumer group not reconnecting when a broker comes back online [#563](https://github.com/SOHU-Co/kafka-node/pull/563)
+- Removed an non consumer group error from consumer group error list [#562](https://github.com/SOHU-Co/kafka-node/pull/562)
+
+
 ## 2017-01-12, Version 1.3.0
 
 - Add `fetchEarliestOffsets` to `Offset` [#544](https://github.com/SOHU-Co/kafka-node/pull/544)
