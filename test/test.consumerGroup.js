@@ -121,6 +121,72 @@ describe('ConsumerGroup', function () {
     });
   });
 
+  describe('Broker offline recovery', function () {
+    let sandbox = null;
+    let consumerGroup = null;
+    let fakeClient = null;
+    let ConsumerGroup = null;
+
+    beforeEach(function () {
+      sandbox = sinon.sandbox.create();
+
+      fakeClient = sandbox.stub().returns(new EventEmitter());
+
+      ConsumerGroup = proxyquire('../lib/consumerGroup', {
+        './client': fakeClient
+      });
+
+      consumerGroup = new ConsumerGroup({
+        host: host,
+        connectOnReady: false,
+        sessionTimeout: 8000,
+        heartbeatInterval: 250,
+        retryMinTimeout: 250,
+        heartbeatTimeoutMs: 200
+      }, 'TestTopic');
+    });
+
+    afterEach(function () {
+      sandbox.restore();
+    });
+
+    it('should connect when broker changes', function () {
+      let stub = sandbox.stub(consumerGroup, 'connect');
+
+      consumerGroup.ready = false;
+      consumerGroup.reconnectTimer = null;
+      consumerGroup.connecting = undefined;
+
+      consumerGroup.client.emit('brokersChanged');
+      sinon.assert.calledOnce(stub);
+    });
+
+    it('should not try to connect when broker changes and already connected', function () {
+      let stub = sandbox.stub(consumerGroup, 'connect');
+
+      consumerGroup.ready = true;
+      consumerGroup.reconnectTimer = null;
+      consumerGroup.connecting = undefined;
+
+      consumerGroup.client.emit('brokersChanged');
+      sinon.assert.notCalled(stub);
+    });
+
+    it('should try to connect when broker changes and a reconnect is scheduled', function () {
+      let stub = sandbox.stub(consumerGroup, 'connect');
+      sandbox.stub(global, 'clearTimeout');
+
+      consumerGroup.ready = false;
+      consumerGroup.reconnectTimer = 1234;
+      consumerGroup.connecting = undefined;
+
+      consumerGroup.client.emit('brokersChanged');
+      should(consumerGroup.reconnectTimer).be.null;
+      sinon.assert.calledOnce(clearTimeout);
+      sinon.assert.calledOnce(stub);
+    });
+  });
+
   describe('Offset Out Of Range', function () {
     const InvalidConsumerOffsetError = require('../lib/errors/InvalidConsumerOffsetError');
 
