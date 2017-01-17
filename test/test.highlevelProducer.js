@@ -58,7 +58,7 @@ var host = process.env['KAFKA_TEST_HOST'] || '';
         assert(_.chain(result)
           .find({topic: topic, partition: partition})
           .result('messages')
-          .pluck('value')
+          .map('value')
           .includes(value)
           .value()
         , `Value "${value}" is not in topic "${topic}" partition ${partition}`);
