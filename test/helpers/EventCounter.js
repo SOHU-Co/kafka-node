@@ -10,9 +10,12 @@ class EventCounter {
    * Creates an event counter with optional expected number and callback.
    *
    * @param {String} eventName - The name of the event counter.
-   * @param {Number} limit - The number of events after which the callback should be called.
-   * @param {Function} callback - The callback to envoke when the expected number is reached.
-   * @returns {Function} - A function that can be called to increment the coutner and collect the result.
+   * @param {Number} limit - The number of events after which the callback
+   *   should be called.
+   * @param {Function} callback - The callback to envoke when the expected
+   *   number is reached.
+   * @returns {Function} - A function that can be called to increment the
+   *   coutner and collect the result.
    */
   createEventCounter (eventName, limit, callback) {
     if (!limit) {
