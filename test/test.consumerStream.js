@@ -71,34 +71,32 @@ describe('ConsumerStream', function () {
         var options = { autoCommit: false, groupId: '_groupId_2_test' };
         var consumer = new ConsumerStream(client, topics, options);
         var eventCounter = new EventCounter();
-        var increment = eventCounter.createEventCounter('first', 20, function (error, events) {
+        var increment1 = eventCounter.createEventCounter('first', 20, function (error, firstEvents) {
           should.not.exist(error);
-          events.events.length.should.equal(20);
-          events.events[0][0].value.should.equal('stream message 1');
-          events.events[0][0].offset.should.equal(0);
-          events.events[19][0].value.should.equal('stream message 20');
-          events.events[19][0].offset.should.equal(19);
-          var increment = eventCounter.createEventCounter('second', 20, function (error, events) {
+          firstEvents.events.length.should.equal(20);
+          firstEvents.events[0][0].value.should.equal('stream message 1');
+          firstEvents.events[0][0].offset.should.equal(0);
+          firstEvents.events[19][0].value.should.equal('stream message 20');
+          firstEvents.events[19][0].offset.should.equal(19);
+          var increment2 = eventCounter.createEventCounter('second', 20, function (error, secondEvents) {
             should.not.exist(error);
-            events.events.length.should.equal(20);
-            events.events[0][0].value.should.equal('stream message 1');
-            events.events[0][0].offset.should.equal(20);
-            events.events[19][0].value.should.equal('stream message 20');
-            events.events[19][0].offset.should.equal(39);
+            secondEvents.count.should.equal(20);
+            secondEvents.events[0][0].value.should.equal('stream message 1');
+            secondEvents.events[0][0].offset.should.equal(20);
+            secondEvents.events[19][0].value.should.equal('stream message 20');
+            secondEvents.events[19][0].offset.should.equal(39);
             consumer.close(done);
           });
-          consumer.on('data', increment);
+          consumer.on('data', increment2);
           createTopicAndProduceMessages(producer, APPEND_TOPIC_1, 20);
         });
         consumer
           .pipe(through2.obj(function (data, enc, cb) {
-            increment(data);
+            increment1(data);
             cb(null);
           }));
       });
     });
-  });
-  it('should support autocommit', function () {
   });
   describe('CommitStream', function () {
     it('should instantiate a consumer stream and increment commit manually', function (done) {
