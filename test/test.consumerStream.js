@@ -114,9 +114,15 @@ describe('ConsumerStream', function () {
           var eventCounter = new EventCounter();
           let commitStream = consumer.createCommitStream({});
           var increment = eventCounter.createEventCounter('first', 20, function (error, events) {
+            if (error) {
+              throw error;
+            }
             setImmediate(function () {
               commitStream.commit(function () {
                 client.sendOffsetFetchRequest(groupId, commitStream.topicPartionOffsets, function (error, data) {
+                  if (error) {
+                    throw error;
+                  }
                   data[topic][0].should.equal(20);
                   consumer.close(done);
                 });
@@ -139,11 +145,14 @@ describe('ConsumerStream', function () {
       var producer = new Producer(client);
       producer.once('ready', function () {
         createTopicAndProduceMessages(producer, topic, 20, function () {
-          var options = { autoCommit: true, autoCommitIntervalMs: false, autoCommitMsgCount: 18,  groupId };
+          var options = { autoCommit: true, autoCommitIntervalMs: false, autoCommitMsgCount: 18, groupId };
           var consumer = new ConsumerStream(client, [topic], options);
           let commitStream = consumer.createCommitStream();
           commitStream.once('commitComplete', function (data) {
             client.sendOffsetFetchRequest(groupId, commitStream.topicPartionOffsets, function (error, data) {
+              if (error) {
+                throw error;
+              }
               data[topic][0].should.equal(18);
               consumer.close(done);
             });
@@ -163,11 +172,14 @@ describe('ConsumerStream', function () {
       var producer = new Producer(client);
       producer.once('ready', function () {
         createTopicAndProduceMessages(producer, topic, 20, function () {
-          var options = { autoCommit: true, autoCommitIntervalMs: 5,  groupId };
+          var options = { autoCommit: true, autoCommitIntervalMs: 5, groupId };
           var consumer = new ConsumerStream(client, [topic], options);
           let commitStream = consumer.createCommitStream();
           commitStream.once('commitComplete', function (data) {
             client.sendOffsetFetchRequest(groupId, commitStream.topicPartionOffsets, function (error, data) {
+              if (error) {
+                throw error;
+              }
               data[topic][0].should.equal(20);
               commitStream.clearInterval();
               consumer.close(done);
