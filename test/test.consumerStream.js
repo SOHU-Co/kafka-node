@@ -9,9 +9,13 @@ var Producer = require(libPath + 'producer');
 var Client = require(libPath + 'client');
 var EventCounter = require('./helpers/EventCounter');
 
-var TOPIC_POSTFIX = '_test_' + Date.now();
-var EXISTS_TOPIC_1 = '_exists_1' + TOPIC_POSTFIX;
-var APPEND_TOPIC_1 = '_append_1' + TOPIC_POSTFIX;
+const TOPIC_POSTFIX = '_test_' + Date.now();
+const EXISTS_TOPIC_1 = '_exists_1' + TOPIC_POSTFIX;
+const APPEND_TOPIC_1 = '_append_1' + TOPIC_POSTFIX;
+const COMMIT_STREAM_TOPIC_1 = '_commit_stream_1' + TOPIC_POSTFIX;
+const COMMIT_STREAM_TOPIC_2 = '_commit_stream_2' + TOPIC_POSTFIX;
+const COMMIT_STREAM_TOPIC_3 = '_commit_stream_3' + TOPIC_POSTFIX;
+const COMMIT_STREAM_TOPIC_4 = '_commit_stream_4' + TOPIC_POSTFIX;
 
 var host = process.env['KAFKA_TEST_HOST'] || '';
 
@@ -32,7 +36,7 @@ describe('ConsumerStream', function () {
   it('should emit both a \'message\' and a \'data\' event for each message', function (done) {
     var client = new Client(host);
     var producer = new Producer(client);
-    producer.on('ready', function () {
+    producer.once('ready', function () {
       createTopicAndProduceMessages(producer, EXISTS_TOPIC_1, 100, function () {
         var topics = [ { topic: EXISTS_TOPIC_1 } ];
         // Here we set fetchMaxBytes to ensure that we're testing running
@@ -59,10 +63,10 @@ describe('ConsumerStream', function () {
       });
     });
   });
-  it('should continue polling for messages after consuming all existing messages', function (done) {
+  it('should continue polling for new messages appended after consuming all existing messages', function (done) {
     var client = new Client(host);
     var producer = new Producer(client);
-    producer.on('ready', function () {
+    producer.once('ready', function () {
       createTopicAndProduceMessages(producer, APPEND_TOPIC_1, 20, function () {
         var topics = [ { topic: APPEND_TOPIC_1 } ];
         var options = { autoCommit: false, groupId: '_groupId_2_test' };
@@ -94,5 +98,172 @@ describe('ConsumerStream', function () {
           }));
       });
     });
+  });
+  it('should support autocommit', function () {
+  });
+  describe('CommitStream', function () {
+    it('should instantiate a consumer stream and increment commit manually', function (done) {
+      const groupId = '_commitStream_1_test';
+      const topic = COMMIT_STREAM_TOPIC_1;
+      var client = new Client(host);
+      var producer = new Producer(client);
+      producer.once('ready', function () {
+        createTopicAndProduceMessages(producer, topic, 20, function () {
+          var options = { autoCommit: false, groupId };
+          var consumer = new ConsumerStream(client, [topic], options);
+          var eventCounter = new EventCounter();
+          let commitStream = consumer.createCommitStream({});
+          var increment = eventCounter.createEventCounter('first', 20, function (error, events) {
+            setImmediate(function () {
+              commitStream.commit(function () {
+                client.sendOffsetFetchRequest(groupId, commitStream.topicPartionOffsets, function (error, data) {
+                  data[topic][0].should.equal(20);
+                  consumer.close(done);
+                });
+              });
+            });
+          });
+          consumer
+            .pipe(through2.obj(function (data, enc, cb) {
+              increment();
+              cb(null, data);
+            }))
+            .pipe(commitStream);
+        });
+      });
+    });
+    it('should commit when the autocommit message count is reached', function (done) {
+      const groupId = '_commitStream_2_test';
+      const topic = COMMIT_STREAM_TOPIC_2;
+      var client = new Client(host);
+      var producer = new Producer(client);
+      producer.once('ready', function () {
+        createTopicAndProduceMessages(producer, topic, 20, function () {
+          var options = { autoCommit: true, autoCommitIntervalMs: false, autoCommitMsgCount: 18,  groupId };
+          var consumer = new ConsumerStream(client, [topic], options);
+          let commitStream = consumer.createCommitStream();
+          commitStream.once('commitComplete', function (data) {
+            client.sendOffsetFetchRequest(groupId, commitStream.topicPartionOffsets, function (error, data) {
+              data[topic][0].should.equal(18);
+              consumer.close(done);
+            });
+          });
+          consumer
+            .pipe(through2.obj(function (data, enc, cb) {
+              cb(null, data);
+            }))
+            .pipe(commitStream);
+        });
+      });
+    });
+    it('should autocommit after a given interval in milliseconds', function (done) {
+      const groupId = '_commitStream_3_test';
+      const topic = COMMIT_STREAM_TOPIC_3;
+      var client = new Client(host);
+      var producer = new Producer(client);
+      producer.once('ready', function () {
+        createTopicAndProduceMessages(producer, topic, 20, function () {
+          var options = { autoCommit: true, autoCommitIntervalMs: 5,  groupId };
+          var consumer = new ConsumerStream(client, [topic], options);
+          let commitStream = consumer.createCommitStream();
+          commitStream.once('commitComplete', function (data) {
+            client.sendOffsetFetchRequest(groupId, commitStream.topicPartionOffsets, function (error, data) {
+              data[topic][0].should.equal(20);
+              commitStream.clearInterval();
+              consumer.close(done);
+            });
+          });
+          consumer
+            .pipe(through2.obj(function (data, enc, cb) {
+              cb(null, data);
+            }))
+            .pipe(commitStream);
+        });
+      });
+    });
+    it.skip('should update the interval so that the consumer may resume where it left off', function (done) {
+      const groupId = '_commitStream_4_test';
+      const topic = COMMIT_STREAM_TOPIC_4;
+
+      var client = new Client(host);
+      var producer = new Producer(client);
+      producer.once('ready', function () {
+        createTopicAndProduceMessages(producer, topic, 19, function () {
+          var options = { autoCommit: true, autoCommitMsgCount: 10,  groupId };
+          var consumer = new ConsumerStream(client, [topic], options);
+          let commitStream = consumer.createCommitStream();
+          commitStream.once('commitComplete', function (data) {
+            consumer.unpipe(commitStream);
+            client.sendOffsetFetchRequest(groupId, commitStream.topicPartionOffsets, function (error, data) {
+              data[topic][0].should.equal(10);
+              commitStream.clearInterval();
+              consumer.close(function() {
+                var client2 = new Client(host);
+                client2.on('ready', function() {
+                  var consumer2 = new ConsumerStream(client2, [topic], options);
+                  consumer2.pipe(through2.obj(function(data, enc, cb)  {
+                    console.log(`consumer 2: ${data.offset}, ${data}`);
+                    cb();
+                  }));
+                  setTimeout(done, 200);
+                });
+              });
+            });
+          });
+          consumer
+            .pipe(through2.obj(function (data, enc, cb) {
+              console.log(`consumer 1: ${data.offset}, ${data}`);
+              cb(null, data);
+            }))
+            .pipe(commitStream);
+        });
+      });
+
+
+      return;
+
+      var client = new Client(host);
+      var producer = new Producer(client);
+      function getMessageCollector(receivedMessages) {
+        return through2.obj(function (data, enc, cb) {
+          receivedMessages.push(data);
+          cb(null, data);
+        });
+      }
+      producer.once('ready', function () {
+        createTopicAndProduceMessages(producer, topic, 20, function () {
+          var options = { autoCommit: true, autoCommitMsgCount: 10, autoCommitIntervalMs: false, groupId };
+          let consumerOneMessages = [];
+          let consumerTwoMessages = [];
+          let consumer = new ConsumerStream(client, [topic], options);
+          let commitStream = consumer.createCommitStream();
+          commitStream.once('commitComplete', function (data) {
+            consumer.close(function() {
+              setTimeout(function() {
+                var eventCounter = new EventCounter();
+                var increment = eventCounter.createEventCounter('first', 20, done);
+                var client2 = new Client(host);
+                client.on('ready', function () {
+                  var consumer2 = new ConsumerStream(client2, [topic], options);
+                  consumer2.pipe(through2.obj(function (data, enc, cb) {
+                    console.log(data);
+                    increment();
+                    cb();
+                  }));
+                });
+              }, 2000);
+            });
+          });
+          consumer
+            .pipe(getMessageCollector(consumerOneMessages))
+            consumer.pipe(through2.obj(function (data, enc, cb) {
+              console.log(data);
+              cb(null, data);
+            }))
+            .pipe(commitStream);
+        });
+      });
+    });
+
   });
 });
