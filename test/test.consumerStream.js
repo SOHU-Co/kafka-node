@@ -15,7 +15,6 @@ const APPEND_TOPIC_1 = '_append_1' + TOPIC_POSTFIX;
 const COMMIT_STREAM_TOPIC_1 = '_commit_stream_1' + TOPIC_POSTFIX;
 const COMMIT_STREAM_TOPIC_2 = '_commit_stream_2' + TOPIC_POSTFIX;
 const COMMIT_STREAM_TOPIC_3 = '_commit_stream_3' + TOPIC_POSTFIX;
-const COMMIT_STREAM_TOPIC_4 = '_commit_stream_4' + TOPIC_POSTFIX;
 
 var host = process.env['KAFKA_TEST_HOST'] || '';
 
