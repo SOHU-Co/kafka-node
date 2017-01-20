@@ -46,7 +46,7 @@ describe('Round Robin Assignment', function () {
 
     roundRobin.assign(topicPartition, groupMembers, function (error, assignment) {
       should(error).be.empty;
-      const consumer1 = _.first(assignment);
+      const consumer1 = _.head(assignment);
       consumer1.memberId.should.eql('consumer1');
       Object.keys(consumer1.topicPartitions).should.eql(['RebalanceTopic', 'RebalanceTest']);
       consumer1.topicPartitions['RebalanceTest'].should.eql(['1']);
@@ -93,7 +93,7 @@ describe('Round Robin Assignment', function () {
       should(error).be.empty;
       assignment = _.sortBy(assignment, 'memberId');
 
-      const consumer1 = _.first(assignment);
+      const consumer1 = _.head(assignment);
       consumer1.memberId.should.eql('consumer1');
       Object.keys(consumer1.topicPartitions).should.eql(['RebalanceTopic', 'RebalanceTest']);
       consumer1.topicPartitions['RebalanceTest'].should.eql(['0']);
@@ -154,7 +154,7 @@ describe('Round Robin Assignment', function () {
       should(error).be.empty;
       assignment = _.sortBy(assignment, 'memberId');
 
-      const consumer1 = _.first(assignment);
+      const consumer1 = _.head(assignment);
       consumer1.memberId.should.eql('consumer1');
       Object.keys(consumer1.topicPartitions).should.eql(['RebalanceTopic', 'RebalanceTest']);
       consumer1.topicPartitions['RebalanceTest'].should.eql(['1']);

@@ -46,7 +46,7 @@ describe('Range Assignment', function () {
   it('should partition two topics of three partitions between two consumers', function (done) {
     range.assign(topicPartition, groupMembers, function (error, result) {
       should(error).be.empty;
-      const consumer1 = _.first(result);
+      const consumer1 = _.head(result);
       consumer1.memberId.should.eql('consumer1');
       Object.keys(consumer1.topicPartitions).should.eql(['RebalanceTopic', 'RebalanceTest']);
       consumer1.topicPartitions['RebalanceTest'].should.eql([0, 1]);
@@ -75,7 +75,7 @@ describe('Range Assignment', function () {
 
     range.assign(topicPartition, gm, function (error, result) {
       should(error).be.empty;
-      const consumer1 = _.first(result);
+      const consumer1 = _.head(result);
       consumer1.memberId.should.eql('consumer1');
       Object.keys(consumer1.topicPartitions).should.eql(['RebalanceTopic', 'RebalanceTest']);
       consumer1.topicPartitions['RebalanceTest'].should.eql([0]);
@@ -119,7 +119,7 @@ describe('Range Assignment', function () {
 
     range.assign(topicPartition, gm, function (error, result) {
       should(error).be.empty;
-      const consumer1 = _.first(result);
+      const consumer1 = _.head(result);
       consumer1.memberId.should.eql('consumer1');
       Object.keys(consumer1.topicPartitions).should.eql(['RebalanceTopic', 'RebalanceTest']);
       consumer1.topicPartitions['RebalanceTest'].should.eql([0]);

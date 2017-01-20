@@ -34,7 +34,7 @@ Childrearer.prototype.closeAll = function (callback) {
 };
 
 Childrearer.prototype.kill = function (numberOfChildren, callback) {
-  var children = _.sample(this.children, numberOfChildren);
+  var children = _.sampleSize(this.children, numberOfChildren);
   this._killEachChild(children, callback);
 };
 
@@ -44,7 +44,7 @@ Childrearer.prototype.killLast = function (callback) {
 };
 
 Childrearer.prototype.killFirst = function (callback) {
-  var child = _.first(this.children);
+  var child = _.head(this.children);
   this._killEachChild([child], callback);
 };
 
@@ -61,7 +61,7 @@ Childrearer.prototype._killEachChild = function (children, callback) {
 };
 
 Childrearer.prototype.raise = function (children, callback, waitTime) {
-  var newChildren = _.times(children, this._raiseChild, this);
+  var newChildren = _.times(children, _.bind(this._raiseChild, this));
 
   this.children = this.children.concat(newChildren);
 
