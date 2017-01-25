@@ -1,9 +1,13 @@
 # kafka-node CHANGELOG
 
+## 2017-01-25, Version 1.3.2
+- Fix potential stalled ConsumerGroup when a kafka broker leaves or comes back online [#574](https://github.com/SOHU-Co/kafka-node/pull/574)
+- Reduce calls to commit when consumer is idle [#568](https://github.com/SOHU-Co/kafka-node/pull/568)
+- Update lodash 4  [#565](https://github.com/SOHU-Co/kafka-node/pull/565)
+
 ## 2017-01-17, Version 1.3.1
 - Fix consumer group not reconnecting when a broker comes back online [#563](https://github.com/SOHU-Co/kafka-node/pull/563)
 - Removed an non consumer group error from consumer group error list [#562](https://github.com/SOHU-Co/kafka-node/pull/562)
-
 
 ## 2017-01-12, Version 1.3.0
 
