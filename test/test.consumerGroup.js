@@ -121,7 +121,7 @@ describe('ConsumerGroup', function () {
     });
   });
 
-  describe('Broker offline recovery', function () {
+  xdescribe('Broker offline recovery', function () {
     let sandbox = null;
     let consumerGroup = null;
     let fakeClient = null;
