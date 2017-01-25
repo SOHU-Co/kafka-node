@@ -22,12 +22,21 @@ before(function (done) {
     client = new Client(host);
     console.log('Creating new client.');
 
+    let timer = setTimeout(function () {
+      console.log('Kafka not responding...');
+      client.close(function () {
+        operation.retry(new Error('No Response'));
+      });
+    }, 2000);
+
     client.on('connect', function () {
+      clearTimeout(timer);
       console.log(client.brokerMetadata);
       done();
     });
 
     client.on('error', function (error) {
+      clearTimeout(timer);
       if (error.name !== 'NO_NODE') {
         console.error('Unexpected error', error);
       } else {
