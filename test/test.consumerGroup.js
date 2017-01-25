@@ -121,30 +121,30 @@ describe('ConsumerGroup', function () {
     });
   });
 
-  xdescribe('Broker offline recovery', function () {
+  describe('Broker offline recovery', function () {
     let sandbox = null;
     let consumerGroup = null;
     let fakeClient = null;
     let ConsumerGroup = null;
     let clock = null;
 
-    beforeEach(function () {
-      sandbox = sinon.sandbox.create();
+    fakeClient = function () {
+      return new EventEmitter();
+    };
 
-      fakeClient = sandbox.stub().returns(new EventEmitter());
-
+    before(function () {
       ConsumerGroup = proxyquire('../lib/consumerGroup', {
         './client': fakeClient
       });
 
       consumerGroup = new ConsumerGroup({
-        host: host,
-        connectOnReady: false,
-        sessionTimeout: 8000,
-        heartbeatInterval: 250,
-        retryMinTimeout: 250,
-        heartbeatTimeoutMs: 200
+        host: 'gibberish',
+        connectOnReady: false
       }, 'TestTopic');
+    });
+
+    beforeEach(function () {
+      sandbox = sinon.sandbox.create();
 
       consumerGroup.client.refreshMetadata = sandbox.stub().yields(null);
       clock = sandbox.useFakeTimers();
@@ -195,7 +195,7 @@ describe('ConsumerGroup', function () {
 
     it('should try to connect when broker changes and a reconnect is scheduled', function () {
       let stub = sandbox.stub(consumerGroup, 'connect');
-      sandbox.stub(global, 'clearTimeout');
+      sinon.stub(global, 'clearTimeout');
 
       consumerGroup.ready = false;
       consumerGroup.reconnectTimer = 1234;
@@ -207,6 +207,7 @@ describe('ConsumerGroup', function () {
       should(consumerGroup.reconnectTimer).be.null;
       sinon.assert.calledOnce(clearTimeout);
       sinon.assert.calledOnce(stub);
+      global.clearTimeout.restore();
     });
   });
 

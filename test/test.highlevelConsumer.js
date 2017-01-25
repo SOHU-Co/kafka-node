@@ -1,12 +1,14 @@
 'use strict';
 
-var sinon = require('sinon');
-var HighLevelConsumer = require('../lib/highLevelConsumer');
-var FakeClient = require('./mocks/mockClient');
-var should = require('should');
-var InvalidConfigError = require('../lib/errors/InvalidConfigError');
-var FailedToRegisterConsumerError = require('../lib/errors/FailedToRegisterConsumerError');
+const sinon = require('sinon');
+const HighLevelConsumer = require('../lib/highLevelConsumer');
+const FakeClient = require('./mocks/mockClient');
+const should = require('should');
+const InvalidConfigError = require('../lib/errors/InvalidConfigError');
+const FailedToRegisterConsumerError = require('../lib/errors/FailedToRegisterConsumerError');
 const _ = require('lodash');
+const Client = require('../lib/client');
+const Producer = require('../lib/producer');
 
 describe('HighLevelConsumer', function () {
   describe('#close', function (done) {
@@ -315,13 +317,10 @@ describe('HighLevelConsumer', function () {
 
   describe('Verify no duplicate messages are being consumed', function () {
     this.timeout(26000);
-    var _ = require('lodash');
-    var Client = require('../lib/client');
-    var Producer = require('../lib/producer');
     var uuid = require('uuid');
     var host = process.env['KAFKA_TEST_HOST'] || '';
     var topic = 'DuplicateMessageTest';
-    var numberOfMessages = 20000;
+    const numberOfMessages = 20000;
 
     var highLevelConsumer;
 
