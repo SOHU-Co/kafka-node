@@ -1,11 +1,14 @@
 'use strict';
 
-var sinon = require('sinon');
-var HighLevelConsumer = require('../lib/highLevelConsumer');
-var FakeClient = require('./mocks/mockClient');
-var should = require('should');
-var InvalidConfigError = require('../lib/errors/InvalidConfigError');
-var FailedToRegisterConsumerError = require('../lib/errors/FailedToRegisterConsumerError');
+const sinon = require('sinon');
+const HighLevelConsumer = require('../lib/highLevelConsumer');
+const FakeClient = require('./mocks/mockClient');
+const should = require('should');
+const InvalidConfigError = require('../lib/errors/InvalidConfigError');
+const FailedToRegisterConsumerError = require('../lib/errors/FailedToRegisterConsumerError');
+const _ = require('lodash');
+const Client = require('../lib/client');
+const Producer = require('../lib/producer');
 
 describe('HighLevelConsumer', function () {
   describe('#close', function (done) {
@@ -314,13 +317,10 @@ describe('HighLevelConsumer', function () {
 
   describe('Verify no duplicate messages are being consumed', function () {
     this.timeout(26000);
-    var _ = require('lodash');
-    var Client = require('../lib/client');
-    var Producer = require('../lib/producer');
     var uuid = require('uuid');
     var host = process.env['KAFKA_TEST_HOST'] || '';
     var topic = 'DuplicateMessageTest';
-    var numberOfMessages = 20000;
+    const numberOfMessages = 20000;
 
     var highLevelConsumer;
 
@@ -365,6 +365,63 @@ describe('HighLevelConsumer', function () {
         });
       });
     }
+  });
+
+  describe('#updateOffsets', function () {
+    let client, highLevelConsumer, sandbox;
+
+    beforeEach(function () {
+      client = new FakeClient();
+
+      highLevelConsumer = new HighLevelConsumer(
+        client,
+        [ {topic: 'fake-topic'} ]
+      );
+
+      clearTimeout(highLevelConsumer.checkPartitionOwnershipInterval);
+
+      sandbox = sinon.sandbox.create();
+    });
+
+    afterEach(function () {
+      highLevelConsumer.close(function () {});
+      sandbox.restore();
+      client = null;
+      highLevelConsumer = null;
+    });
+
+    it('should not call commit if topic and partition has not changed', function () {
+      sandbox.stub(highLevelConsumer, 'autoCommit');
+      highLevelConsumer.updateOffsets({'fake-topic': {}});
+
+      highLevelConsumer.options.autoCommit.should.be.true;
+      sinon.assert.notCalled(highLevelConsumer.autoCommit);
+    });
+
+    it('should call commit if topic and partition has changed', function () {
+      sandbox.stub(highLevelConsumer, 'autoCommit');
+
+      highLevelConsumer.topicPayloads = [
+        {
+          topic: 'fake-topic',
+          partition: '0',
+          offset: 0
+        },
+        {
+          topic: 'fake-topic',
+          partition: '1',
+          offset: 0
+        }
+      ];
+
+      highLevelConsumer.updateOffsets({'fake-topic': {
+        '0': 28
+      }});
+
+      highLevelConsumer.options.autoCommit.should.be.true;
+      sinon.assert.calledOnce(highLevelConsumer.autoCommit);
+      _.find(highLevelConsumer.topicPayloads, {topic: 'fake-topic', partition: '0'}).offset.should.be.eql(29);
+    });
   });
 
   describe('rebalance', function () {
