@@ -63,9 +63,7 @@ describe('Offset', function () {
     it('should keeping calling fetch until offset is ready', function (done) {
       var topic = '_exist_topic_3_test';
       var topics = [ { topic: topic } ];
-      offset.ready = false;
       offset.fetch(topics, done);
-      offset.ready = true;
     });
   });
 
@@ -83,9 +81,7 @@ describe('Offset', function () {
     it('should keep calling commit until offset is ready', function (done) {
       var topic = '_exist_topic_3_test';
       var topics = [ { topic: topic, offset: 10 } ];
-      offset.ready = false;
       offset.commit('_groupId_commit_test', topics, done);
-      offset.ready = true;
     });
   });
 
@@ -104,9 +100,7 @@ describe('Offset', function () {
     it('should keep calling fetchCommits until offset is ready', function (done) {
       var topic = '_exist_topic_3_test';
       var topics = [ { topic: topic, offset: 10 } ];
-      offset.ready = false;
       offset.fetchCommits('_groupId_commit_1_test', topics, done);
-      offset.ready = true;
     });
   });
 
@@ -129,9 +123,7 @@ describe('Offset', function () {
     it('should keep calling fetchLatestOffsets until offset is ready', function (done) {
       var topic = '_exist_topic_3_test';
       var topics = [topic];
-      offset.ready = false;
       offset.fetchLatestOffsets(topics, done);
-      offset.ready = true;
     });
   });
 });
