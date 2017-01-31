@@ -1,5 +1,8 @@
 # kafka-node CHANGELOG
 
+## 2017-01-31, Version 1.3.3
+- Fix issue where `fetchEarliestOffsets` using `Offset` could fail [#572](https://github.com/SOHU-Co/kafka-node/pull/572)
+
 ## 2017-01-25, Version 1.3.2
 - Fix potential stalled ConsumerGroup when a kafka broker leaves or comes back online [#574](https://github.com/SOHU-Co/kafka-node/pull/574)
 - Reduce calls to commit when consumer is idle [#568](https://github.com/SOHU-Co/kafka-node/pull/568)
