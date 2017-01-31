@@ -34,6 +34,7 @@ Kafka-node is a Node.js client with Zookeeper integration for Apache Kafka 0.8.1
   - [HighLevelConsumer does not consume on all partitions](#highlevelconsumer-does-not-consume-on-all-partitions)
   - [How to throttle messages / control the concurrency of processing messages](#how-to-throttle-messages--control-the-concurrency-of-processing-messages)
   - [How do I produce and consume binary data?](#how-do-i-produce-and-consume-binary-data)
+  - [What are these node-gyp and snappy errors?](#what-are-these-node-gyp-and-snappy-errors)
 - [Running Tests](#running-tests)
 - [LICENSE - "MIT"](#license---mit)
 
@@ -924,6 +925,16 @@ Set the `messages` attribute in the `payload` to a `Buffer`. `TypedArrays` such 
 ```
 
 Reference to issue [#470](https://github.com/SOHU-Co/kafka-node/issues/470) [#514](https://github.com/SOHU-Co/kafka-node/issues/514)
+
+## What are these node-gyp and snappy errors?
+
+Snappy is a optional compression library. Windows users have reported issues with installing it while running `npm install`. It's **optional** in kafka-node and can be skipped by using the `--no-optional` flag (though errors from it should not fail the install).
+
+```bash
+npm install kafka-node --no-optional --save
+```
+
+Keep in mind if you try to use snappy without installing it `kafka-node` will throw a runtime exception.
 
 # Running Tests
 
