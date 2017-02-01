@@ -306,6 +306,24 @@ describe('Client', function () {
     });
   });
 
+  describe('Versions', function () {
+    beforeEach(function (done) {
+      client = new Client(host);
+      client.once('connect', done);
+    });
+
+    afterEach(function (done) {
+      client.close(done);
+    });
+
+    it('#sendVersionsRequest', function (done) {
+      client.sendVersionsRequest(function (error, results) {
+        console.log(results);
+        done(error);
+      });
+    });
+  });
+
   describe('Discover Group Coordinator', function () {
     beforeEach(function (done) {
       client = new Client(host);
