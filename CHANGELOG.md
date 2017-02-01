@@ -1,5 +1,8 @@
 # kafka-node CHANGELOG
 
+## 2017-02-01, Version 1.3.4
+- Producers should better recover from brokers going offline and coming back [#580](https://github.com/SOHU-Co/kafka-node/pull/580)
+
 ## 2017-01-31, Version 1.3.3
 - Fix issue where `fetchEarliestOffsets` using `Offset` could fail [#572](https://github.com/SOHU-Co/kafka-node/pull/572)
 
