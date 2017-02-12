@@ -35,6 +35,7 @@ Kafka-node is a Node.js client with Zookeeper integration for Apache Kafka 0.8.1
   - [How to throttle messages / control the concurrency of processing messages](#how-to-throttle-messages--control-the-concurrency-of-processing-messages)
   - [How do I produce and consume binary data?](#how-do-i-produce-and-consume-binary-data)
   - [What are these node-gyp and snappy errors?](#what-are-these-node-gyp-and-snappy-errors)
+  - [How do I configure the log output?](#how-do-i-configure-the-log-output)
 - [Running Tests](#running-tests)
 - [LICENSE - "MIT"](#license---mit)
 
@@ -935,6 +936,41 @@ npm install kafka-node --no-optional --save
 ```
 
 Keep in mind if you try to use snappy without installing it `kafka-node` will throw a runtime exception.
+
+## How do I configure the log output?
+
+By default, `kafka-node` uses [debug](https://github.com/visionmedia/debug) to log important information. To integrate `kafka-node`'s log output into an application, it is possible to set a logger provider. This enables filtering of log levels and easy redirection of output streams.
+
+### What is a logger provider?
+
+A logger provider is a function which takes the name of a logger and returns a logger implementation. For instance, the following code snippet shows how a logger provider for the global `console` object could be written:
+
+```javascript
+function consoleLoggerProvider (name) {
+  // do something with the name
+  return {
+    debug: console.debug.bind(console),
+    info: console.info.bind(console),
+    warn: console.warn.bind(console),
+    error: console.error.bind(console)
+  };
+}
+```
+
+The logger interface with its `debug`, `info`, `warn` and `error` methods expects format string support as seen in `debug` or the JavaScript `console` object. Many commonly used logging implementations cover this API, e.g. bunyan, pino or winston.
+
+### How do I set a logger provider?
+
+For performance reasons, initialization of the `kafka-node` module creates all necessary loggers. This means that custom logger providers need to be set *before requiring the `kafka-node` module*. The following example shows how this can be done:
+
+```javascript
+// first configure the logger provider
+const kafkaLogging = require('kafka-node/logging');
+kafkaLogging.setLoggerProvider(consoleLoggerProvider);
+
+// then require kafka-node and continue as normal
+const kafka = require('kafka-node');
+```
 
 # Running Tests
 

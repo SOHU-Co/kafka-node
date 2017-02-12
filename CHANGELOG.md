@@ -1,5 +1,8 @@
 # kafka-node CHANGELOG
 
+## Unreleased
+- Logging strategy should be configurable so that `kafka-node` can be integrated into applications more easily.
+
 ## 2017-02-01, Version 1.3.4
 - Producers should better recover from brokers going offline and coming back [#580](https://github.com/SOHU-Co/kafka-node/pull/580)
 
@@ -42,7 +45,7 @@
 ## 2016-11-18, Version 1.0.7
 - Fix issue where `createTopics` using the `async` set to `false` was not synchronous. [#519](https://github.com/SOHU-Co/kafka-node/pull/519)
 
-   **NOTE**: The behavior now is if `async` is true the callback is not actually called until all the topics are confirmed to have been created by Kafka. The previous behavior the callback would be called after the first request (which does not guarantee the topics have been created). This wasn't consistent with what the doc said. 
+   **NOTE**: The behavior now is if `async` is true the callback is not actually called until all the topics are confirmed to have been created by Kafka. The previous behavior the callback would be called after the first request (which does not guarantee the topics have been created). This wasn't consistent with what the doc said.
 
 - Fix issue where messages are lost when sending a batch of keyed messages using the highLevelPartitioner [#521](https://github.com/SOHU-Co/kafka-node/pull/521)
 - Upgrade UUID package [#520](https://github.com/SOHU-Co/kafka-node/pull/520)
@@ -74,9 +77,9 @@
 
 Major version change since we're dropping support for Node older than v4.
 
-Added a new Consumer called [Consumer Group](https://github.com/SOHU-Co/kafka-node#consumergroup) this is supported in Kafka 0.9 and greater. [#477](https://github.com/SOHU-Co/kafka-node/pull/477) 
+Added a new Consumer called [Consumer Group](https://github.com/SOHU-Co/kafka-node#consumergroup) this is supported in Kafka 0.9 and greater. [#477](https://github.com/SOHU-Co/kafka-node/pull/477)
 
-* Add group membership API protocols 
+* Add group membership API protocols
 * Add consumerGroup roundrobin assignment
 * Add documentation for ConsumerGroup
 * Implemented range assignment strategy
@@ -91,7 +94,7 @@ Added a new Consumer called [Consumer Group](https://github.com/SOHU-Co/kafka-no
 ## 2016-10-03, Version 0.5.9
 - Fix issue with highLevelConsumers and how consumer groups react to zookeeper redeploys creating a lot of [NODE_EXISTS] errors [#472](https://github.com/SOHU-Co/kafka-node/pull/472)
 - Removed docker-machine support for tests [#474](https://github.com/SOHU-Co/kafka-node/pull/474)
-- Minor fixes and additions to doc [#475](https://github.com/SOHU-Co/kafka-node/pull/475) [#471](https://github.com/SOHU-Co/kafka-node/pull/471) 
+- Minor fixes and additions to doc [#475](https://github.com/SOHU-Co/kafka-node/pull/475) [#471](https://github.com/SOHU-Co/kafka-node/pull/471)
 
 ## 2016-09-12, Version 0.5.8
 - Fix duplicate messages consumed on startup this was triggered by unnecessary rebalance (versions affected: *v0.5.4* to *v0.5.7*) [#465](https://github.com/SOHU-Co/kafka-node/pull/465)
