@@ -864,8 +864,13 @@ export DEBUG=kafka-node:*
 Call `client.loadMetadataForTopics` with a blank topic array to get the entire list of available topics (and available brokers).
 
 ```js
-client.loadMetadataForTopics([], function (error, results) {
-  console.log('%j', _.get(results, '1.metadata'));
+client.once('connect', function () {
+	client.loadMetadataForTopics([], function (error, results) {
+	  if (error) {
+	  	return console.error(error);
+	  }
+	  console.log('%j', _.get(results, '1.metadata'));
+	});
 });
 ```
 
