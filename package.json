@@ -44,6 +44,7 @@
     "eslint-plugin-standard": "^2.0.1",
     "istanbul": "^0.4.4",
     "mocha": "^3.1.0",
+    "nsp": "^2.6.2",
     "optimist": "^0.6.1",
     "proxyquire": "^1.7.10",
     "should": "^6.0.0",
@@ -54,7 +55,7 @@
     "url": "https://github.com/SOHU-Co/kafka-node.git"
   },
   "scripts": {
-    "test": "eslint . && ./run-tests.sh",
+    "test": "eslint . && ./run-tests.sh && nsp check",
     "startDocker": "./start-docker.sh",
     "stopDocker": "docker-compose down",
     "updateToc": "doctoc README.md --maxlevel 2 --notitle"
