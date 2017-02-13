@@ -2,6 +2,7 @@
 
 ## Unreleased
 - Logging strategy should be configurable so that `kafka-node` can be integrated into applications more easily.
+- Published NPM package should not contain testing and local development artifacts.
 
 ## 2017-02-01, Version 1.3.4
 - Producers should better recover from brokers going offline and coming back [#580](https://github.com/SOHU-Co/kafka-node/pull/580)

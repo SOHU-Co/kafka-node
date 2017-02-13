@@ -8,6 +8,7 @@
     "producer",
     "broker"
   ],
+  "files": ["kafka.js", "logging.js", "lib"],
   "bugs": "https://github.com/SOHU-co/kafka-node/issues",
   "version": "1.3.4",
   "main": "kafka.js",
