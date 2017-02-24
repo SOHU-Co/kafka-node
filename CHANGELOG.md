@@ -1,5 +1,9 @@
 # kafka-node CHANGELOG
 
+## 2017-02-24, Version 1.5.0
+* Added `highWaterOffset` attribute to `message` and `done` results to help keep track consumer status [#610](https://github.com/SOHU-Co/kafka-node/pull/610)
+* Fixed potential missing commits in HighLevelCosumer and ConsumerGroup [#613](https://github.com/SOHU-Co/kafka-node/pull/613)
+
 ## 2017-02-13, Version 1.4.0
 - Logging strategy should be configurable so that `kafka-node` can be integrated into applications more easily. [#597](https://github.com/SOHU-Co/kafka-node/pull/597)
 - Published NPM package should not contain testing and local development artifacts. [#598](https://github.com/SOHU-Co/kafka-node/pull/598)
