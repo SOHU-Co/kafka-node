@@ -391,16 +391,20 @@ describe('HighLevelConsumer', function () {
     });
 
     it('should not call commit if topic and partition has not changed', function () {
-      sandbox.stub(highLevelConsumer, 'autoCommit');
+      sandbox.stub(highLevelConsumer, 'sendOffsetCommitRequest');
+      sandbox.spy(highLevelConsumer, 'autoCommit');
+
       highLevelConsumer.updateOffsets({'fake-topic': {}});
 
       highLevelConsumer.options.autoCommit.should.be.true;
-      sinon.assert.notCalled(highLevelConsumer.autoCommit);
+      should(highLevelConsumer.needToCommit).be.empty;
+      sinon.assert.calledOnce(highLevelConsumer.autoCommit);
+      sinon.assert.notCalled(highLevelConsumer.sendOffsetCommitRequest);
     });
 
     it('should call commit if topic and partition has changed', function () {
-      sandbox.stub(highLevelConsumer, 'autoCommit');
-
+      sandbox.spy(highLevelConsumer, 'autoCommit');
+      sandbox.stub(highLevelConsumer, 'sendOffsetCommitRequest');
       highLevelConsumer.topicPayloads = [
         {
           topic: 'fake-topic',
@@ -419,7 +423,9 @@ describe('HighLevelConsumer', function () {
       }});
 
       highLevelConsumer.options.autoCommit.should.be.true;
+      highLevelConsumer.needToCommit.should.be.false;
       sinon.assert.calledOnce(highLevelConsumer.autoCommit);
+      sinon.assert.calledOnce(highLevelConsumer.sendOffsetCommitRequest);
       _.find(highLevelConsumer.topicPayloads, {topic: 'fake-topic', partition: '0'}).offset.should.be.eql(29);
     });
   });
