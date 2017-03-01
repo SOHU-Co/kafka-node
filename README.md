@@ -66,7 +66,7 @@ Closes the connection to Zookeeper and the brokers so that the node process can 
 * `cb`: **Function**, the callback
 
 ## Producer
-### Producer(client, [options])
+### Producer(client, [options], [customPartitioner])
 * `client`: client which keeps a connection with the Kafka server.
 * `options`: options for producer,
 
@@ -76,7 +76,7 @@ Closes the connection to Zookeeper and the brokers so that the node process can 
     requireAcks: 1,
     // The amount of time in milliseconds to wait for all acks before considered, default 100ms
     ackTimeoutMs: 100,
-    // Partitioner type (default = 0, random = 1, cyclic = 2, keyed = 3), default 0
+    // Partitioner type (default = 0, random = 1, cyclic = 2, keyed = 3, custom = 4), default 0
     partitionerType: 2
 }
 ```
@@ -162,7 +162,7 @@ producer.createTopics(['t'], function (err, data) {});// Simply omit 2nd arg
 
 
 ## HighLevelProducer
-### HighLevelProducer(client, [options])
+### HighLevelProducer(client, [options], [customPartitioner])
 * `client`: client which keeps a connection with the Kafka server. Round-robins produce requests to the available topic partitions
 * `options`: options for producer,
 
@@ -172,7 +172,7 @@ producer.createTopics(['t'], function (err, data) {});// Simply omit 2nd arg
     requireAcks: 1,
     // The amount of time in milliseconds to wait for all acks before considered, default 100ms
     ackTimeoutMs: 100,
-    // Partitioner type (default = 0, random = 1, cyclic = 2, keyed = 3), default 2
+    // Partitioner type (default = 0, random = 1, cyclic = 2, keyed = 3, custom = 4), default 2
     partitionerType: 3
 }
 ```
