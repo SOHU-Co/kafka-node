@@ -83,8 +83,8 @@ describe('Partitioner', function () {
   });
 
   describe('CustomPartitioner', function () {
-    function getPartition(partitions, key) {
-        return partitions[partitions.length-1]
+    function getPartition (partitions, key) {
+      return partitions[partitions.length - 1];
     }
 
     var partitioner = new CustomPartitioner(getPartition);
