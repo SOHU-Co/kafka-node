@@ -7,8 +7,98 @@ const host = process.env['KAFKA_TEST_HOST'] || '';
 const proxyquire = require('proxyquire').noCallThru();
 const EventEmitter = require('events').EventEmitter;
 const _ = require('lodash');
+const uuid = require('uuid');
+const async = require('async');
+const Client = require('../lib/client');
+const Producer = require('../lib/producer');
+const assert = require('assert');
 
 describe('ConsumerGroup', function () {
+  describe('large message consumption', function () {
+    let topic, client, consumerGroup, consumed, interval;
+    const numberOfMessages = 2100000;
+    const chunkSize = 4;
+
+    function sendUUIDMessages (times, topic, done) {
+      console.log(`Trying to send ${times} messages`);
+      const producer = new Producer(client, { requireAcks: 1 });
+      assert(producer.ready, 'Producer is not ready');
+      console.log('producer ready');
+      const allMessages = _.times(times, uuid.v4);
+      const chunked = _.chunk(allMessages, times / chunkSize);
+      console.log(`${allMessages.length} messages generated. Sending in ${chunked.length} chunks of ${times / chunkSize}`);
+      async.each(chunked, function (messages, callback) {
+        console.log('sending...');
+        producer.send([{topic: topic, messages: messages}], callback);
+      }, done);
+      return producer;
+    }
+
+    before(function (done) {
+      if (process.env.TRAVIS) {
+        return this.skip();
+      }
+      topic = uuid.v4();
+      async.series([
+        function (callback) {
+          client = new Client(host, uuid.v4());
+          client.once('ready', function () {
+            client.createTopics(topic, true, callback);
+          });
+        },
+        function (callback) {
+          console.log(`topic ${topic} created`);
+          sendUUIDMessages(numberOfMessages, topic, callback);
+        },
+        function (callback) {
+          client.close(callback);
+        }
+      ], function (error) {
+        if (error) {
+          return done(error);
+        }
+        console.log('All messages sent');
+        done();
+      });
+    });
+
+    after(function (done) {
+      clearInterval(interval);
+      consumerGroup.close(false, done);
+    });
+
+    it('can consume messages', function (done) {
+      const groupId = uuid.v4();
+      console.log(`starting to consume using groupId: ${groupId}`);
+      const time = process.hrtime();
+      consumerGroup = new ConsumerGroup({
+        fetchMaxBytes: 1024 * 100,
+        groupId: groupId,
+        host: host,
+        sessionTimeout: 8000,
+        heartbeatInterval: 250,
+        retryMinTimeout: 250,
+        fromOffset: 'earliest'
+      }, topic);
+
+      consumed = 0;
+      consumerGroup.once('error', done);
+      consumerGroup.on('message', function (message) {
+        // console.log('read message', message.offset);
+        if (++consumed === numberOfMessages) {
+          console.log(`consumed ${consumed}`);
+          const [seconds, nanoseconds] = process.hrtime(time);
+          console.log(`took ${seconds}s ${nanoseconds / 1e6}ms`);
+          done();
+        }
+      });
+
+      interval = setInterval(function () {
+        console.log(`consumed ${consumed}`);
+      }, 1000);
+    });
+  });
+
   describe('#constructor', function () {
     var ConsumerGroup;
     var fakeClient = sinon.stub().returns(new EventEmitter());
@@ -233,8 +323,7 @@ describe('ConsumerGroup', function () {
         connectOnReady: false,
         sessionTimeout: 8000,
         heartbeatInterval: 250,
-        retryMinTimeout: 250,
-        heartbeatTimeoutMs: 200
+        retryMinTimeout: 250
       }, 'TestTopic');
     });
 
@@ -355,8 +444,7 @@ describe('ConsumerGroup', function () {
         connectOnReady: false,
         sessionTimeout: 8000,
         heartbeatInterval: 250,
-        retryMinTimeout: 250,
-        heartbeatTimeoutMs: 200
+        retryMinTimeout: 250
       }, 'TestTopic');
     });
 
