@@ -1,5 +1,9 @@
 # kafka-node CHANGELOG
 
+## 2017-03-16, Version 1.6.0
+* Add ability to provide your own custom partitioner implementation (see docs for Producer) [#625](https://github.com/SOHU-Co/kafka-node/pull/625)
+* Create topics will yield with topics created [#618](https://github.com/SOHU-Co/kafka-node/pull/618)
+
 ## 2017-02-24, Version 1.5.0
 * Added `highWaterOffset` attribute to `message` and `done` results to help keep track consumer status [#610](https://github.com/SOHU-Co/kafka-node/pull/610)
 * Fixed potential missing commits in HighLevelCosumer and ConsumerGroup [#613](https://github.com/SOHU-Co/kafka-node/pull/613)
