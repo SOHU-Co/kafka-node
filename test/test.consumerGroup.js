@@ -284,7 +284,7 @@ describe('ConsumerGroup', function () {
       const TOPIC_NAME = 'test-topic';
       const NEW_OFFSET = 657;
 
-      sandbox.stub(consumerGroup, 'resume', function () {
+      sandbox.stub(consumerGroup, 'resume').callsFake(function () {
         sinon.assert.calledOnce(consumerGroup.pause);
         sinon.assert.calledWithExactly(consumerGroup.offset.fetch, [{topic: TOPIC_NAME, partition: '0', time: -1}], sinon.match.func);
         sinon.assert.calledWithExactly(consumerGroup.setOffset, TOPIC_NAME, '0', NEW_OFFSET);
@@ -317,7 +317,7 @@ describe('ConsumerGroup', function () {
       const TOPIC_NAME = 'test-topic';
       const NEW_OFFSET = 500;
 
-      sandbox.stub(consumerGroup, 'resume', function () {
+      sandbox.stub(consumerGroup, 'resume').callsFake(function () {
         sinon.assert.calledWithExactly(consumerGroup.offset.fetch, [{topic: TOPIC_NAME, partition: '0', time: -2}], sinon.match.func);
         sinon.assert.calledWithExactly(consumerGroup.setOffset, TOPIC_NAME, '0', NEW_OFFSET);
         consumerGroup.topicPayloads[0].offset.should.be.eql(NEW_OFFSET);

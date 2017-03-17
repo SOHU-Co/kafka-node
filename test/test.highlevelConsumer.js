@@ -461,7 +461,7 @@ describe('HighLevelConsumer', function () {
       });
 
       function verifyPendingRebalances (event, done) {
-        sandbox.stub(client, 'refreshMetadata', function (topicNames, callback) {
+        sandbox.stub(client, 'refreshMetadata').callsFake(function (topicNames, callback) {
           highLevelConsumer.rebalancing.should.be.true;
           highLevelConsumer.pendingRebalances.should.be.eql(0);
           event();
@@ -496,19 +496,19 @@ describe('HighLevelConsumer', function () {
     it('should emit rebalanced event and clear rebalancing flag only after offsets are updated', function (done) {
       client.emit('ready');
 
-      sinon.stub(highLevelConsumer, 'rebalanceAttempt', function (oldTopicPayloads, cb) {
+      sinon.stub(highLevelConsumer, 'rebalanceAttempt').callsFake(function (oldTopicPayloads, cb) {
         highLevelConsumer.topicPayloads = [{topic: 'fake-topic', partition: 0, offset: 0, maxBytes: 1048576, metadata: 'm'}];
         cb();
       });
 
       // verify rebalancing is false until rebalance finishes
-      var refreshMetadataStub = sandbox.stub(client, 'refreshMetadata', function (topicNames, cb) {
+      var refreshMetadataStub = sandbox.stub(client, 'refreshMetadata').callsFake(function (topicNames, cb) {
         highLevelConsumer.rebalancing.should.be.true;
         setImmediate(cb);
       });
 
       highLevelConsumer.on('registered', function () {
-        var sendOffsetFetchRequestStub = sandbox.stub(client, 'sendOffsetFetchRequest', function (groupId, payloads, cb) {
+        var sendOffsetFetchRequestStub = sandbox.stub(client, 'sendOffsetFetchRequest').callsFake(function (groupId, payloads, cb) {
           highLevelConsumer.rebalancing.should.be.true;
           // wait for the results
           setImmediate(function () {
@@ -535,13 +535,13 @@ describe('HighLevelConsumer', function () {
     it('should emit error and clear rebalancing flag if fetchOffset failed', function (done) {
       client.emit('ready');
 
-      sinon.stub(highLevelConsumer, 'rebalanceAttempt', function (oldTopicPayloads, cb) {
+      sinon.stub(highLevelConsumer, 'rebalanceAttempt').callsFake(function (oldTopicPayloads, cb) {
         highLevelConsumer.topicPayloads = [{topic: 'fake-topic', partition: 0, offset: 0, maxBytes: 1048576, metadata: 'm'}];
         cb();
       });
 
       highLevelConsumer.on('registered', function () {
-        sandbox.stub(client, 'sendOffsetFetchRequest', function (groupId, payloads, cb) {
+        sandbox.stub(client, 'sendOffsetFetchRequest').callsFake(function (groupId, payloads, cb) {
           setImmediate(cb, new Error('Fetching offset failed'));
         });
 
@@ -562,7 +562,7 @@ describe('HighLevelConsumer', function () {
     it('should ignore fetch calls from "done" event handler during rebalance', function (done) {
       client.emit('ready');
 
-      sinon.stub(highLevelConsumer, 'rebalanceAttempt', function (oldTopicPayloads, cb) {
+      sinon.stub(highLevelConsumer, 'rebalanceAttempt').callsFake(function (oldTopicPayloads, cb) {
         highLevelConsumer.topicPayloads = [{topic: 'fake-topic', partition: 0, offset: 0, maxBytes: 1048576, metadata: 'm'}];
         cb();
       });
@@ -570,7 +570,7 @@ describe('HighLevelConsumer', function () {
       var sendFetchRequestSpy = sandbox.spy(client, 'sendFetchRequest');
       var fetchSpy = sandbox.spy(highLevelConsumer, 'fetch');
 
-      sandbox.stub(client, 'sendOffsetFetchRequest', function (groupId, payloads, cb) {
+      sandbox.stub(client, 'sendOffsetFetchRequest').callsFake(function (groupId, payloads, cb) {
         highLevelConsumer.rebalancing.should.be.true;
         highLevelConsumer.ready = true;
         highLevelConsumer.paused = false;
