@@ -36,10 +36,10 @@
   "devDependencies": {
     "coveralls": "^2.11.12",
     "doctoc": "^1.2.0",
-    "eslint": "^3.7.0",
-    "eslint-config-semistandard": "^7.0.0",
-    "eslint-config-standard": "^6.2.0",
-    "eslint-plugin-dependencies": "^1.3.0",
+    "eslint": "^3.17.1",
+    "eslint-config-semistandard": "^8.0.0",
+    "eslint-config-standard": "^7.0.1",
+    "eslint-plugin-dependencies": "^2.2.0",
     "eslint-plugin-promise": "^3.4.0",
     "eslint-plugin-standard": "^2.0.1",
     "istanbul": "^0.4.4",
@@ -48,7 +48,7 @@
     "optimist": "^0.6.1",
     "proxyquire": "^1.7.10",
     "should": "^6.0.0",
-    "sinon": "^1.17.2"
+    "sinon": "^2.0.0"
   },
   "repository": {
     "type": "git",
