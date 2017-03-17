@@ -57,10 +57,10 @@ describe('Partitioner', function () {
         partitions[5].should.equal(2);
       });
 
-      xit('should not modify different partitioners', function () {
+      it('should not modify different partitioners', function () {
         var partitioner2 = new CyclicPartitioner();
-        var partitions1 = getPartitions(partitioner, [0, 1, 2], 1);
-        var partitions2 = getPartitions(partitioner2, [0, 1, 2], 1);
+        var partitions1 = getPartitions(partitioner, [0, 1, 2], 3);
+        var partitions2 = getPartitions(partitioner2, [0, 1, 2], 3);
         partitions1.should.have.length(3);
         partitions2.should.have.length(3);
         partitions1[0].should.equal(0);
