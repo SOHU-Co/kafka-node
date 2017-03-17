@@ -5,6 +5,7 @@ var Producer = kafka.Producer;
 var uuid = require('uuid');
 var Client = kafka.Client;
 var KeyedMessage = kafka.KeyedMessage;
+const async = require('async');
 
 var client, producer, noAckProducer, producerKeyed;
 
@@ -38,14 +39,14 @@ var host = process.env['KAFKA_TEST_HOST'] || '';
       noAckProducer = new Producer(client, { requireAcks: 0 });
       producerKeyed = new Producer(client, { partitionerType: Producer.PARTITIONER_TYPES.keyed });
 
-      producer.on('ready', function () {
-        producerKeyed.on('ready', function () {
-          producer.createTopics([EXISTS_TOPIC_3], true, function (err) {
-            if (err) return done(err);
-            done();
-          });
-        });
-      });
+      async.series([
+        function (callback) {
+          producer.once('ready', callback);
+        },
+        function (callback) {
+          producer.createTopics([EXISTS_TOPIC_3], true, callback);
+        }
+      ], done);
     });
 
     after(function (done) {
@@ -184,11 +185,36 @@ var host = process.env['KAFKA_TEST_HOST'] || '';
         });
       });
 
-      xit('should send message to partition determined by keyed partitioner', function (done) {
-        producerKeyed.send([{ key: '12345', topic: EXISTS_TOPIC_3, messages: 'hello kafka' }], function (err, message) {
-          message.should.be.ok;
-          message[EXISTS_TOPIC_3].should.have.property('1', 0);
-          done(err);
+      describe('Keyed Partitioner', function () {
+        const createTopic = require('../docker/createTopic');
+        const topicWithTwoPartitions = uuid.v4();
+        let client, keyed;
+
+        before(function () {
+          var clientId = 'kafka-node-client-' + uuid.v4();
+          return createTopic(topicWithTwoPartitions, 2, 1).then(function () {
+            return new Promise(function (resolve, reject) {
+              client = new Client(host, clientId, undefined, undefined, sslOptions);
+              keyed = new Producer(client, { partitionerType: Producer.PARTITIONER_TYPES.keyed });
+              client.once('connect', function () {
+                client.refreshMetadata([topicWithTwoPartitions], function (error) {
+                  if (error) {
+                    return reject(error);
+                  }
+                  resolve();
+                });
+              });
+            });
+          });
+        });
+
+        it('should send message to partition determined by keyed partitioner', function (done) {
+          keyed.send([{ key: '12345', topic: topicWithTwoPartitions, messages: 'hello kafka' }], function (err, message) {
+            console.log(message);
+            message.should.be.ok;
+            message[topicWithTwoPartitions].should.have.property('1', 0);
+            done(err);
+          });
         });
       });
     });

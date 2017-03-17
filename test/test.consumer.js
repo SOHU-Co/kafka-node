@@ -508,14 +508,33 @@ describe('Consumer', function () {
           });
         });
 
-        xdescribe('#pauseTopics|resumeTopics', function () {
+        describe('#pauseTopics|resumeTopics', function () {
+          const now = Date.now();
+          const topic1 = `_test_topic_1_${now}`;
+          const topic2 = `_test_topic_2_${now}`;
+
+          const createTopic = require('../docker/createTopic');
+
+          before(function () {
+            return Promise.all([createTopic(topic1, 2, 1), createTopic(topic2, 2, 1)]).then(function () {
+              return new Promise(function (resolve, reject) {
+                producer.send([{ topic: topic2, messages: 'hello kafka' }], function (error) {
+                  if (error) {
+                    return reject(error);
+                  }
+                  resolve();
+                });
+              });
+            });
+          });
+
           it('should pause or resume the topics', function (done) {
-            var client = new Client(host);
+            var client = createClient();
             var topics = [
-              {topic: EXISTS_TOPIC_1, partition: 0},
-              {topic: EXISTS_TOPIC_1, partition: 1},
-              {topic: EXISTS_TOPIC_2, partition: 0},
-              {topic: EXISTS_TOPIC_2, partition: 1}
+              {topic: topic1, partition: 0},
+              {topic: topic1, partition: 1},
+              {topic: topic2, partition: 0},
+              {topic: topic2, partition: 1}
             ];
             var consumer = new Consumer(client, topics, {});
             consumer.on('error', function () {});
@@ -530,20 +549,20 @@ describe('Consumer', function () {
             }
 
             consumer.payloads.should.eql(topics);
-            consumer.pauseTopics([EXISTS_TOPIC_1, { topic: EXISTS_TOPIC_2, partition: 0 }]);
-            consumer.payloads.map(normalize).should.eql([{ topic: EXISTS_TOPIC_2, partition: 1 }]);
+            consumer.pauseTopics([topic1, { topic: topic2, partition: 0 }]);
+            consumer.payloads.map(normalize).should.eql([{ topic: topic2, partition: 1 }]);
 
-            consumer.resumeTopics([{topic: EXISTS_TOPIC_1, partition: 0}]);
+            consumer.resumeTopics([{topic: topic1, partition: 0}]);
             consumer.payloads.map(normalize).sort(compare).should.eql([
-              {topic: EXISTS_TOPIC_1, partition: 0},
-              {topic: EXISTS_TOPIC_2, partition: 1}
+              {topic: topic1, partition: 0},
+              {topic: topic2, partition: 1}
             ]);
             consumer.pausedPayloads.map(normalize).sort(compare).should.eql([
-              {topic: EXISTS_TOPIC_1, partition: 1},
-              {topic: EXISTS_TOPIC_2, partition: 0}
+              {topic: topic1, partition: 1},
+              {topic: topic2, partition: 0}
             ]);
 
-            consumer.resumeTopics([EXISTS_TOPIC_1, EXISTS_TOPIC_2]);
+            consumer.resumeTopics([topic1, topic2]);
             consumer.payloads.sort(compare).should.eql(topics);
             consumer.pausedPayloads.should.eql([]);
             consumer.once('message', function () {
