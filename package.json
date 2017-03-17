@@ -36,7 +36,7 @@
   "devDependencies": {
     "coveralls": "^2.11.12",
     "doctoc": "^1.2.0",
-    "eslint": "^3.7.0",
+    "eslint": "^3.17.1",
     "eslint-config-semistandard": "^8.0.0",
     "eslint-config-standard": "^7.0.1",
     "eslint-plugin-dependencies": "^2.2.0",
