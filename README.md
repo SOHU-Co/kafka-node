@@ -554,7 +554,7 @@ The new consumer group uses Kafka broker coordinators instead of Zookeeper to ma
 
 ### Coming from the highLevelConsumer
 
-API is very similar to `HighLevelConsumer` with some exceptions noted below:
+API is very similar to `HighLevelConsumer` since it extends directly from HLC so many of the same options will apply with some exceptions noted below:
 
 * In an effort to make the API simpler you no longer need to create a `client` this is done inside the `ConsumerGroup`
 * consumer ID do not need to be defined. There's a new ID to represent consumers called *member ID* and this is assigned to consumer after joining the group
