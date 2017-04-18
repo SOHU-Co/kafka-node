@@ -52,6 +52,16 @@ Kafka-node is a Node.js client with Zookeeper integration for Apache Kafka 0.8.1
 Follow the [instructions](http://kafka.apache.org/documentation.html#quickstart) on the Kafka wiki to build Kafka 0.8 and get a test broker up and running.
 
 # API
+
+## KafkaClient
+
+New KafkaClient connects directly to Kafka brokers instead of connecting to zookeeper for broker discovery.
+
+### Notable differences
+
+* Constructor accepts an options object
+* Unlike the original `Client` `KafkaClient` will not emit socket errors it will do it's best to recover and only emit errors when it has exhausted it's recovery attempts
+
 ## Client
 ### Client(connectionString, clientId, [zkOptions], [noAckBatchOptions], [sslOptions])
 * `connectionString`: Zookeeper connection string, default `localhost:2181/`
