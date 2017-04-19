@@ -2,7 +2,9 @@
 
 const kafka = require('..');
 const Client = kafka.KafkaClient;
-
+const sinon = require('sinon');
+const EventEmitter = require('events');
+const TimeoutError = require('../lib/errors/TimeoutError');
 
 describe('Kafka Client', function () {
   it('should connect plaintext', function (done) {
@@ -18,7 +20,6 @@ describe('Kafka Client', function () {
     });
 
     client.on('error', function (error) {
-      console.log('test error', error)
       error.code.should.be.eql('ECONNREFUSED');
       done();
     });
@@ -32,5 +33,40 @@ describe('Kafka Client', function () {
       }
     });
     client.once('ready', done);
+  });
+
+  describe('Verify Timeout', function () {
+    let sandbox;
+
+    beforeEach(function () {
+      sandbox = sinon.sandbox.create();
+    });
+
+    afterEach(function () {
+      sandbox.restore();
+    });
+
+    it('should timeout when connect is not emitted', function (done) {
+      const clock = sandbox.useFakeTimers();
+      const client = new Client({
+        autoConnect: false,
+        kafkaHost: 'localhost:9093',
+        sslOptions: {
+          rejectUnauthorized: false
+        }
+      });
+
+      sandbox.stub(client, 'setupBroker').returns({
+        socket: new EventEmitter()
+      });
+
+      client.connect();
+      client.once('error', function (error) {
+        error.should.be.an.instanceOf(TimeoutError);
+        done();
+      });
+
+      clock.tick(10000);
+    });
   });
 });
