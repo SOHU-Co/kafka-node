@@ -57,6 +57,12 @@ Follow the [instructions](http://kafka.apache.org/documentation.html#quickstart)
 
 New KafkaClient connects directly to Kafka brokers instead of connecting to zookeeper for broker discovery.
 
+### New Features
+
+* Kafka **ONLY** no zookeeper
+* Added request timeout
+* Added connection timeout
+
 ### Notable differences
 
 * Constructor accepts an options object
