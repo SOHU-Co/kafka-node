@@ -103,7 +103,9 @@ describe('Kafka Client', function () {
 
     it('should error when connecting to an invalid host', function (done) {
       const client = new Client({
-        retries: 3,
+        connectRetryOptions: {
+          retries: 0
+        },
         kafkaHost: 'localhost:9094'
       });
 
@@ -138,6 +140,9 @@ describe('Kafka Client', function () {
     it('should timeout when connect is not emitted', function (done) {
       const clock = sandbox.useFakeTimers();
       const client = new Client({
+        connectRetryOptions: {
+          retries: 0
+        },
         autoConnect: false,
         kafkaHost: 'localhost:9093',
         sslOptions: {
