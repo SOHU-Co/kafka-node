@@ -7,6 +7,43 @@ const EventEmitter = require('events');
 const TimeoutError = require('../lib/errors/TimeoutError');
 
 describe('Kafka Client', function () {
+  describe('#parseHostList', function () {
+    it('initial hosts should be parsed if single host is provided', function () {
+      const client = new Client({
+        autoConnect: false,
+        kafkaHost: 'localhost:9092'
+      });
+
+      client.initialHosts.should.not.be.empty;
+      client.initialHosts.length.should.be.eql(1);
+      client.initialHosts[0].host.should.be.eql('localhost');
+      client.initialHosts[0].port.should.be.eql('9092');
+    });
+
+    it('initial hosts should be parsed if multiple hosts are provided', function () {
+      const client = new Client({
+        autoConnect: false,
+        kafkaHost: 'localhost:9092,127.0.0.1:9093,192.168.1.0:9094'
+      });
+
+      client.initialHosts.should.not.be.empty;
+      client.initialHosts.should.be.eql([
+        {
+          host: 'localhost',
+          port: '9092'
+        },
+        {
+          host: '127.0.0.1',
+          port: '9093'
+        },
+        {
+          host: '192.168.1.0',
+          port: '9094'
+        }
+      ]);
+    });
+  });
+
   describe('#wrapTimeoutIfNeeded', function () {
     let sandbox, wrapTimeoutIfNeeded, client, clock;
 
@@ -56,32 +93,35 @@ describe('Kafka Client', function () {
     });
   });
 
-  it('should connect plaintext', function (done) {
-    const client = new Client({
-      kafkaHost: 'localhost:9092'
-    });
-    client.once('ready', done);
-  });
-
-  it('should error when connecting to an invalid host', function (done) {
-    const client = new Client({
-      kafkaHost: 'localhost:9094'
+  describe('#connect', function () {
+    it('should connect plaintext', function (done) {
+      const client = new Client({
+        kafkaHost: 'localhost:9092'
+      });
+      client.once('ready', done);
     });
 
-    client.on('error', function (error) {
-      error.code.should.be.eql('ECONNREFUSED');
-      done();
-    });
-  });
+    it('should error when connecting to an invalid host', function (done) {
+      const client = new Client({
+        retries: 3,
+        kafkaHost: 'localhost:9094'
+      });
 
-  it('should connect SSL', function (done) {
-    const client = new Client({
-      kafkaHost: 'localhost:9093',
-      sslOptions: {
-        rejectUnauthorized: false
-      }
+      client.on('error', function (error) {
+        error.code.should.be.eql('ECONNREFUSED');
+        done();
+      });
     });
-    client.once('ready', done);
+
+    it('should connect SSL', function (done) {
+      const client = new Client({
+        kafkaHost: 'localhost:9093',
+        sslOptions: {
+          rejectUnauthorized: false
+        }
+      });
+      client.once('ready', done);
+    });
   });
 
   describe('Verify Timeout', function () {
