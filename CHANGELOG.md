@@ -1,5 +1,9 @@
 # kafka-node CHANGELOG
 
+## 2017-05-04, Version 1.6.1
+* Fix `Offset` calling `.fetchOffset` methods not yielding callback when the topic does not exist [#662](https://github.com/SOHU-Co/kafka-node/pull/662)
+* Improved performance of Client using `BufferList` instead of `Buffer.slice` [#654](https://github.com/SOHU-Co/kafka-node/pull/654)
+
 ## 2017-03-16, Version 1.6.0
 * Add ability to provide your own custom partitioner implementation (see docs for Producer) [#625](https://github.com/SOHU-Co/kafka-node/pull/625)
 * Create topics will yield with topics created [#618](https://github.com/SOHU-Co/kafka-node/pull/618)
