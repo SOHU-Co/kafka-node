@@ -13,9 +13,34 @@ var sinon = require('sinon');
 var retry = require('retry');
 const _ = require('lodash');
 const async = require('async');
+const BufferList = require('bl');
 
 describe('Client', function () {
   var client = null;
+
+  describe('#handleReceivedData', function () {
+    let socket;
+
+    beforeEach(function () {
+      socket = {
+        buffer: new BufferList()
+      };
+    });
+
+    it('should early return when buffer is beyond offset', function () {
+      socket.buffer.append(Uint8Array.from([0, 0, 0]));
+
+      const readSpy = sinon.spy(socket.buffer, 'readUInt32BE');
+      Client.prototype.handleReceivedData.call({}, socket);
+      sinon.assert.notCalled(readSpy);
+    });
+
+    it('should early return when buffer is empty', function () {
+      const readSpy = sinon.spy(socket.buffer, 'readUInt32BE');
+      Client.prototype.handleReceivedData.call({}, socket);
+      sinon.assert.notCalled(readSpy);
+    });
+  });
 
   describe('Kafka cluster not using deprecated host and port configs', function () {
     var zk, Client, brokers;
