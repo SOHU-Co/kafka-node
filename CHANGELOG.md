@@ -1,5 +1,8 @@
 # kafka-node CHANGELOG
 
+## 2017-05-08, Version 1.6.2
+* Reverting performance changes using BufferList since it's causing idle consumers to crash [#670](https://github.com/SOHU-Co/kafka-node/pull/670)
+
 ## 2017-05-04, Version 1.6.1
 * Fix `Offset` calling `.fetchOffset` methods not yielding callback when the topic does not exist [#662](https://github.com/SOHU-Co/kafka-node/pull/662)
 * Improved performance of Client using `BufferList` instead of `Buffer.slice` [#654](https://github.com/SOHU-Co/kafka-node/pull/654)
