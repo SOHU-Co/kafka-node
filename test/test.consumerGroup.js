@@ -811,12 +811,7 @@ describe('ConsumerGroup', function () {
         function (callback) {
           producer.close(callback);
         }
-      ], function (error) {
-        if (error) {
-          return done(error);
-        }
-        done(null, messages);
-      });
+      ], done);
     }
 
     function confirmMessages (done) {
