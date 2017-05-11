@@ -7,6 +7,8 @@ const host = process.env['KAFKA_TEST_HOST'] || '';
 const proxyquire = require('proxyquire').noCallThru();
 const EventEmitter = require('events').EventEmitter;
 const _ = require('lodash');
+const uuid = require('uuid');
+const async = require('async');
 
 describe('ConsumerGroup', function () {
   describe('#constructor', function () {
@@ -776,5 +778,67 @@ describe('ConsumerGroup', function () {
       sandbox.clock.tick(10000);
       sinon.assert.calledOnce(consumerGroup.connect);
     });
+  });
+
+  it('should not commit when autoCommit is disabled', function (done) {
+    const topic = uuid.v4();
+    const groupId = uuid.v4();
+
+    const messages = _.times(5, function () {
+      return uuid.v4();
+    });
+
+    function addMessages (done) {
+      const Client = require('../lib/client');
+      const Producer = require('../lib/producer');
+
+      const client = new Client(host);
+      const producer = new Producer(client);
+
+      async.series([
+        function (callback) {
+          client.createTopics([topic], true, callback);
+        },
+        function (callback) {
+          if (producer.ready) {
+            return callback();
+          }
+          producer.once('ready', callback);
+        },
+        function (callback) {
+          producer.send([{topic: topic, messages: messages}], callback);
+        },
+        function (callback) {
+          producer.close(callback);
+        }
+      ], done);
+    }
+
+    function confirmMessages (done) {
+      const left = messages.slice();
+      const consumerGroup = new ConsumerGroup({
+        fromOffset: 'earliest',
+        groupId: groupId,
+        sessionTimeout: 8000,
+        autoCommit: false
+      }, topic);
+
+      async.series([
+        function (callback) {
+          consumerGroup.on('message', function (data) {
+            _.pull(left, data.value);
+
+            if (left.length === 0) {
+              callback();
+            }
+          });
+        },
+        function (callback) {
+          consumerGroup.close(callback);
+        }
+      ], done);
+    }
+
+    async.series([addMessages, confirmMessages, confirmMessages], done);
   });
 });
