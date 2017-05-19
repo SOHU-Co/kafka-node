@@ -67,6 +67,7 @@ New KafkaClient connects directly to Kafka brokers instead of connecting to zook
 
 * Constructor accepts an options object
 * Unlike the original `Client` `KafkaClient` will not emit socket errors it will do it's best to recover and only emit errors when it has exhausted it's recovery attempts
+* `ready` event is only emitted after successful connection to a broker and metadata request to that broker
 
 ## Client
 ### Client(connectionString, clientId, [zkOptions], [noAckBatchOptions], [sslOptions])
