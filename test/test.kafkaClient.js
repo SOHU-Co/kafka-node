@@ -5,6 +5,8 @@ const Client = kafka.KafkaClient;
 const sinon = require('sinon');
 const TimeoutError = require('../lib/errors/TimeoutError');
 const FakeSocket = require('./mocks/mockSocket');
+const should = require('should');
+const _ = require('lodash');
 
 describe('Kafka Client', function () {
   describe('#parseHostList', function () {
@@ -90,6 +92,89 @@ describe('Kafka Client', function () {
       retFn.should.not.be.exactly(callback);
       clock.tick(400);
       retFn(new Error('BAD'));
+    });
+  });
+
+  describe('#setBrokerMetadata', function () {
+    let clock;
+
+    beforeEach(function () {
+      clock = sinon.useFakeTimers();
+    });
+
+    afterEach(function () {
+      clock.restore();
+    });
+
+    it('should set new brokerMetadata field on client no emit', function () {
+      const client = new Client({
+        autoConnect: false,
+        kafkaHost: 'Kafka-1.us-east-1.myapp.com:9093'
+      });
+
+      const brokerMetadata = {
+        '1': { nodeId: 1, host: 'Kafka-1.us-east-1.myapp.com', port: 9093 },
+        '2': { nodeId: 2, host: 'Kafka-2.us-east-1.myapp.com', port: 9093 },
+        '3': { nodeId: 3, host: 'Kafka-3.us-east-1.myapp.com', port: 9093 }
+      };
+
+      client.on('brokersChanged', function () {
+        throw new Error('should not emit');
+      });
+
+      client.setBrokerMetadata(brokerMetadata);
+      client.brokerMetadata.should.be.eql(brokerMetadata);
+      client.brokerMetadataLastUpdate.should.be.eql(0);
+      clock.tick(100);
+    });
+
+    it('should set same brokerMetadata field on client no emit', function () {
+      const client = new Client({
+        autoConnect: false,
+        kafkaHost: 'Kafka-1.us-east-1.myapp.com:9093'
+      });
+
+      const brokerMetadata = {
+        '1': { nodeId: 1, host: 'Kafka-1.us-east-1.myapp.com', port: 9093 },
+        '2': { nodeId: 2, host: 'Kafka-2.us-east-1.myapp.com', port: 9093 },
+        '3': { nodeId: 3, host: 'Kafka-3.us-east-1.myapp.com', port: 9093 }
+      };
+
+      client.brokerMetadata = brokerMetadata;
+      should(client.brokerMetadataLastUpdate).be.empty;
+
+      client.on('brokersChanged', function () {
+        throw new Error('should not emit');
+      });
+
+      client.setBrokerMetadata(brokerMetadata);
+      client.brokerMetadata.should.be.eql(brokerMetadata);
+      client.brokerMetadataLastUpdate.should.be.eql(0);
+      clock.tick(100);
+    });
+
+    it('should set different brokerMetadata field on client no emit', function (done) {
+      const client = new Client({
+        autoConnect: false,
+        kafkaHost: 'Kafka-1.us-east-1.myapp.com:9093'
+      });
+
+      const brokerMetadata = {
+        '1': { nodeId: 1, host: 'Kafka-1.us-east-1.myapp.com', port: 9093 },
+        '2': { nodeId: 2, host: 'Kafka-2.us-east-1.myapp.com', port: 9093 },
+        '3': { nodeId: 3, host: 'Kafka-3.us-east-1.myapp.com', port: 9093 }
+      };
+
+      client.brokerMetadata = _.clone(brokerMetadata);
+      should(client.brokerMetadataLastUpdate).be.empty;
+
+      delete brokerMetadata['1'];
+      client.on('brokersChanged', done);
+
+      client.setBrokerMetadata(brokerMetadata);
+      client.brokerMetadata.should.be.eql(brokerMetadata);
+      client.brokerMetadataLastUpdate.should.be.eql(0);
+      clock.tick(100);
     });
   });
 
