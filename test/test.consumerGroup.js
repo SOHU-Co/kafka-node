@@ -723,6 +723,18 @@ describe('ConsumerGroup', function () {
     });
   });
 
+  describe('KafkaClient support', function () {
+    it('should throw error if migration option is used with KafkaClient', function () {
+      should.throws(function () {
+        // eslint-disable-next-line no-new
+        new ConsumerGroup({
+          kafkaHost: 'localhost:9092',
+          migrateHLC: true
+        });
+      });
+    });
+  });
+
   describe('#scheduleReconnect', function () {
     var consumerGroup, sandbox;
 
