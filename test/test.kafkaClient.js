@@ -3,8 +3,8 @@
 const kafka = require('..');
 const Client = kafka.KafkaClient;
 const sinon = require('sinon');
-const EventEmitter = require('events');
 const TimeoutError = require('../lib/errors/TimeoutError');
+const FakeSocket = require('./mocks/mockSocket');
 
 describe('Kafka Client', function () {
   describe('#parseHostList', function () {
@@ -98,7 +98,11 @@ describe('Kafka Client', function () {
       const client = new Client({
         kafkaHost: 'localhost:9092'
       });
-      client.once('ready', done);
+      client.once('error', done);
+      client.once('ready', function () {
+        client.brokerMetadata.should.not.be.empty;
+        done();
+      });
     });
 
     it('should error when connecting to an invalid host', function (done) {
@@ -122,7 +126,11 @@ describe('Kafka Client', function () {
           rejectUnauthorized: false
         }
       });
-      client.once('ready', done);
+      client.once('error', done);
+      client.once('ready', function () {
+        client.brokerMetadata.should.not.be.empty;
+        done();
+      });
     });
   });
 
@@ -151,7 +159,7 @@ describe('Kafka Client', function () {
       });
 
       sandbox.stub(client, 'setupBroker').returns({
-        socket: new EventEmitter()
+        socket: new FakeSocket()
       });
 
       client.connect();
