@@ -20,6 +20,10 @@ describe('Integrated Reblance', function () {
   describe('ConsumerGroup', function () {
     testRebalance('test/helpers/child-cg', false);
   });
+
+  describe('ConsumerGroup using Kafka Client', function () {
+    testRebalance('test/helpers/child-cg-kafka-client', false);
+  });
 });
 
 function testRebalance (forkPath, checkZkTopic) {
