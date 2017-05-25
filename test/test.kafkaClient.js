@@ -180,8 +180,14 @@ describe('Kafka Client', function () {
   });
 
   describe('#connect', function () {
+    let client;
+
+    afterEach(function (done) {
+      client.close(done);
+    });
+
     it('should connect plaintext', function (done) {
-      const client = new Client({
+      client = new Client({
         kafkaHost: 'localhost:9092'
       });
       client.once('error', done);
@@ -192,7 +198,7 @@ describe('Kafka Client', function () {
     });
 
     it('should error when connecting to an invalid host', function (done) {
-      const client = new Client({
+      client = new Client({
         connectRetryOptions: {
           retries: 0
         },
@@ -206,7 +212,7 @@ describe('Kafka Client', function () {
     });
 
     it('should connect SSL', function (done) {
-      const client = new Client({
+      client = new Client({
         kafkaHost: 'localhost:9093',
         sslOptions: {
           rejectUnauthorized: false
