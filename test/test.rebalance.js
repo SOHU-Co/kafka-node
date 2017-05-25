@@ -143,7 +143,14 @@ function testRebalance (forkPath, checkZkTopic) {
         if (consumedBy.length >= expectedConsumersConsuming) {
           verified();
         } else {
-          verified(new Error('Received messages but not by the expected ' + expectedConsumersConsuming + ' consumers: ' + JSON.stringify(consumedBy)));
+          verified(
+            new Error(
+              'Received messages but not by the expected ' +
+                expectedConsumersConsuming +
+                ' consumers: ' +
+                JSON.stringify(consumedBy)
+            )
+          );
         }
       }
     };
@@ -189,19 +196,27 @@ function testRebalance (forkPath, checkZkTopic) {
     sendMessages(messages, done);
   });
 
-  it('verify one consumer consumes all messages on all partitions after one out of the two consumer is killed', function (done) {
+  it('verify one consumer consumes all messages on all partitions after one out of the two consumer is killed', function (
+    done
+  ) {
     var messages = generateMessages(4, 'verify 1 c 1 killed');
     var verify = getConsumerVerifier(messages, 3, 1, done);
 
     rearer.setVerifier(topic, groupId, verify);
-    rearer.raise(2, function () {
-      rearer.kill(1, function () {
-        sendMessages(messages, done);
-      });
-    }, 500);
+    rearer.raise(
+      2,
+      function () {
+        rearer.kill(1, function () {
+          sendMessages(messages, done);
+        });
+      },
+      500
+    );
   });
 
-  it('verify two consumer consumes all messages on all partitions after two out of the four consumers are killed right away', function (done) {
+  it('verify two consumer consumes all messages on all partitions after two out of the four consumers are killed right away', function (
+    done
+  ) {
     var messages = generateMessages(3, 'verify 4 c 2 killed');
     var verify = getConsumerVerifier(messages, 3, 2, done);
 
@@ -213,54 +228,71 @@ function testRebalance (forkPath, checkZkTopic) {
     });
   });
 
-  it('verify three consumer consumes all messages on all partitions after one that is unassigned is killed', function (done) {
+  it('verify three consumer consumes all messages on all partitions after one that is unassigned is killed', function (
+    done
+  ) {
     var messages = generateMessages(3, 'verify 2 c 2 killed');
     var verify = getConsumerVerifier(messages, 3, 2, done);
 
     rearer.setVerifier(topic, groupId, verify);
 
-    async.series([
-      function (callback) {
-        rearer.raise(3, callback);
-      },
-      function (callback) {
-        setTimeout(callback, 1000);
-      },
-      function (callback) {
-        rearer.raise(1, callback);
-      },
-      function (callback) {
-        setTimeout(callback, 1000);
-      },
-      function (callback) {
-        rearer.killFirst(callback);
-      }
-    ], function () {
-      sendMessages(messages, done);
-    });
-  });
-
-  it('verify two consumer consumes all messages on all partitions after two out of the four consumers are killed', function (done) {
-    var messages = generateMessages(3, 'verify 2 c 2 killed');
-    var verify = getConsumerVerifier(messages, 3, 2, done);
-
-    rearer.setVerifier(topic, groupId, verify);
-    rearer.raise(4, function () {
-      rearer.kill(2, function () {
+    async.series(
+      [
+        function (callback) {
+          rearer.raise(3, callback);
+        },
+        function (callback) {
+          setTimeout(callback, 1000);
+        },
+        function (callback) {
+          rearer.raise(1, callback);
+        },
+        function (callback) {
+          setTimeout(callback, 1000);
+        },
+        function (callback) {
+          rearer.killFirst(callback);
+        }
+      ],
+      function () {
         sendMessages(messages, done);
-      });
-    }, 500);
+      }
+    );
   });
 
-  it('verify three consumer consumes all messages on all partitions after three out of the six consumers are killed', function (done) {
+  it('verify two consumer consumes all messages on all partitions after two out of the four consumers are killed', function (
+    done
+  ) {
+    var messages = generateMessages(3, 'verify 2 c 2 killed');
+    var verify = getConsumerVerifier(messages, 3, 2, done);
+
+    rearer.setVerifier(topic, groupId, verify);
+    rearer.raise(
+      4,
+      function () {
+        rearer.kill(2, function () {
+          sendMessages(messages, done);
+        });
+      },
+      500
+    );
+  });
+
+  it('verify three consumer consumes all messages on all partitions after three out of the six consumers are killed', function (
+    done
+  ) {
     var messages = generateMessages(3, 'verify 3 c 3 killed');
     var verify = getConsumerVerifier(messages, 3, 2, done);
 
     rearer.setVerifier(topic, groupId, verify);
-    rearer.raise(6, function () {
-      rearer.kill(3, function () {
-        sendMessages(messages, done);
-      });
-    }, 1000);
+    rearer.raise(
+      6,
+      function () {
+        rearer.kill(3, function () {
+          sendMessages(messages, done);
+        });
+      },
+      1000
+    );
   });
 }
