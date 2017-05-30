@@ -18,6 +18,7 @@ Kafka-node is a Node.js client with Zookeeper integration for Apache Kafka 0.8.1
 - [Features](#features)
 - [Install Kafka](#install-kafka)
 - [API](#api)
+  - [KafkaClient](#kafkaclient)
   - [Client](#client)
   - [Producer](#producer)
   - [HighLevelProducer](#highlevelproducer)
@@ -47,6 +48,7 @@ Kafka-node is a Node.js client with Zookeeper integration for Apache Kafka 0.8.1
 * Manage topic Offsets
 * SSL connections to brokers (Kafka 0.9+)
 * Consumer Groups managed by Kafka coordinator (Kafka 0.9+)
+* Connect directly to brokers (Kafka 0.9+)
 
 # Install Kafka
 Follow the [instructions](http://kafka.apache.org/documentation.html#quickstart) on the Kafka wiki to build Kafka 0.8 and get a test broker up and running.
@@ -61,13 +63,21 @@ New KafkaClient connects directly to Kafka brokers instead of connecting to zook
 
 * Kafka **ONLY** no zookeeper
 * Added request timeout
-* Added connection timeout
+* Added connection timeout and retry
 
 ### Notable differences
 
-* Constructor accepts an options object
+* Constructor accepts an single options object (see below)
 * Unlike the original `Client` `KafkaClient` will not emit socket errors it will do it's best to recover and only emit errors when it has exhausted it's recovery attempts
 * `ready` event is only emitted after successful connection to a broker and metadata request to that broker
+* `Client` uses zookeeper to discover the SSL kafka host/port since we connect directly to the broker this host/port for SSL need to be correct
+
+### Options
+* `kafkaHost` : A string of kafka broker/host combination delimited by comma for example: `kafka-1.us-east-1.myapp.com:9093,kafka-2.us-east-1.myapp.com:9093,kafka-3.us-east-1.myapp.com:9093` default: `localhost:9092`.
+* `connectTimeout` : in ms it takes to wait for a successful connection before moving to the next host default: `10000`
+* `requestTimeout` : in ms for a kafka request to timeout default: `30000`
+* `autoConnect` : automatically connect when KafkaClient is instantiated otherwise you need to manually call `connect` default: `true`
+* `connectRetryOptions` : object hash that applies to the initial connection. see [retry](https://www.npmjs.com/package/retry) module for these options.
 
 ## Client
 ### Client(connectionString, clientId, [zkOptions], [noAckBatchOptions], [sslOptions])
@@ -582,7 +592,8 @@ API is very similar to `HighLevelConsumer` since it extends directly from HLC so
 
 ```js
 var options = {
-  host: 'zookeeper:2181',
+  host: 'zookeeper:2181',  // zookeeper host omit if connecting directly to broker (see kafkaHost below)
+  kafkaHost: 'broker:9092', // connect directly to kafka broker (instantiates a KafkaClient)
   zk : undefined,   // put client zk settings if you need them (see Client)
   batch: undefined, // put client batch settings if you need them (see Client)
   ssl: true, // optional (defaults to false) or tls options hash
