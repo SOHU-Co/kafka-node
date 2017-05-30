@@ -4,6 +4,9 @@ var EventEmitter = require('events').EventEmitter;
 function FakeSocket () {
   EventEmitter.call(this);
 
+  this.destroy = function () {};
+  this.unref = function () {};
+
   this.end = function () {
     var self = this;
     setImmediate(function () {

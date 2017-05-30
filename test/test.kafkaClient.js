@@ -355,13 +355,21 @@ describe('Kafka Client', function () {
         }
       });
 
+      const fakeSocket = new FakeSocket();
+
+      sandbox.spy(fakeSocket, 'destroy');
+      sandbox.spy(fakeSocket, 'end');
+      sandbox.spy(fakeSocket, 'unref');
+
       sandbox.stub(client, 'setupBroker').returns({
-        socket: new FakeSocket()
+        socket: fakeSocket
       });
 
       client.connect();
       client.once('error', function (error) {
         error.should.be.an.instanceOf(TimeoutError);
+        fakeSocket.closing.should.be.true;
+        sinon.assert.callOrder(fakeSocket.end, fakeSocket.destroy, fakeSocket.unref);
         done();
       });
 
