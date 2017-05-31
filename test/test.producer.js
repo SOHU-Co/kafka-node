@@ -32,21 +32,26 @@ var host = process.env['KAFKA_TEST_HOST'] || '';
 
   describe(suiteName, function () {
     before(function (done) {
-      if (suiteTimeout) { this.timeout(suiteTimeout); }
+      if (suiteTimeout) {
+        this.timeout(suiteTimeout);
+      }
       var clientId = 'kafka-node-client-' + uuid.v4();
       client = new Client(host, clientId, undefined, undefined, sslOptions);
       producer = new Producer(client);
       noAckProducer = new Producer(client, { requireAcks: 0 });
       producerKeyed = new Producer(client, { partitionerType: Producer.PARTITIONER_TYPES.keyed });
 
-      async.series([
-        function (callback) {
-          producer.once('ready', callback);
-        },
-        function (callback) {
-          producer.createTopics([EXISTS_TOPIC_3], true, callback);
-        }
-      ], done);
+      async.series(
+        [
+          function (callback) {
+            producer.once('ready', callback);
+          },
+          function (callback) {
+            producer.createTopics([EXISTS_TOPIC_3], true, callback);
+          }
+        ],
+        done
+      );
     });
 
     after(function (done) {
@@ -98,7 +103,7 @@ var host = process.env['KAFKA_TEST_HOST'] || '';
       });
 
       it('should send buffer message successfully', function (done) {
-        var message = new Buffer('hello kafka');
+        var message = Buffer.from('hello kafka');
         producer.send([{ topic: EXISTS_TOPIC_3, messages: message }], function (err, message) {
           message.should.be.ok;
           message[EXISTS_TOPIC_3]['0'].should.be.above(0);
@@ -142,43 +147,64 @@ var host = process.env['KAFKA_TEST_HOST'] || '';
       });
 
       it('should support snappy compression', function (done) {
-        producer.send([{
-          topic: EXISTS_TOPIC_3,
-          messages: ['hello kafka', 'hello kafka'],
-          attributes: 2
-        }], function (err, message) {
-          if (err) return done(err);
-          message.should.be.ok;
-          message[EXISTS_TOPIC_3]['0'].should.be.above(0);
-          done();
-        });
+        producer.send(
+          [
+            {
+              topic: EXISTS_TOPIC_3,
+              messages: ['hello kafka', 'hello kafka'],
+              attributes: 2
+            }
+          ],
+          function (err, message) {
+            if (err) return done(err);
+            message.should.be.ok;
+            message[EXISTS_TOPIC_3]['0'].should.be.above(0);
+            done();
+          }
+        );
       });
 
       it('should support gzip compression', function (done) {
-        producer.send([{
-          topic: EXISTS_TOPIC_3,
-          messages: ['hello kafka', 'hello kafka'],
-          attributes: 1
-        }], function (err, message) {
-          if (err) return done(err);
-          message.should.be.ok;
-          message[EXISTS_TOPIC_3]['0'].should.be.above(0);
-          done();
-        });
+        producer.send(
+          [
+            {
+              topic: EXISTS_TOPIC_3,
+              messages: ['hello kafka', 'hello kafka'],
+              attributes: 1
+            }
+          ],
+          function (err, message) {
+            if (err) return done(err);
+            message.should.be.ok;
+            message[EXISTS_TOPIC_3]['0'].should.be.above(0);
+            done();
+          }
+        );
       });
 
       it('should send message without ack', function (done) {
-        noAckProducer.send([{
-          topic: EXISTS_TOPIC_3, messages: 'hello kafka'
-        }], function (err, message) {
-          if (err) return done(err);
-          message.result.should.equal('no ack');
-          done();
-        });
+        noAckProducer.send(
+          [
+            {
+              topic: EXISTS_TOPIC_3,
+              messages: 'hello kafka'
+            }
+          ],
+          function (err, message) {
+            if (err) return done(err);
+            message.result.should.equal('no ack');
+            done();
+          }
+        );
       });
 
-      it('should send message to specified partition even when producer configured with keyed partitioner', function (done) {
-        producerKeyed.send([{ key: '12345', partition: 0, topic: EXISTS_TOPIC_3, messages: 'hello kafka' }], function (err, message) {
+      it('should send message to specified partition even when producer configured with keyed partitioner', function (
+        done
+      ) {
+        producerKeyed.send([{ key: '12345', partition: 0, topic: EXISTS_TOPIC_3, messages: 'hello kafka' }], function (
+          err,
+          message
+        ) {
           message.should.be.ok;
           message[EXISTS_TOPIC_3]['0'].should.be.above(0);
           done(err);
@@ -209,7 +235,10 @@ var host = process.env['KAFKA_TEST_HOST'] || '';
         });
 
         it('should send message to partition determined by keyed partitioner', function (done) {
-          keyed.send([{ key: '12345', topic: topicWithTwoPartitions, messages: 'hello kafka' }], function (err, message) {
+          keyed.send([{ key: '12345', topic: topicWithTwoPartitions, messages: 'hello kafka' }], function (
+            err,
+            message
+          ) {
             console.log(message);
             message.should.be.ok;
             message[topicWithTwoPartitions].should.have.property('1', 0);

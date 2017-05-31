@@ -32,7 +32,9 @@ var host = process.env['KAFKA_TEST_HOST'] || '';
 
   describe(suiteName, function () {
     before(function (done) {
-      if (suiteTimeout) { this.timeout(suiteTimeout); }
+      if (suiteTimeout) {
+        this.timeout(suiteTimeout);
+      }
       var clientId = 'kafka-node-client-' + uuid.v4();
       client = new Client(host, clientId, undefined, undefined, sslOptions);
       producer = new HighLevelProducer(client);
@@ -55,13 +57,15 @@ var host = process.env['KAFKA_TEST_HOST'] || '';
 
     describe('#buildPayloads', function () {
       function assertMessage (result, topic, partition, value) {
-        assert(_.chain(result)
-          .find({topic: topic, partition: partition})
-          .result('messages')
-          .map('value')
-          .includes(value)
-          .value()
-        , `Value "${value}" is not in topic "${topic}" partition ${partition}`);
+        assert(
+          _.chain(result)
+            .find({ topic: topic, partition: partition })
+            .result('messages')
+            .map('value')
+            .includes(value)
+            .value(),
+          `Value "${value}" is not in topic "${topic}" partition ${partition}`
+        );
       }
 
       it('should normalize payload by topic parition', function () {
@@ -72,17 +76,17 @@ var host = process.env['KAFKA_TEST_HOST'] || '';
         };
 
         const payload = [
-          {topic: 'jolly', partition: 0, messages: 'jolly-test-0'},
-          {topic: 'jolly', partition: 1, messages: 'jolly-test-1'},
-          {topic: 'jolly', partition: 2, messages: 'jolly-test-2'},
-          {topic: 'jolly', partition: 1, messages: 'jolly-test-3'},
-          {topic: 'christmas', partition: 0, messages: 'christmas-test-0'},
-          {topic: 'christmas', partition: 1, messages: 'christmas-test-1'},
-          {topic: 'christmas', partition: 2, messages: 'christmas-test-2'},
-          {topic: 'christmas', partition: 0, messages: 'christmas-test-3'},
-          {topic: 'christmas', partition: 1, messages: 'christmas-test-4'},
-          {topic: 'christmas', partition: 2, messages: 'christmas-test-5'},
-          {topic: 'coal', partition: 0, messages: 'coal-test'}
+          { topic: 'jolly', partition: 0, messages: 'jolly-test-0' },
+          { topic: 'jolly', partition: 1, messages: 'jolly-test-1' },
+          { topic: 'jolly', partition: 2, messages: 'jolly-test-2' },
+          { topic: 'jolly', partition: 1, messages: 'jolly-test-3' },
+          { topic: 'christmas', partition: 0, messages: 'christmas-test-0' },
+          { topic: 'christmas', partition: 1, messages: 'christmas-test-1' },
+          { topic: 'christmas', partition: 2, messages: 'christmas-test-2' },
+          { topic: 'christmas', partition: 0, messages: 'christmas-test-3' },
+          { topic: 'christmas', partition: 1, messages: 'christmas-test-4' },
+          { topic: 'christmas', partition: 2, messages: 'christmas-test-5' },
+          { topic: 'coal', partition: 0, messages: 'coal-test' }
         ];
 
         const requestPayload = producer.buildPayloads(payload, topicMetadata);
@@ -124,7 +128,7 @@ var host = process.env['KAFKA_TEST_HOST'] || '';
       });
 
       it('should send buffer message successfully', function (done) {
-        var message = new Buffer('hello kafka');
+        var message = Buffer.from('hello kafka');
         producer.send([{ topic: EXISTS_TOPIC_3, messages: message }], function (err, message) {
           message.should.be.ok;
           message[EXISTS_TOPIC_3]['0'].should.be.above(0);
@@ -168,30 +172,46 @@ var host = process.env['KAFKA_TEST_HOST'] || '';
       });
 
       it('should support snappy compression', function (done) {
-        producer.send([{
-          topic: EXISTS_TOPIC_3,
-          messages: ['hello kafka', 'hello kafka'],
-          attributes: 2
-        }], function (err, message) {
-          if (err) return done(err);
-          message.should.be.ok;
-          message[EXISTS_TOPIC_3]['0'].should.be.above(0);
-          done();
-        });
+        producer.send(
+          [
+            {
+              topic: EXISTS_TOPIC_3,
+              messages: ['hello kafka', 'hello kafka'],
+              attributes: 2
+            }
+          ],
+          function (err, message) {
+            if (err) return done(err);
+            message.should.be.ok;
+            message[EXISTS_TOPIC_3]['0'].should.be.above(0);
+            done();
+          }
+        );
       });
 
       it('should send message without ack', function (done) {
-        noAckProducer.send([{
-          topic: EXISTS_TOPIC_3, messages: 'hello kafka'
-        }], function (err, message) {
-          if (err) return done(err);
-          message.result.should.equal('no ack');
-          done();
-        });
+        noAckProducer.send(
+          [
+            {
+              topic: EXISTS_TOPIC_3,
+              messages: 'hello kafka'
+            }
+          ],
+          function (err, message) {
+            if (err) return done(err);
+            message.result.should.equal('no ack');
+            done();
+          }
+        );
       });
 
-      it('should send message to specified partition even when producer configured with keyed partitioner', function (done) {
-        producerKeyed.send([{ key: '12345', partition: 0, topic: EXISTS_TOPIC_3, messages: 'hello kafka' }], function (err, message) {
+      it('should send message to specified partition even when producer configured with keyed partitioner', function (
+        done
+      ) {
+        producerKeyed.send([{ key: '12345', partition: 0, topic: EXISTS_TOPIC_3, messages: 'hello kafka' }], function (
+          err,
+          message
+        ) {
           message.should.be.ok;
           message[EXISTS_TOPIC_3]['0'].should.be.above(0);
           done(err);
