@@ -98,7 +98,7 @@ var host = process.env['KAFKA_TEST_HOST'] || '';
       });
 
       it('should send buffer message successfully', function (done) {
-        var message = new Buffer('hello kafka');
+        var message = Buffer.from('hello kafka');
         producer.send([{ topic: EXISTS_TOPIC_3, messages: message }], function (err, message) {
           message.should.be.ok;
           message[EXISTS_TOPIC_3]['0'].should.be.above(0);
