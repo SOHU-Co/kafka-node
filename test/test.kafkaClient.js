@@ -4,10 +4,12 @@ const kafka = require('..');
 const Client = kafka.KafkaClient;
 const sinon = require('sinon');
 const TimeoutError = require('../lib/errors/TimeoutError');
+const TopicsNotExistError = require('../lib/errors/TopicsNotExistError');
 const BrokerWrapper = require('../lib/wrapper/BrokerWrapper');
 const FakeSocket = require('./mocks/mockSocket');
 const should = require('should');
 const _ = require('lodash');
+const uuid = require('uuid');
 
 describe('Kafka Client', function () {
   describe('#parseHostList', function () {
@@ -374,6 +376,48 @@ describe('Kafka Client', function () {
       });
 
       clock.tick(10000);
+    });
+  });
+
+  describe('#topicExists', function () {
+    const createTopic = require('../docker/createTopic');
+    let sandbox, client;
+
+    beforeEach(function (done) {
+      sandbox = sinon.sandbox.create();
+      client = new Client({
+        kafkaHost: 'localhost:9092'
+      });
+      client.once('ready', done);
+    });
+
+    afterEach(function (done) {
+      sandbox.restore();
+      client.close(done);
+    });
+
+    it('should not yield error when single topic exists', function (done) {
+      const topic = uuid.v4();
+
+      createTopic(topic, 1, 1).then(function () {
+        client.topicExists([topic], done);
+      });
+    });
+
+    it('should yield error when given group of topics do not exist', function (done) {
+      sandbox.spy(client, 'loadMetadataForTopics');
+      sandbox.spy(client, 'updateMetadatas');
+
+      const nonExistantTopics = _.times(3, () => uuid.v4());
+
+      client.topicExists(nonExistantTopics, function (error) {
+        error.should.be.an.instanceOf(TopicsNotExistError);
+        sinon.assert.calledOnce(client.updateMetadatas);
+        sinon.assert.calledWith(client.loadMetadataForTopics, []);
+        sinon.assert.callOrder(client.loadMetadataForTopics, client.updateMetadatas);
+        error.topics.should.be.eql(nonExistantTopics);
+        done();
+      });
     });
   });
 });
