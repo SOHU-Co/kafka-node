@@ -12,21 +12,15 @@ services:
   - docker
 env:
   global:
-    - DOCKER_VERSION=1.12.1-0~trusty
-    - DOCKER_COMPOSE_VERSION=1.7.1
     # - DEBUG=kafka-node:*
     - KAFKA_ADVERTISED_HOST_NAME=127.0.0.1
 before_install:
-  - docker version
-  # list docker-engine versions
-  - apt-cache madison docker-engine
-  # upgrade docker-engine to specific version
-  - sudo apt-get -o Dpkg::Options::="--force-confnew" install -y --force-yes docker-engine=${DOCKER_VERSION}
-  - sudo rm /usr/local/bin/docker-compose
-  - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
-  - chmod +x docker-compose
-  - sudo mv docker-compose /usr/local/bin
+  - docker --version
+  - sudo apt-get update
+  - sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce
   - docker-compose up -d
+before_script:
+  - npm prune
 after_failure:
   - docker ps
   - docker-compose logs
