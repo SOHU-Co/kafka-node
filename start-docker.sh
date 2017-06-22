@@ -16,7 +16,13 @@ if [ -z "$TRAVIS" ]; then
     DOCKER_VM_IP=${DOCKER_VM_IP:-127.0.0.1}
     export KAFKA_ADVERTISED_HOST_NAME=$DOCKER_VM_IP
     docker-compose down
-    docker-compose up -d
+
+    if [ -z "$KAFKA_VERSION" ]; then
+      docker-compose up -d
+    else
+      echo "Using Kafka Version: $KAFKA_VERSION"
+      docker-compose -f docker-compose.yml -f docker/docker-compose.${KAFKA_VERSION}.yml up -d
+    fi
 else
     DOCKER_VM_IP='127.0.0.1'
 fi
