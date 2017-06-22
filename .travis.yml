@@ -11,8 +11,9 @@ sudo: required
 services:
   - docker
 env:
-  - KAFKA_VERSION=0.9
-  - KAFKA_VERSION=0.10
+  matrix:
+    - KAFKA_VERSION=0.9
+    - KAFKA_VERSION=0.10
   global:
     # - DEBUG=kafka-node:*
     - KAFKA_ADVERTISED_HOST_NAME=127.0.0.1
