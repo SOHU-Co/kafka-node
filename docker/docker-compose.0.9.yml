@@ -1,0 +1,4 @@
+version: '2'
+services:
+    kafka:
+      image: wurstmeister/kafka:0.9.0.1
