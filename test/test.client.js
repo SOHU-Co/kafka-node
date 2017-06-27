@@ -307,6 +307,12 @@ describe('Client', function () {
   });
 
   describe('Versions', function () {
+    before(function () {
+      if (~['0.8', '0.9'].indexOf(process.env.KAFKA_VERSION)) {
+        this.skip();
+      }
+    });
+
     beforeEach(function (done) {
       client = new Client(host);
       client.once('connect', done);
