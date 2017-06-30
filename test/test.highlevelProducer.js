@@ -4,6 +4,7 @@ var kafka = require('..');
 var HighLevelProducer = kafka.HighLevelProducer;
 var uuid = require('uuid');
 var Client = kafka.Client;
+var KafkaClient = kafka.KafkaClient;
 var KeyedMessage = kafka.KeyedMessage;
 const _ = require('lodash');
 const assert = require('assert');
@@ -13,17 +14,29 @@ var host = process.env['KAFKA_TEST_HOST'] || '';
 
 [
   {
-    name: 'PLAINTEXT HighLevelProducer'
+    name: 'PLAINTEXT HighLevelProducer using KafkaClient',
+    useKafkaClient: true
   },
   {
-    name: 'SSL Producer',
+    name: 'PLAINTEXT HighLevelProducer using Client'
+  },
+  {
+    name: 'SSL Producer using Client',
+    sslOptions: {
+      rejectUnauthorized: false
+    },
+    suiteTimeout: 30000
+  },
+  {
+    name: 'SSL Producer using KafkaClient',
+    useKafkaClient: true,
     sslOptions: {
       rejectUnauthorized: false
     },
     suiteTimeout: 30000
   }
 ].forEach(function (testParameters) {
-  var TOPIC_POSTFIX = '_test_' + Date.now();
+  var TOPIC_POSTFIX = '_test_' + uuid.v4();
   var EXISTS_TOPIC_3 = '_exists_3' + TOPIC_POSTFIX;
 
   var sslOptions = testParameters.sslOptions;
@@ -36,7 +49,15 @@ var host = process.env['KAFKA_TEST_HOST'] || '';
         this.timeout(suiteTimeout);
       }
       var clientId = 'kafka-node-client-' + uuid.v4();
-      client = new Client(host, clientId, undefined, undefined, sslOptions);
+      if (testParameters.useKafkaClient) {
+        const kafkaHost = 'localhost:' + (sslOptions != null ? '9093' : '9092');
+        client = new KafkaClient({
+          kafkaHost: kafkaHost,
+          sslOptions: sslOptions
+        });
+      } else {
+        client = new Client(host, clientId, undefined, undefined, sslOptions);
+      }
       producer = new HighLevelProducer(client);
       noAckProducer = new HighLevelProducer(client, { requireAcks: 0 });
       producerKeyed = new HighLevelProducer(client, { partitionerType: HighLevelProducer.PARTITIONER_TYPES.keyed });

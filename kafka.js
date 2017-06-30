@@ -4,6 +4,7 @@ exports.ConsumerGroup = require('./lib/consumerGroup');
 exports.Consumer = require('./lib/consumer');
 exports.Producer = require('./lib/producer');
 exports.Client = require('./lib/client');
+exports.KafkaClient = require('./lib/kafkaClient');
 exports.Offset = require('./lib/offset');
 exports.KeyedMessage = require('./lib/protocol').KeyedMessage;
 exports.DefaultPartitioner = require('./lib/partitioner').DefaultPartitioner;
