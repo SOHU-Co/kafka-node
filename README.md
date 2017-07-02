@@ -68,7 +68,7 @@ New KafkaClient connects directly to Kafka brokers instead of connecting to zook
 ### Notable differences
 
 * Constructor accepts an single options object (see below)
-* Unlike the original `Client` `KafkaClient` will not emit socket errors it will do it's best to recover and only emit errors when it has exhausted it's recovery attempts
+* Unlike the original `Client` `KafkaClient` will not emit socket errors it will do its best to recover and only emit errors when it has exhausted its recovery attempts
 * `ready` event is only emitted after successful connection to a broker and metadata request to that broker
 * `Client` uses zookeeper to discover the SSL kafka host/port since we connect directly to the broker this host/port for SSL need to be correct
 
