@@ -328,7 +328,7 @@ describe('HighLevelConsumer', function () {
       var client = new Client(host, uuid.v4());
       var producer = new Producer(client, { requireAcks: 1 });
 
-      producer.on('ready', function () {
+      client.on('connect', function () {
         var messages = _.times(times, uuid.v4);
         producer.send([{topic: topic, messages: messages}], done);
       });
