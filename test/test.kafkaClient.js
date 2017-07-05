@@ -195,6 +195,7 @@ describe('Kafka Client', function () {
       client.once('error', done);
       client.once('ready', function () {
         client.brokerMetadata.should.not.be.empty;
+        client.ready.should.be.true;
         done();
       });
     });
@@ -208,6 +209,7 @@ describe('Kafka Client', function () {
       });
 
       client.on('error', function (error) {
+        client.ready.should.be.false;
         error.code.should.be.eql('ECONNREFUSED');
         done();
       });
@@ -222,6 +224,7 @@ describe('Kafka Client', function () {
       });
       client.once('error', done);
       client.once('ready', function () {
+        client.ready.should.be.true;
         client.brokerMetadata.should.not.be.empty;
         done();
       });
