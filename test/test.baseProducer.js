@@ -48,4 +48,27 @@ describe('BaseProducer', function () {
       done();
     });
   });
+  describe('#buildPayloads', function () {
+    it('should use request "key" as each message key', function () {
+      const fakeClient = new Client();
+
+      fakeClient.topicMetadata = {
+        MyTopic: [0]
+      };
+
+      const producer = new BaseProducer(fakeClient, {}, BaseProducer.PARTITIONER_TYPES.keyed);
+      const payload = [
+        { topic: 'MyTopic', messages: ['hello', 'haloha'], key: 'hikey' },
+        { topic: 'MyTopic', messages: ['message with <undefined> key'] },
+        { topic: 'MyTopic', messages: ['message with <null> key'], key: null },
+        { topic: 'MyTopic', messages: ['message with <true> key'], key: true }
+      ];
+      const messages = producer.buildPayloads(payload, fakeClient.topicMetadata)[0].messages;
+      messages[0].key.should.equal('hikey');
+      messages[1].key.should.equal('hikey');
+      messages[2].key.should.equal('');
+      messages[3].key.should.equal('');
+      messages[4].key.should.equal('');
+    });
+  });
 });
