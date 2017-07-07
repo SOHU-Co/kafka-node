@@ -301,7 +301,8 @@ producer.createTopics(['t'], function (err, data) {});// Simply omit 2nd arg
     // If set true, consumer will fetch message from the given offset in the payloads
     fromOffset: false,
     // If set to 'buffer', values will be returned as raw buffer objects.
-    encoding: 'utf8'
+    encoding: 'utf8',
+    keyEncoding: 'utf-8'
 }
 ```
 Example:
