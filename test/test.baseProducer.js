@@ -11,7 +11,7 @@ const should = require('should');
 
 describe('BaseProducer', function () {
   const KAFKA_HOST = 'localhost:9092';
-  describe('key attribute', function () {
+  describe('encoding and decoding key attribute', function () {
     let consumerGroup, topic, producer;
     beforeEach(function (done) {
       topic = uuid.v4();
@@ -76,7 +76,7 @@ describe('BaseProducer', function () {
       );
 
       consumerGroup.on('message', function (message) {
-        message.key.toString().should.be.exactly('myKeyIsHere');
+        message.key.should.be.exactly('myKeyIsHere');
         done();
       });
     });
@@ -98,7 +98,7 @@ describe('BaseProducer', function () {
       );
 
       consumerGroup.on('message', function (message) {
-        message.key.toString().should.be.exactly('');
+        message.key.should.be.exactly('');
         done();
       });
     });
@@ -120,7 +120,7 @@ describe('BaseProducer', function () {
       );
 
       consumerGroup.on('message', function (message) {
-        message.key.toString().should.be.exactly('0');
+        message.key.should.be.exactly('0');
         done();
       });
     });
@@ -165,6 +165,32 @@ describe('BaseProducer', function () {
 
       consumerGroup.on('message', function (message) {
         should(message.key).be.null;
+        done();
+      });
+    });
+
+    it('verify key value of buffer makes it into the message as untouched buffer', function (done) {
+      const keyBuffer = Buffer.from('testing123');
+      producer.send(
+        [
+          {
+            topic: topic,
+            messages: 'this is my message',
+            key: keyBuffer
+          }
+        ],
+        function (error) {
+          if (error) {
+            done(error);
+          }
+        }
+      );
+
+      consumerGroup.options.keyEncoding = 'buffer';
+
+      consumerGroup.on('message', function (message) {
+        should(message.key).not.be.empty;
+        keyBuffer.equals(message.key).should.be.true;
         done();
       });
     });
