@@ -730,7 +730,7 @@ describe('ConsumerGroup', function () {
         new ConsumerGroup({
           kafkaHost: 'localhost:9092',
           migrateHLC: true
-        });
+        }, 'TestTopic');
       });
     });
   });
