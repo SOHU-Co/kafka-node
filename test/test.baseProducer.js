@@ -10,8 +10,8 @@ const async = require('async');
 const should = require('should');
 
 describe('BaseProducer', function () {
-  const KAFKA_HOST = 'localhost:9092';
   describe('encoding and decoding key attribute', function () {
+    const KAFKA_HOST = 'localhost:9092';
     let consumerGroup, topic, producer;
     beforeEach(function (done) {
       topic = uuid.v4();
