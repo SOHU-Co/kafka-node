@@ -1,5 +1,8 @@
 # kafka-node CHANGELOG
 
+## 2017-07-13, Version 2.0.1
+* Fix unreferenced method call in Client/KafkaClient [#708](https://github.com/SOHU-Co/kafka-node/pull/708)
+
 ## 2017-07-08, Version 2.0.0
 * Fix out of range error causing idle consumers to crash. This was a performance improvement made in 1.6.1 and reverted in 1.6.2 [#672](https://github.com/SOHU-Co/kafka-node/pull/672)
 * Add [KafkaClient](https://github.com/SOHU-Co/kafka-node#kafkaclient) a version of `Client` that connects directly to Kafka brokers instead of zookeeper for discovery. [#691](https://github.com/SOHU-Co/kafka-node/pull/691)
@@ -8,7 +11,7 @@
 * Fix issue where a specified `key` attribute in producer payload was missing from the message
 * Fix issue where a falsey key value (such as an empty string or `0`) was not able to be saved into the message. `null` or `undefined` key value will return as `null`
 * Fix issue where key of `Buffer` value was not able to be saved into the message
-* **BREAKING CHANGE** The `key` is decoded as a `string` by default. Previously was a `Buffer`. The preferred encoding for the key can be defined by the `keyEncoding` option on any of the consumers and will fallback to `encoding` if omitted 
+* **BREAKING CHANGE** The `key` is decoded as a `string` by default. Previously was a `Buffer`. The preferred encoding for the key can be defined by the `keyEncoding` option on any of the consumers and will fallback to `encoding` if omitted
 
 ## 2017-05-08, Version 1.6.2
 * Reverting performance changes using BufferList since it's causing idle consumers to crash [#670](https://github.com/SOHU-Co/kafka-node/pull/670)
