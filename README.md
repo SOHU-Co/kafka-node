@@ -504,11 +504,10 @@ consumer.on('message', function (message) {
 
 ### on('offsetOutOfRange', function (err) {})
 
-### addTopics(topics, cb, fromOffset)
+### addTopics(topics, cb)
 Add topics to current consumer, if any topic to be added not exists, return error
 * `topics`: **Array**, array of topics to add
 * `cb`: **Function**,the callback
-* `fromOffset`: **Boolean**, if true, the consumer will fetch message from the specified offset, otherwise it will fetch message from the last commited offset of the topic.
 
 Example:
 
