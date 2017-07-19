@@ -78,6 +78,7 @@ New KafkaClient connects directly to Kafka brokers instead of connecting to zook
 * `requestTimeout` : in ms for a kafka request to timeout default: `30000`
 * `autoConnect` : automatically connect when KafkaClient is instantiated otherwise you need to manually call `connect` default: `true`
 * `connectRetryOptions` : object hash that applies to the initial connection. see [retry](https://www.npmjs.com/package/retry) module for these options.
+* `idleConnection` : allows the broker to disconnect an idle connection from a client (otherwise the clients continues to reconnect after being disconnected). The value is elapsed time in ms without any data written to the TCP socket. default: 5 minutes
 
 ## Client
 ### Client(connectionString, clientId, [zkOptions], [noAckBatchOptions], [sslOptions])
