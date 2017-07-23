@@ -306,30 +306,6 @@ describe('Client', function () {
     });
   });
 
-  describe('Versions', function () {
-    before(function () {
-      if (~['0.8', '0.9'].indexOf(process.env.KAFKA_VERSION)) {
-        this.skip();
-      }
-    });
-
-    beforeEach(function (done) {
-      client = new Client(host);
-      client.once('connect', done);
-    });
-
-    afterEach(function (done) {
-      client.close(done);
-    });
-
-    it('#sendVersionsRequest', function (done) {
-      client.sendVersionsRequest(function (error, results) {
-        console.log(results);
-        done(error);
-      });
-    });
-  });
-
   describe('Discover Group Coordinator', function () {
     beforeEach(function (done) {
       client = new Client(host);
