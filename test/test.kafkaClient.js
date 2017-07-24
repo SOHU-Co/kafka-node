@@ -92,6 +92,26 @@ describe('Kafka Client', function () {
           done();
         });
       });
+
+      if (process.env.KAFKA_VERSION === '0.9') {
+        it('should return base support mapping', function (done) {
+          client = new Client({ kafkaHost: '127.0.0.1:9092' });
+          client.once('connect', function () {
+            const broker = client.brokerForLeader();
+            broker.isConnected().should.be.true;
+            broker.should.have.property('apiSupport');
+            broker.apiSupport.should.be.type('object');
+            _.forOwn(broker.apiSupport, function (support, api) {
+              if (support === null) {
+                return;
+              }
+              support.should.be.type('object');
+              support.should.have.keys('min', 'max', 'usable');
+            });
+            done();
+          });
+        });
+      }
     });
 
     describe('#getApiVersions', function () {
@@ -111,6 +131,12 @@ describe('Kafka Client', function () {
         it('#getApiVersions returns results', function (done) {
           client.getApiVersions(client.brokerForLeader(), function (error, results) {
             should(results).not.be.empty;
+            _.forOwn(results, function (support, api) {
+              if (support === null) {
+                return;
+              }
+              support.should.have.keys('min', 'max', 'usable');
+            });
             done(error);
           });
         });
