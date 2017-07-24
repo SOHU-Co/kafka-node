@@ -1,18 +1,21 @@
 'use strict';
 
-const versionSupport = require('../lib/protocol/versionSupportMapping');
+const versionSupport = require('../lib/protocol/protocolVersions');
 const protocolStruct = require('../lib/protocol/protocol_struct');
 const _ = require('lodash');
 
 describe('Protocol', function () {
-  it('exports two properties', function () {
+  it('exports correct properties', function () {
     versionSupport.should.have.property('apiMap');
-    versionSupport.should.have.property('maxSupported');
+    versionSupport.should.have.property('maxSupport');
+    versionSupport.should.have.property('baseSupport');
   });
 
-  describe('verify API map', function () {
+  describe('verify API map keys', function () {
     it('should contain the same keys as request type', function () {
       Object.keys(protocolStruct.REQUEST_TYPE).should.be.eql(Object.keys(versionSupport.apiMap));
+      Object.keys(protocolStruct.REQUEST_TYPE).should.be.eql(Object.keys(versionSupport.maxSupport));
+      Object.keys(protocolStruct.REQUEST_TYPE).should.be.eql(Object.keys(versionSupport.baseSupport));
     });
 
     it('should contain different versions of encode/decode functions', function () {
