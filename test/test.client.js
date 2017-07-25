@@ -89,7 +89,7 @@ describe('Client', function () {
       };
 
       var clientId = 'kafka-node-client-' + uuid.v4();
-      client = new Client(host, clientId, undefined, undefined, {rejectUnauthorized: false});
+      client = new Client(host, clientId, undefined, undefined, { rejectUnauthorized: false });
 
       zk.emit('init', brokers);
 
@@ -181,7 +181,7 @@ describe('Client', function () {
       };
 
       var clientId = 'kafka-node-client-' + uuid.v4();
-      client = new Client(host, clientId, undefined, undefined, {rejectUnauthorized: false});
+      client = new Client(host, clientId, undefined, undefined, { rejectUnauthorized: false });
       client.on('error', function (error) {
         error.message.should.be.eql('No kafka endpoint found for broker: 1001 with protocol ssl:');
         done();
@@ -214,13 +214,13 @@ describe('Client', function () {
     beforeEach(function () {
       brokers = {
         '1001': {
-          endpoints: [ 'PLAINTEXT://127.0.0.1:9092', 'SSL://127.0.0.1:9093' ],
+          endpoints: ['PLAINTEXT://127.0.0.1:9092', 'SSL://127.0.0.1:9093'],
           host: '127.0.0.1',
           version: 2,
           port: 9092
         },
         '1002': {
-          endpoints: [ 'PLAINTEXT://127.0.0.2:9092', 'SSL://127.0.0.2:9093' ],
+          endpoints: ['PLAINTEXT://127.0.0.2:9092', 'SSL://127.0.0.2:9093'],
           host: '127.0.0.2',
           version: 2,
           port: 9092
@@ -233,7 +233,7 @@ describe('Client', function () {
 
       beforeEach(function () {
         var clientId = 'kafka-node-client-' + uuid.v4();
-        client = new Client(host, clientId, undefined, undefined, {rejectUnauthorized: false});
+        client = new Client(host, clientId, undefined, undefined, { rejectUnauthorized: false });
       });
 
       it('should delete and close dead brokers when SSL is enabled', function () {
@@ -287,7 +287,7 @@ describe('Client', function () {
 
     it('should keep brokerProfiles in sync with broker changes', function () {
       var clientId = 'kafka-node-client-' + uuid.v4();
-      client = new Client(host, clientId, undefined, undefined, {rejectUnauthorized: false});
+      client = new Client(host, clientId, undefined, undefined, { rejectUnauthorized: false });
 
       sinon.spy(client, 'setupBrokerProfiles');
       sinon.stub(client, 'createBroker').returns({
@@ -359,21 +359,21 @@ describe('Client', function () {
     });
 
     it('should pass zookeeper options in a newless constructor', function () {
-      var client = Client(host, undefined, {sessionTimeout: 10400, spinDelay: 1000, retries: 0});
+      var client = Client(host, undefined, { sessionTimeout: 10400, spinDelay: 1000, retries: 0 });
       client.zkOptions.should.have.property('sessionTimeout').and.be.exactly(10400);
       client.zkOptions.should.have.property('spinDelay').and.be.exactly(1000);
       client.zkOptions.should.have.property('retries').and.be.exactly(0);
     });
 
     it('should pass noAckBatchOptions options in a newless constructor', function () {
-      var client = Client(host, undefined, undefined, {noAckBatchAge: 20000, noAckBatchSize: 1024 * 1024});
+      var client = Client(host, undefined, undefined, { noAckBatchAge: 20000, noAckBatchSize: 1024 * 1024 });
       client.noAckBatchOptions.should.have.property('noAckBatchAge').and.be.exactly(20000);
       client.noAckBatchOptions.should.have.property('noAckBatchSize').and.be.exactly(1024 * 1024);
     });
 
     it('should pass sslOptions options in a newless constructor', function () {
       var ca = '--- CA CONTENTS HERE ---';
-      var client = Client(host, undefined, undefined, undefined, {rejectUnauthorized: false, ca: ca});
+      var client = Client(host, undefined, undefined, undefined, { rejectUnauthorized: false, ca: ca });
       client.ssl.should.be.true;
       client.sslOptions.should.have.property('ca').and.be.exactly(ca);
       client.sslOptions.should.have.property('rejectUnauthorized').and.be.false;
@@ -383,7 +383,7 @@ describe('Client', function () {
   describe('non constructor', function () {
     beforeEach(function (done) {
       var clientId = 'kafka-node-client-' + uuid.v4();
-      client = new Client(host, clientId, undefined, undefined, {rejectUnauthorized: false});
+      client = new Client(host, clientId, undefined, undefined, { rejectUnauthorized: false });
       client.once('connect', done);
     });
 
@@ -399,15 +399,19 @@ describe('Client', function () {
 
     describe('#createTopics', function () {
       function verifyTopics (topics, callback) {
-        async.each(topics, function (topic, callback) {
-          client.zk.topicExists(topic, function (error, exists, topic) {
-            if (error) {
-              return callback(error);
-            }
-            exists.should.be.true;
-            callback();
-          });
-        }, callback);
+        async.each(
+          topics,
+          function (topic, callback) {
+            client.zk.topicExists(topic, function (error, exists, topic) {
+              if (error) {
+                return callback(error);
+              }
+              exists.should.be.true;
+              callback();
+            });
+          },
+          callback
+        );
       }
 
       it('should create given kafka topics', function (done) {

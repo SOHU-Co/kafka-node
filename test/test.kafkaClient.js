@@ -49,6 +49,101 @@ describe('Kafka Client', function () {
     });
   });
 
+  describe('Versions', function () {
+    let client;
+    before(function () {
+      if (process.env.KAFKA_VERSION === '0.8') {
+        this.skip();
+      }
+    });
+
+    afterEach(function (done) {
+      client.close(done);
+    });
+
+    describe('#initializeBroker', function () {
+      it('should not call #getApiVersions if versions is disabled', function (done) {
+        client = new Client({ kafkaHost: '127.0.0.1:9092', autoConnect: false, versions: { disabled: true } });
+        client.options.versions.disabled.should.be.true;
+        const brokerInitSpy = sinon.spy(client, 'initializeBroker');
+        const apiVersionsSpy = sinon.spy(client, 'getApiVersions');
+        client.connect();
+        client.once('connect', function () {
+          sinon.assert.calledOnce(brokerInitSpy);
+          sinon.assert.notCalled(apiVersionsSpy);
+          brokerInitSpy.restore();
+          apiVersionsSpy.restore();
+          done();
+        });
+      });
+
+      it('should call #getApiVersions if versions is enabled', function (done) {
+        client = new Client({ kafkaHost: '127.0.0.1:9092', autoConnect: false });
+        client.options.versions.disabled.should.be.false;
+        const brokerInitSpy = sinon.spy(client, 'initializeBroker');
+        const apiVersionsSpy = sinon.spy(client, 'getApiVersions');
+        client.connect();
+        client.once('connect', function () {
+          sinon.assert.calledOnce(brokerInitSpy);
+          sinon.assert.calledOnce(apiVersionsSpy);
+          sinon.assert.callOrder(brokerInitSpy, apiVersionsSpy);
+          brokerInitSpy.restore();
+          apiVersionsSpy.restore();
+          done();
+        });
+      });
+
+      if (process.env.KAFKA_VERSION === '0.9') {
+        it('should return base support mapping', function (done) {
+          client = new Client({ kafkaHost: '127.0.0.1:9092' });
+          client.once('connect', function () {
+            const broker = client.brokerForLeader();
+            broker.isConnected().should.be.true;
+            broker.should.have.property('apiSupport');
+            broker.apiSupport.should.be.type('object');
+            _.forOwn(broker.apiSupport, function (support, api) {
+              if (support === null) {
+                return;
+              }
+              support.should.be.type('object');
+              support.should.have.keys('min', 'max', 'usable');
+            });
+            done();
+          });
+        });
+      }
+    });
+
+    describe('#getApiVersions', function () {
+      beforeEach(function (done) {
+        client = new Client({ kafkaHost: '127.0.0.1:9092' });
+        client.once('connect', done);
+      });
+
+      if (process.env.KAFKA_VERSION === '0.9') {
+        it('#getApiVersions failure for 0.9', function (done) {
+          client.getApiVersions(client.brokerForLeader(), function (error, results) {
+            error.should.be.an.instanceOf(TimeoutError);
+            done();
+          });
+        });
+      } else {
+        it('#getApiVersions returns results', function (done) {
+          client.getApiVersions(client.brokerForLeader(), function (error, results) {
+            should(results).not.be.empty;
+            _.forOwn(results, function (support, api) {
+              if (support === null) {
+                return;
+              }
+              support.should.have.keys('min', 'max', 'usable');
+            });
+            done(error);
+          });
+        });
+      }
+    });
+  });
+
   describe('#wrapTimeoutIfNeeded', function () {
     let sandbox, wrapTimeoutIfNeeded, client, clock;
 
@@ -86,7 +181,7 @@ describe('Kafka Client', function () {
     it('should yield timeout error if not called by timeout', function (done) {
       client.options.requestTimeout = 400;
       function callback (error) {
-        error.should.be.an.instanceOf(Error);
+        error.should.be.an.instanceOf(TimeoutError);
         error.message.should.be.exactly('Request timed out after 400ms');
         sinon.assert.calledWithExactly(client.unqueueCallback, 1, 10);
         done();
