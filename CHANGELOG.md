@@ -1,5 +1,8 @@
 # kafka-node CHANGELOG
 
+## Unreleased
+* Add V1 and V2 Produce request (timestamps) supported in kafka 0.9 and 0.10 [#730](https://github.com/SOHU-Co/kafka-node/pull/730)
+
 ## 2017-07-13, Version 2.0.1
 * Fix unreferenced method call in Client/KafkaClient [#708](https://github.com/SOHU-Co/kafka-node/pull/708)
 
