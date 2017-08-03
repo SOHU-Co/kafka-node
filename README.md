@@ -782,6 +782,8 @@ Same notes in the Notes section of [ConsumerStream](#consumerstream) applies to 
 * `consumerGroupOptions` same options to initialize a `ConsumerGroup`
 * `topics` a single or array of topics to subscribe to
 
+### close(callback)
+Closes the `ConsumerGroup`. Calls `callback` when complete. If `autoCommit` is enabled calling close will also commit offsets consumed from the buffer.
 
 ## Offset
 ### Offset(client)
