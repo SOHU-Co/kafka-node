@@ -1,7 +1,8 @@
 # kafka-node CHANGELOG
 
-## Unreleased
-* Add V1 and V2 Produce request (timestamps) supported in kafka 0.9 and 0.10 [#730](https://github.com/SOHU-Co/kafka-node/pull/730)
+## 2017-08-03, Version 2.1.0
+* Add two `Readable` streams `ConsumerGroupStream` and `ConsumerStream` [#732](https://github.com/SOHU-Co/kafka-node/pull/732)
+* Add V1 and V2 Produce request (adds client timestamps) to `KafkaClient` only supported in kafka v0.9 and v0.10 [#730](https://github.com/SOHU-Co/kafka-node/pull/730)
 
 ## 2017-07-13, Version 2.0.1
 * Fix unreferenced method call in Client/KafkaClient [#708](https://github.com/SOHU-Co/kafka-node/pull/708)
