@@ -1,6 +1,6 @@
 {
   "name": "kafka-node",
-  "description": "Client for Apache Kafka v0.8+",
+  "description": "Client for Apache Kafka v0.8.1+, v0.9.x, and v0.10.x",
   "keywords": [
     "kafka",
     "zookeeper",
@@ -14,7 +14,7 @@
     "lib"
   ],
   "bugs": "https://github.com/SOHU-co/kafka-node/issues",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "main": "kafka.js",
   "license": "MIT",
   "dependencies": {
