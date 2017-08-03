@@ -1,7 +1,9 @@
 exports.HighLevelConsumer = require('./lib/highLevelConsumer');
 exports.HighLevelProducer = require('./lib/highLevelProducer');
 exports.ConsumerGroup = require('./lib/consumerGroup');
+exports.ConsumerGroupStream = require('./lib/consumerGroupStream');
 exports.Consumer = require('./lib/consumer');
+exports.ConsumerStream = require('./lib/consumerStream');
 exports.Producer = require('./lib/producer');
 exports.Client = require('./lib/client');
 exports.KafkaClient = require('./lib/kafkaClient');

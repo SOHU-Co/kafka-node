@@ -23,8 +23,10 @@ Kafka-node is a Node.js client with Zookeeper integration for Apache Kafka 0.8.1
   - [Producer](#producer)
   - [HighLevelProducer](#highlevelproducer)
   - [Consumer](#consumer)
+  - [ConsumerStream](#consumerstream)
   - [HighLevelConsumer](#highlevelconsumer)
   - [ConsumerGroup](#consumergroup)
+  - [ConsumerGroupStream](#consumergroupstream)
   - [Offset](#offset)
 - [Troubleshooting / FAQ](#troubleshooting--faq)
   - [HighLevelProducer with KeyedPartitioner errors on first send](#highlevelproducer-with-keyedpartitioner-errors-on-first-send)
@@ -305,7 +307,7 @@ producer.createTopics(['t'], function (err, data) {});// Simply omit 2nd arg
     fromOffset: false,
     // If set to 'buffer', values will be returned as raw buffer objects.
     encoding: 'utf8',
-    keyEncoding: 'utf-8'
+    keyEncoding: 'utf8'
 }
 ```
 Example:
@@ -435,6 +437,22 @@ Example
 consumer.close(true, cb);
 consumer.close(cb); //force is disabled
 ```
+
+## ConsumerStream
+
+`Consumer` implemented using node's `Readable` stream interface. Read more about streams [here](https://nodejs.org/dist/v8.1.3/docs/api/stream.html#stream_readable_streams).
+
+### Notes
+
+* streams are consumed in chunks and in `kafka-node` each chunk is a kafka message
+* a stream contains an internal buffer of messages fetched from kafka. By default the buffer size is `100` messages and can be changed through the `highWaterMark` option
+
+### Compared to Consumer
+
+Similar API as `Consumer` with some exceptions. Methods like `pause` and `resume` in `ConsumerStream` respects the toggling of flow mode in a Stream. In `Consumer` calling `pause()` just paused the fetch cycle and will continue to emit `message` events. Pausing in a `ConsumerStream` should immediately stop emitting `data` events.
+
+### ConsumerStream(client, payloads, options)
+
 
 ## HighLevelConsumer
 ⚠️ ***This consumer has been deprecated in the latest version of Kafka (0.10.1) and is likely to be removed in the future. Please use the ConsumerGroup instead.***
@@ -749,6 +767,23 @@ For case 2 setting `migrateRolling` to `true` will allow the ConsumerGroup to st
 * Should never overwrite existing offsets
 * Only offsets for Topics that were once in the highLevelConsumer will be migrated over offsets for new topics will follow the `fromOffset` setting
 
+## ConsumerGroupStream
+
+The `ConsumerGroup` wrapped with a `Readable` stream interface. Read more about consuming `Readable` streams [here](https://nodejs.org/dist/v8.1.3/docs/api/stream.html#stream_readable_streams).
+
+Same notes in the Notes section of [ConsumerStream](#consumerstream) applies to this stream.
+
+### Auto Commit
+
+`ConsumerGroupStream` manages auto commits differently than `ConsumerGroup`. Whereas the `ConsumerGroup` would automatically commit offsets of fetched messages the `ConsumerGroupStream` will only commit offsets of consumed messages from the stream buffer. This will be better for most users since it more accurately represents what was actually "Consumed". The interval at which auto commit fires off is still controlled by the `autoCommitIntervalMs` option and this feature can be disabled by setting `autoCommit` to `false`.
+
+### ConsumerGroupStream (consumerGroupOptions, topics)
+
+* `consumerGroupOptions` same options to initialize a `ConsumerGroup`
+* `topics` a single or array of topics to subscribe to
+
+### close(callback)
+Closes the `ConsumerGroup`. Calls `callback` when complete. If `autoCommit` is enabled calling close will also commit offsets consumed from the buffer.
 
 ## Offset
 ### Offset(client)
