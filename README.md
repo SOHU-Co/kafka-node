@@ -5,7 +5,7 @@ Kafka-node
 [![Coverage Status](https://coveralls.io/repos/github/SOHU-Co/kafka-node/badge.svg?branch=master)](https://coveralls.io/github/SOHU-Co/kafka-node?branch=master)
 
 [![NPM](https://nodei.co/npm/kafka-node.png)](https://nodei.co/npm/kafka-node/)
-[![NPM](https://nodei.co/npm-dl/kafka-node.png?height=3)](https://nodei.co/npm/kafka-node/)
+<!--[![NPM](https://nodei.co/npm-dl/kafka-node.png?height=3)](https://nodei.co/npm/kafka-node/)-->
 
 
 Kafka-node is a Node.js client with Zookeeper integration for Apache Kafka 0.8.1 and later.
@@ -22,6 +22,7 @@ Kafka-node is a Node.js client with Zookeeper integration for Apache Kafka 0.8.1
   - [Client](#client)
   - [Producer](#producer)
   - [HighLevelProducer](#highlevelproducer)
+  - [ProducerStream](#producerstream)
   - [Consumer](#consumer)
   - [ConsumerStream](#consumerstream)
   - [HighLevelConsumer](#highlevelconsumer)
@@ -47,6 +48,8 @@ Kafka-node is a Node.js client with Zookeeper integration for Apache Kafka 0.8.1
 # Features
 * Consumer and High Level Consumer
 * Producer and High Level Producer
+* Node Stream Producer (Kafka 0.9+)
+* Node Stream Consumers (ConsumerGroupStream Kafka 0.9+)
 * Manage topic Offsets
 * SSL connections to brokers (Kafka 0.9+)
 * Consumer Groups managed by Kafka coordinator (Kafka 0.9+)
@@ -275,6 +278,80 @@ producer.createTopics(['t','t1'], false, function (err, data) {
 // Create topics async
 producer.createTopics(['t'], true, function (err, data) {});
 producer.createTopics(['t'], function (err, data) {});// Simply omit 2nd arg
+```
+
+## ProducerStream
+
+### ProducerStream (options)
+
+**Requires**: Kafka v0.9+
+
+#### Options
+* `highWaterMark` size of write buffer (Default: 100)
+* `kafkaClient` options see [KafkaClient](#kafkaclient)
+* `producer` options for Producer see [HighLevelProducer](#highlevelproducer)
+
+### Streams Example
+
+In this example we demonstrate how to stream a source of data (from `stdin`) to kafka (`ExampleTopic` topic) for processing. Then in a separate instance (or worker process) we consume from that kafka topic and use a `Transform` stream to update the data and stream the result to a different topic using a `ProducerStream`.
+
+> Stream text from `stdin` and write that into a Kafka Topic
+
+```js
+const Transform = require('stream').Transform;
+const ProducerStream = require('./lib/producerStream');
+const _ = require('lodash');
+const producer = new ProducerStream();
+
+const stdinTransform = new Transform({
+  objectMode: true,
+  decodeStrings: true,
+  transform (text, encoding, callback) {
+    text = _.trim(text);
+    console.log(`pushing message ${text} to ExampleTopic`);
+    callback(null, {
+      topic: 'ExampleTopic',
+      messages: text
+    });
+  }
+});
+
+process.stdin.setEncoding('utf8');
+process.stdin.pipe(stdinTransform).pipe(producer);
+```
+
+> Use `ConsumerGroupStream` to read from this topic and transform the data and feed the result of into the `RebalanceTopic` Topic.
+
+```js
+const ProducerStream = require('./lib/producerStream');
+const ConsumerGroupStream = require('./lib/consumerGroupStream');
+const resultProducer = new ProducerStream();
+
+const consumerOptions = {
+  kafkaHost: '127.0.0.1:9092',
+  groupId: 'ExampleTestGroup',
+  sessionTimeout: 15000,
+  protocol: ['roundrobin'],
+  asyncPush: false,
+  id: 'consumer1',
+  fromOffset: 'latest'
+};
+
+const consumerGroup = new ConsumerGroupStream(consumerOptions, 'ExampleTopic');
+
+const messageTransform = new Transform({
+  objectMode: true,
+  decodeStrings: true,
+  transform (message, encoding, callback) {
+    console.log(`Received message ${message.value} transforming input`);
+    callback(null, {
+      topic: 'RebalanceTopic',
+      messages: `You have been (${message.value}) made an example of`
+    });
+  }
+});
+
+consumerGroup.pipe(messageTransform).pipe(resultProducer);
 ```
 
 ## Consumer
