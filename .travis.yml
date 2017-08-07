@@ -14,6 +14,7 @@ env:
   matrix:
     - KAFKA_VERSION=0.9
     - KAFKA_VERSION=0.10
+    - KAFKA_VERSION=0.11
   global:
     # - DEBUG=kafka-node:*
     - KAFKA_ADVERTISED_HOST_NAME=127.0.0.1
