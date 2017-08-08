@@ -54,6 +54,34 @@ describe('BaseProducer', function () {
       );
     });
 
+    describe('gzip compression', function () {
+      it('kafkaClient', function (done) {
+        const messageValue = uuid.v4();
+        producer.send(
+          [
+            {
+              topic: topic,
+              messages: messageValue,
+              key: 'myKeyIsHere',
+              attributes: 1
+            }
+          ],
+          function (error) {
+            if (error) {
+              done(error);
+            }
+          }
+        );
+
+        consumerGroup.on('message', function (message) {
+          console.log(message);
+          message.key.should.be.exactly('myKeyIsHere');
+          message.value.should.be.exactly(messageValue);
+          done();
+        });
+      });
+    });
+
     afterEach(function (done) {
       producer.close();
       consumerGroup.close(done);
