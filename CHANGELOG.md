@@ -1,5 +1,9 @@
 # kafka-node CHANGELOG
 
+## 2017-08-08, Version 2.2.0
+* Fix decoding of messages produced using `KafkaClient` with timestamps [#736](https://github.com/SOHU-Co/kafka-node/pull/736)
+* Add `Writable` stream `ProducerStream` [#734](https://github.com/SOHU-Co/kafka-node/pull/734)
+
 ## 2017-08-03, Version 2.1.0
 * Add two `Readable` streams `ConsumerGroupStream` and `ConsumerStream` [#732](https://github.com/SOHU-Co/kafka-node/pull/732)
 * Add V1 and V2 Produce request (adds client timestamps) to `KafkaClient` only supported in kafka v0.9 and v0.10 [#730](https://github.com/SOHU-Co/kafka-node/pull/730)
