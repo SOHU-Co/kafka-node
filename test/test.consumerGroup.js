@@ -807,19 +807,30 @@ describe('ConsumerGroup', function () {
     var producer = new HighLevelProducer(client, { requireAcks: 1 });
 
     client.on('connect', function () {
-      producer.send([{ topic: topic, messages: message, attributes: 0 }], done);
+      producer.send([{ topic: topic, messages: message, attributes: 0 }], function (error) {
+        if (error) {
+          done(error);
+        } else {
+          done(null);
+        }
+        producer.close(_.noop);
+      });
     });
   }
 
   describe('fetchMaxBytes', function () {
-    let topic;
+    let topic, consumerGroup;
     beforeEach(function (done) {
       topic = uuid.v4();
       sendRandomByteMessage(2048, topic, done);
     });
 
+    afterEach(function (done) {
+      consumerGroup.close(done);
+    });
+
     it('should throw an error when message exceeds maximum fetch size', function (done) {
-      const consumerGroup = new ConsumerGroup(
+      consumerGroup = new ConsumerGroup(
         {
           kafkaHost: '127.0.0.1:9092',
           groupId: uuid.v4(),
