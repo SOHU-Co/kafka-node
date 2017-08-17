@@ -8,9 +8,71 @@ var KafkaClient = kafka.KafkaClient;
 var KeyedMessage = kafka.KeyedMessage;
 const _ = require('lodash');
 const assert = require('assert');
+const ConsumerGroup = kafka.ConsumerGroup;
 var client, producer, noAckProducer, producerKeyed;
 
 var host = process.env['KAFKA_TEST_HOST'] || '';
+
+describe('partitioner', function () {
+  function sendMessage (message, topic, done) {
+    var client = new KafkaClient({ kafkaHost: '127.0.0.1:9092' });
+    var producer = new HighLevelProducer(client, { requireAcks: 1 });
+
+    client.on('connect', function () {
+      producer.send([{ topic: topic, messages: message }], function (error) {
+        if (error) {
+          done(error);
+        } else {
+          done(null);
+        }
+        producer.close(_.noop);
+      });
+    });
+  }
+
+  let topic, consumerGroup, messages;
+  const createTopic = require('../docker/createTopic');
+
+  beforeEach(function () {
+    messages = _.times(3, uuid.v4);
+    topic = uuid.v4();
+
+    return createTopic(topic, 3, 1).then(function () {
+      return new Promise(function (resolve, reject) {
+        sendMessage(messages, topic, function (error) {
+          if (error) {
+            return reject(error);
+          }
+          resolve();
+        });
+      });
+    });
+  });
+
+  afterEach(function (done) {
+    consumerGroup.close(done);
+  });
+
+  it('should distribute messages round-robin using cyclic', function (done) {
+    consumerGroup = new ConsumerGroup(
+      {
+        kafkaHost: '127.0.0.1:9092',
+        groupId: uuid.v4(),
+        fromOffset: 'earliest'
+      },
+      topic
+    );
+    const offsets = [];
+    consumerGroup.on('message', function (message) {
+      offsets.should.not.containEql(message.offset);
+      offsets.push(message.offset);
+      _.pull(messages, message.value);
+      if (messages.length === 0) {
+        done();
+      }
+    });
+  });
+});
 
 [
   {
