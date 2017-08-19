@@ -62,6 +62,17 @@ describe('Kafka Client', function () {
     });
 
     describe('#initializeBroker', function () {
+      it('should not call #getApiVersions if socket is longpolling', function (done) {
+        client = new Client({ kafkaHost: '127.0.0.1:9092', autoConnect: false });
+        const fakeBroker = new BrokerWrapper(new FakeSocket());
+        const apiVersionsSpy = sinon.spy(client, 'getApiVersions');
+        fakeBroker.socket.longpolling = true;
+        client.initializeBroker(fakeBroker, function (error) {
+          sinon.assert.notCalled(apiVersionsSpy);
+          done(error);
+        });
+      });
+
       it('should not call #getApiVersions if versions is disabled', function (done) {
         client = new Client({ kafkaHost: '127.0.0.1:9092', autoConnect: false, versions: { disabled: true } });
         client.options.versions.disabled.should.be.true;
