@@ -1,5 +1,9 @@
 # kafka-node CHANGELOG
 
+## 2017-08-21, Version 2.2.1
+* Fix duplicate messages emitted when using `KafkaClient` and consuming topic/partition that span multiple brokers [#747](https://github.com/SOHU-Co/kafka-node/pull/747)
+* Instead of failing silently consumers now emits a error when trying to consume messages that exceeds `fetchMaxBytes` [#744](https://github.com/SOHU-Co/kafka-node/pull/744)
+
 ## 2017-08-08, Version 2.2.0
 * Fix decoding of messages produced using `KafkaClient` with timestamps [#736](https://github.com/SOHU-Co/kafka-node/pull/736)
 * Add `Writable` stream `ProducerStream` [#734](https://github.com/SOHU-Co/kafka-node/pull/734)
