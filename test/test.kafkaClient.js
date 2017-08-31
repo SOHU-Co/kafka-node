@@ -155,6 +155,62 @@ describe('Kafka Client', function () {
     });
   });
 
+  describe('#deleteDisconnected', function () {
+    let sandbox, client, fakeBroker;
+
+    before(function () {
+      sandbox = sinon.sandbox.create();
+      client = new Client({ kafkaHost: '127.0.0.1:9092', autoConnect: false, requestTimeout: 4000 });
+      fakeBroker = new BrokerWrapper(new FakeSocket());
+      fakeBroker.socket.addr = '127.0.0.1:9092';
+    });
+
+    afterEach(function () {
+      sandbox.restore();
+    });
+
+    it('should not delete if broker is still connected', function () {
+      sandbox.spy(client, 'getBrokers');
+
+      client.brokers[fakeBroker.socket.addr] = fakeBroker;
+
+      sandbox.stub(fakeBroker, 'isConnected').returns(true);
+      client.deleteDisconnected(fakeBroker);
+      sinon.assert.notCalled(client.getBrokers);
+      sinon.assert.calledOnce(fakeBroker.isConnected);
+
+      client.brokers.should.have.property(fakeBroker.socket.addr);
+    });
+
+    it('should throw if the broker is key does not match the instance', function () {
+      sandbox.spy(client, 'getBrokers');
+      client.brokers[fakeBroker.socket.addr] = {};
+      sandbox.stub(fakeBroker, 'isConnected').returns(false);
+
+      should.throws(function () {
+        client.deleteDisconnected(fakeBroker);
+      });
+
+      sinon.assert.calledOnce(client.getBrokers);
+      sinon.assert.calledOnce(fakeBroker.isConnected);
+
+      client.brokers.should.have.property(fakeBroker.socket.addr);
+    });
+
+    it('should delete broker if disconnected', function () {
+      sandbox.spy(client, 'getBrokers');
+
+      client.brokers[fakeBroker.socket.addr] = fakeBroker;
+
+      sandbox.stub(fakeBroker, 'isConnected').returns(false);
+      client.deleteDisconnected(fakeBroker);
+      sinon.assert.calledOnce(client.getBrokers);
+      sinon.assert.calledOnce(fakeBroker.isConnected);
+
+      client.brokers.should.not.have.property(fakeBroker.socket.addr);
+    });
+  });
+
   describe('#waitUntilReady', function () {
     let sandbox, client, clock;
 
