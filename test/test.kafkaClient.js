@@ -155,6 +155,59 @@ describe('Kafka Client', function () {
     });
   });
 
+  describe('#waitUntilReady', function () {
+    let sandbox, client, clock;
+
+    before(function () {
+      sandbox = sinon.sandbox.create();
+      clock = sandbox.useFakeTimers();
+      client = new Client({ kafkaHost: '127.0.0.1:9092', autoConnect: false, requestTimeout: 4000 });
+    });
+
+    afterEach(function () {
+      sandbox.restore();
+    });
+
+    it('should yield error timeout if broker is not ready by requestTimeout', function (done) {
+      const fakeBroker = new BrokerWrapper(new FakeSocket());
+      const readyKey = 'broker.host-ready';
+
+      sandbox.stub(fakeBroker, 'getReadyEventName').returns(readyKey);
+      sandbox.spy(client, 'removeListener');
+      sandbox.spy(client, 'once');
+
+      client.waitUntilReady(fakeBroker, function (error) {
+        error.should.not.be.empty;
+        error.should.be.an.instanceOf(TimeoutError);
+        sinon.assert.calledOnce(fakeBroker.getReadyEventName);
+        sinon.assert.calledWith(client.removeListener, readyKey, sinon.match.func);
+        sinon.assert.calledWith(client.once, readyKey, sinon.match.func);
+        done();
+      });
+
+      clock.tick(client.options.requestTimeout + 1);
+    });
+
+    it('should yield if broker is ready before requestTimeout', function (done) {
+      const fakeBroker = new BrokerWrapper(new FakeSocket());
+      const readyKey = 'broker.host-ready';
+
+      sandbox.stub(fakeBroker, 'getReadyEventName').returns(readyKey);
+      sandbox.spy(client, 'removeListener');
+      sandbox.spy(client, 'once');
+
+      client.waitUntilReady(fakeBroker, function (error) {
+        should(error).be.empty;
+        sinon.assert.calledOnce(fakeBroker.getReadyEventName);
+        sinon.assert.calledWith(client.once, readyKey, sinon.match.func);
+        done();
+      });
+
+      clock.tick(client.options.requestTimeout - 1);
+      client.emit(readyKey);
+    });
+  });
+
   describe('#wrapTimeoutIfNeeded', function () {
     let sandbox, wrapTimeoutIfNeeded, client, clock;
 
