@@ -1,5 +1,9 @@
 # kafka-node CHANGELOG
 
+## 2017-08-31, Version 2.2.2
+* Fix issue where connections disconnected from being idle will never reinitialize when using `KafkaClient` [#752](https://github.com/SOHU-Co/kafka-node/pull/752)
+* Fix callback of producer send never being called when connection loss occurs with Broker using `KafkaClient` [#751](https://github.com/SOHU-Co/kafka-node/pull/751)
+
 ## 2017-08-21, Version 2.2.1
 * Fix duplicate messages emitted when using `KafkaClient` and consuming topic/partition that span multiple brokers [#747](https://github.com/SOHU-Co/kafka-node/pull/747)
 * Instead of failing silently consumers now emits a error when trying to consume messages that exceeds `fetchMaxBytes` [#744](https://github.com/SOHU-Co/kafka-node/pull/744)
