@@ -1140,11 +1140,15 @@ Achieved using the `KAFKA_VERSION` environment variable.
 # Runs "latest" kafka on docker hub*
 npm test
 
+# Runs test against other versions:
+
 KAFKA_VERSION=0.8 npm test
 
 KAFKA_VERSION=0.9 npm test
 
 KAFKA_VERSION=0.10 npm test
+
+KAFKA_VERSION=0.11 npm test
 ```
 
 *See Docker hub [tags](https://hub.docker.com/r/wurstmeister/kafka/tags/) entry for which version is considered `latest`.
