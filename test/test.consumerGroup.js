@@ -11,6 +11,8 @@ const EventEmitter = require('events').EventEmitter;
 const _ = require('lodash');
 const uuid = require('uuid');
 const async = require('async');
+const BrokerWrapper = require('../lib/wrapper/BrokerWrapper');
+const FakeSocket = require('./mocks/mockSocket');
 
 describe('ConsumerGroup', function () {
   describe('#constructor', function () {
@@ -384,6 +386,29 @@ describe('ConsumerGroup', function () {
 
       consumerGroup.options.outOfRangeOffset = 'earliest';
       consumerGroup.emit('offsetOutOfRange', { topic: TOPIC_NAME, partition: '0' });
+    });
+  });
+
+  describe('#clearPendingFetches', function () {
+    it('should set waiting to false and clear the callback queue', function () {
+      const pendingSocket = new FakeSocket();
+      pendingSocket.waiting = true;
+      const longPollingBrokers = {
+        '1': new BrokerWrapper(pendingSocket),
+        '2': new BrokerWrapper(new FakeSocket())
+      };
+      const fakeClient = {
+        getBrokers: sinon.stub().returns(longPollingBrokers),
+        clearCallbackQueue: sinon.stub()
+      };
+
+      ConsumerGroup.prototype.clearPendingFetches.call({
+        client: fakeClient
+      });
+
+      sinon.assert.calledWithExactly(fakeClient.getBrokers, true);
+      sinon.assert.calledWithExactly(fakeClient.clearCallbackQueue, pendingSocket);
+      pendingSocket.waiting.should.be.false;
     });
   });
 
