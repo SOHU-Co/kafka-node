@@ -27,6 +27,47 @@ describe('Client', function () {
       };
     });
 
+    it('should always consume entire response even if handlers are missing', function () {
+      const fakeClient = {
+        unqueueCallback: sinon.stub().returns(null)
+      };
+
+      sinon.spy(socket.buffer, 'consume');
+      sinon.stub(socket.buffer, 'readUInt32BE').onFirstCall().returns(0);
+      sinon.stub(socket.buffer, 'shallowSlice').returns({
+        readUInt32BE: sinon.stub().returns(25)
+      });
+
+      socket.buffer.append(Uint8Array.from([0, 0, 0, 0]));
+      Client.prototype.handleReceivedData.call(fakeClient, socket);
+      sinon.assert.calledOnce(socket.buffer.shallowSlice);
+      sinon.assert.calledOnce(socket.buffer.consume);
+      sinon.assert.calledOnce(fakeClient.unqueueCallback);
+      should(socket.waiting).be.empty;
+    });
+
+    it('should consume entire response if handlers are missing and set waiting to false for longpolling sockets', function () {
+      const fakeClient = {
+        unqueueCallback: sinon.stub().returns(null)
+      };
+
+      sinon.spy(socket.buffer, 'consume');
+      sinon.stub(socket.buffer, 'readUInt32BE').onFirstCall().returns(0);
+      sinon.stub(socket.buffer, 'shallowSlice').returns({
+        readUInt32BE: sinon.stub().returns(25)
+      });
+
+      socket.longpolling = true;
+      socket.waiting = true;
+
+      socket.buffer.append(Uint8Array.from([0, 0, 0, 0]));
+      Client.prototype.handleReceivedData.call(fakeClient, socket);
+      sinon.assert.calledOnce(socket.buffer.shallowSlice);
+      sinon.assert.calledOnce(socket.buffer.consume);
+      sinon.assert.calledOnce(fakeClient.unqueueCallback);
+      socket.waiting.should.be.false;
+    });
+
     it('should early return when buffer is beyond offset', function () {
       socket.buffer.append(Uint8Array.from([0, 0, 0]));
 
