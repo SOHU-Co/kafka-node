@@ -389,6 +389,66 @@ describe('ConsumerGroup', function () {
     });
   });
 
+  describe('#reconnectIfNeeded', function () {
+    let cg;
+    beforeEach(function () {
+      cg = {
+        connect: sinon.stub(),
+        fetch: sinon.stub()
+      };
+    });
+
+    it('should do nothing if there is a pending connect', function () {
+      cg.connecting = true;
+
+      ConsumerGroup.prototype.reconnectIfNeeded.call(cg);
+
+      sinon.assert.notCalled(cg.connect);
+      sinon.assert.notCalled(cg.fetch);
+      should(cg.paused).be.false;
+    });
+
+    it('should call connect if not ready and not connecting', function () {
+      cg.connecting = false;
+      cg.ready = false;
+
+      ConsumerGroup.prototype.reconnectIfNeeded.call(cg);
+
+      sinon.assert.calledOnce(cg.connect);
+      sinon.assert.notCalled(cg.fetch);
+      should(cg.paused).be.false;
+    });
+
+    it('should call connect if not ready and not connecting and clear existing reconnectTimer', function () {
+      cg.connecting = false;
+      cg.ready = false;
+
+      cg.reconnectTimer = {};
+
+      sinon.stub(global, 'clearTimeout');
+
+      ConsumerGroup.prototype.reconnectIfNeeded.call(cg);
+
+      sinon.assert.calledOnce(cg.connect);
+      sinon.assert.calledOnce(clearTimeout);
+      sinon.assert.notCalled(cg.fetch);
+      should(cg.paused).be.false;
+      should(cg.reconnectTimer).be.null;
+      global.clearTimeout.restore();
+    });
+
+    it('should call fetch if ready and not connecting', function () {
+      cg.connecting = false;
+      cg.ready = true;
+
+      ConsumerGroup.prototype.reconnectIfNeeded.call(cg);
+
+      sinon.assert.notCalled(cg.connect);
+      sinon.assert.calledOnce(cg.fetch);
+      should(cg.paused).be.false;
+    });
+  });
+
   describe('#clearPendingFetches', function () {
     it('should set waiting to false and clear the callback queue', function () {
       const pendingSocket = new FakeSocket();
