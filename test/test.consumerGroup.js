@@ -11,6 +11,8 @@ const EventEmitter = require('events').EventEmitter;
 const _ = require('lodash');
 const uuid = require('uuid');
 const async = require('async');
+const BrokerWrapper = require('../lib/wrapper/BrokerWrapper');
+const FakeSocket = require('./mocks/mockSocket');
 
 describe('ConsumerGroup', function () {
   describe('#constructor', function () {
@@ -384,6 +386,89 @@ describe('ConsumerGroup', function () {
 
       consumerGroup.options.outOfRangeOffset = 'earliest';
       consumerGroup.emit('offsetOutOfRange', { topic: TOPIC_NAME, partition: '0' });
+    });
+  });
+
+  describe('#reconnectIfNeeded', function () {
+    let cg;
+    beforeEach(function () {
+      cg = {
+        connect: sinon.stub(),
+        fetch: sinon.stub()
+      };
+    });
+
+    it('should do nothing if there is a pending connect', function () {
+      cg.connecting = true;
+
+      ConsumerGroup.prototype.reconnectIfNeeded.call(cg);
+
+      sinon.assert.notCalled(cg.connect);
+      sinon.assert.notCalled(cg.fetch);
+      should(cg.paused).be.false;
+    });
+
+    it('should call connect if not ready and not connecting', function () {
+      cg.connecting = false;
+      cg.ready = false;
+
+      ConsumerGroup.prototype.reconnectIfNeeded.call(cg);
+
+      sinon.assert.calledOnce(cg.connect);
+      sinon.assert.notCalled(cg.fetch);
+      should(cg.paused).be.false;
+    });
+
+    it('should call connect if not ready and not connecting and clear existing reconnectTimer', function () {
+      cg.connecting = false;
+      cg.ready = false;
+
+      cg.reconnectTimer = {};
+
+      sinon.stub(global, 'clearTimeout');
+
+      ConsumerGroup.prototype.reconnectIfNeeded.call(cg);
+
+      sinon.assert.calledOnce(cg.connect);
+      sinon.assert.calledOnce(clearTimeout);
+      sinon.assert.notCalled(cg.fetch);
+      should(cg.paused).be.false;
+      should(cg.reconnectTimer).be.null;
+      global.clearTimeout.restore();
+    });
+
+    it('should call fetch if ready and not connecting', function () {
+      cg.connecting = false;
+      cg.ready = true;
+
+      ConsumerGroup.prototype.reconnectIfNeeded.call(cg);
+
+      sinon.assert.notCalled(cg.connect);
+      sinon.assert.calledOnce(cg.fetch);
+      should(cg.paused).be.false;
+    });
+  });
+
+  describe('#clearPendingFetches', function () {
+    it('should set waiting to false and clear the callback queue', function () {
+      const pendingSocket = new FakeSocket();
+      pendingSocket.waiting = true;
+      const longPollingBrokers = {
+        '1': new BrokerWrapper(pendingSocket),
+        '2': new BrokerWrapper(new FakeSocket())
+      };
+      const fakeClient = {
+        getBrokers: sinon.stub().returns(longPollingBrokers),
+        clearCallbackQueue: sinon.stub()
+      };
+
+      ConsumerGroup.prototype.clearPendingFetches.call({
+        client: fakeClient
+      });
+
+      sinon.assert.calledWithExactly(fakeClient.getBrokers, true);
+      sinon.assert.calledWithExactly(fakeClient.clearCallbackQueue, pendingSocket);
+      pendingSocket.waiting.should.be.false;
     });
   });
 

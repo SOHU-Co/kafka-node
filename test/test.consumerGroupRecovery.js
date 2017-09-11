@@ -7,6 +7,7 @@ const ConsumerGroupRecovery = require('../lib/consumerGroupRecovery');
 const GroupCoordinatorNotAvailable = require('../lib/errors/GroupCoordinatorNotAvailableError');
 const GroupLoadInProgress = require('../lib/errors/GroupLoadInProgressError');
 const HeartbeatTimeout = require('../lib/errors/HeartbeatTimeoutError');
+const TimeoutError = require('../lib/errors/TimeoutError');
 const BrokerNotAvailableError = require('../lib/errors').BrokerNotAvailableError;
 const EventEmitter = require('events');
 
@@ -16,7 +17,9 @@ describe('ConsumerGroupRecovery', function () {
   beforeEach(function () {
     fakeConsumerGroup = new EventEmitter();
     fakeConsumerGroup.client = new EventEmitter();
-    fakeConsumerGroup.scheduleReconnect = () => { throw new Error('should be stubbed!'); };
+    fakeConsumerGroup.scheduleReconnect = () => {
+      throw new Error('should be stubbed!');
+    };
     Object.assign(fakeConsumerGroup, {
       stopHeartbeats: sinon.stub(),
       options: {
@@ -63,6 +66,43 @@ describe('ConsumerGroupRecovery', function () {
 
       sinon.assert.calledOnce(fakeConsumerGroup.scheduleReconnect);
       should(fakeConsumerGroup.client.coordinatorId).be.undefined;
+    });
+
+    it('should try to recover from a temporary network error', function () {
+      const fakeNetworkError = new Error('read ETIMEDOUT');
+      fakeNetworkError.code = fakeNetworkError.errno = 'ETIMEDOUT';
+
+      fakeConsumerGroup.once('error', function (error) {
+        error.should.not.be.eql(fakeNetworkError);
+      });
+
+      sinon.stub(fakeConsumerGroup, 'scheduleReconnect');
+
+      consumerGroupRecovery.tryToRecoverFrom(fakeNetworkError, 'test');
+
+      sinon.assert.calledOnce(fakeConsumerGroup.stopHeartbeats);
+      fakeConsumerGroup.ready.should.be.false;
+      consumerGroupRecovery.lastError.should.be.eql(fakeNetworkError);
+
+      sinon.assert.calledOnce(fakeConsumerGroup.scheduleReconnect);
+    });
+
+    it('should try to recover from a request timeout', function () {
+      const fakeNetworkError = new TimeoutError('request timeout');
+
+      fakeConsumerGroup.once('error', function (error) {
+        error.should.not.be.eql(fakeNetworkError);
+      });
+
+      sinon.stub(fakeConsumerGroup, 'scheduleReconnect');
+
+      consumerGroupRecovery.tryToRecoverFrom(fakeNetworkError, 'test');
+
+      sinon.assert.calledOnce(fakeConsumerGroup.stopHeartbeats);
+      fakeConsumerGroup.ready.should.be.false;
+      consumerGroupRecovery.lastError.should.be.eql(fakeNetworkError);
+
+      sinon.assert.calledOnce(fakeConsumerGroup.scheduleReconnect);
     });
 
     it('should try to recover from a HeartbeatTimeout', function () {
