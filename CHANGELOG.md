@@ -1,5 +1,9 @@
 # kafka-node CHANGELOG
 
+## 2017-09-11, Version 2.2.3
+* Improved recovery of `ConsumerGroup` from broker down and network issues [#758](https://github.com/SOHU-Co/kafka-node/pull/758)
+* Upgrade to snappy 3 [#760](https://github.com/SOHU-Co/kafka-node/pull/760)
+
 ## 2017-08-31, Version 2.2.2
 * Fix issue where connections disconnected from being idle will never reinitialize when using `KafkaClient` [#752](https://github.com/SOHU-Co/kafka-node/pull/752)
 * Fix callback of producer send never being called when connection loss occurs with Broker using `KafkaClient` [#751](https://github.com/SOHU-Co/kafka-node/pull/751)
