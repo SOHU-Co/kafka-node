@@ -9,6 +9,7 @@ exports.Producer = require('./lib/producer');
 exports.Client = require('./lib/client');
 exports.KafkaClient = require('./lib/kafkaClient');
 exports.Offset = require('./lib/offset');
+exports.Admin = require('./lib/admin');
 exports.KeyedMessage = require('./lib/protocol').KeyedMessage;
 exports.DefaultPartitioner = require('./lib/partitioner').DefaultPartitioner;
 exports.CyclicPartitioner = require('./lib/partitioner').CyclicPartitioner;

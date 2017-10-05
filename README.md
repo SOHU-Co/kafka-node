@@ -29,6 +29,7 @@ Kafka-node is a Node.js client with Zookeeper integration for Apache Kafka 0.8.1
   - [ConsumerGroup](#consumergroup)
   - [ConsumerGroupStream](#consumergroupstream)
   - [Offset](#offset)
+  - [Admin](#admin)
 - [Troubleshooting / FAQ](#troubleshooting--faq)
   - [HighLevelProducer with KeyedPartitioner errors on first send](#highlevelproducer-with-keyedpartitioner-errors-on-first-send)
   - [How do I debug an issue?](#how-do-i-debug-an-issue)
@@ -84,6 +85,7 @@ New KafkaClient connects directly to Kafka brokers instead of connecting to zook
 * `autoConnect` : automatically connect when KafkaClient is instantiated otherwise you need to manually call `connect` default: `true`
 * `connectRetryOptions` : object hash that applies to the initial connection. see [retry](https://www.npmjs.com/package/retry) module for these options.
 * `idleConnection` : allows the broker to disconnect an idle connection from a client (otherwise the clients continues to reconnect after being disconnected). The value is elapsed time in ms without any data written to the TCP socket. default: 5 minutes
+* `maxAsyncRequests` : maximum async operations at a time toward the kafka cluster. default: 10
 
 ## Client
 ### Client(connectionString, clientId, [zkOptions], [noAckBatchOptions], [sslOptions])
@@ -980,6 +982,94 @@ Example
 		console.log(offsets[topic][partition]);
 	});
 ```
+
+## Admin
+
+This class provides administrative APIs can be used to monitor and administer the Kafka cluster.
+
+### Admin(kafkaClient)
+* `kafkaClient`: client which keeps a connection with the Kafka server. (**`KafkaClient` only**, `client` not supported)
+
+### listGroups(cb)
+
+List the consumer groups managed by the kafka cluster.
+
+* `cb`: **Function**, the callback
+
+Example:
+
+```js
+const client = new kafka.KafkaClient();
+const admin = new kafka.Admin(client); // client must be KafkaClient
+admin.listGroups((err, res) => {
+  console.log('consumerGroups', res);
+});
+```
+
+Result:
+
+```js
+consumerGroups { 'console-consumer-87148': 'consumer',
+  'console-consumer-2690': 'consumer',
+  'console-consumer-7439': 'consumer'
+}
+```
+
+### describeGroups(consumerGroups, cb)
+
+Fetch consumer group information from the cluster. See result for detailed information.
+
+* `consumerGroups`: **Array**, array of consumer groups (which can be gathered from `listGroups`)
+* `cb`: **Function**, the callback
+
+Example:
+
+```js
+admin.describeGroups(['console-consumer-2690'], (err, res) => {
+  console.log(JSON.stringify(res,null,1));
+})
+```
+
+Result:
+
+```json
+{
+ "console-consumer-2690": {
+  "members": [
+   {
+    "memberId": "consumer-1-20195e12-cb3b-4ba4-9076-e7da8ed0d57a",
+    "clientId": "consumer-1",
+    "clientHost": "/192.168.61.1",
+    "memberMetadata": {
+     "subscription": [
+      "twice-tt"
+     ],
+     "version": 0,
+     "userData": "JSON parse error",
+     "id": "consumer-1-20195e12-cb3b-4ba4-9076-e7da8ed0d57a"
+    },
+    "memberAssignment": {
+     "partitions": {
+      "twice-tt": [
+       0,
+       1
+      ]
+     },
+     "version": 0,
+     "userData": "JSON Parse error"
+    }
+   }
+  ],
+  "error": null,
+  "groupId": "console-consumer-2690",
+  "state": "Stable",
+  "protocolType": "consumer",
+  "protocol": "range",
+  "brokerId": "4"
+ }
+}
+```
+
 
 # Troubleshooting / FAQ
 
