@@ -365,6 +365,7 @@ consumerGroup.pipe(messageTransform).pipe(resultProducer);
 {
    topic: 'topicName',
    offset: 0, //default 0
+   partition: 0 // default 0
 }
 ```
 
