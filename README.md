@@ -87,6 +87,12 @@ New KafkaClient connects directly to Kafka brokers instead of connecting to zook
 * `idleConnection` : allows the broker to disconnect an idle connection from a client (otherwise the clients continues to reconnect after being disconnected). The value is elapsed time in ms without any data written to the TCP socket. default: 5 minutes
 * `maxAsyncRequests` : maximum async operations at a time toward the kafka cluster. default: 10
 
+### Example
+
+```javascript
+const client = new kafka.KafkaClient({kafkaHost: '10.3.100.196:9092'});
+```
+
 ## Client
 ### Client(connectionString, clientId, [zkOptions], [noAckBatchOptions], [sslOptions])
 * `connectionString`: Zookeeper connection string, default `localhost:2181/`
@@ -365,6 +371,7 @@ consumerGroup.pipe(messageTransform).pipe(resultProducer);
 {
    topic: 'topicName',
    offset: 0, //default 0
+   partition: 0 // default 0
 }
 ```
 
