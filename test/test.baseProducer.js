@@ -55,6 +55,10 @@ describe('BaseProducer', function () {
     });
 
     describe('gzip compression', function () {
+      afterEach(function () {
+        consumerGroup.on('error', function () {});
+      });
+
       it('kafkaClient', function (done) {
         const messageValue = uuid.v4();
         producer.send(
