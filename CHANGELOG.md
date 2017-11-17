@@ -1,5 +1,11 @@
 # kafka-node CHANGELOG
 
+## 2017-11-17, Version 2.3.0
+
+* Add support for `ListGroups` and `DescribeGroups` protocol. They can be used through the new [Admin](https://github.com/SOHU-Co/kafka-node#admin) interface [#770](https://github.com/SOHU-Co/kafka-node/pull/770)
+* Fixed missing callback call in `commit` method of `ConsumerGroupStream` [#776](https://github.com/SOHU-Co/kafka-node/pull/776)
+* Flush queued commits of `ConsumerGroupStream` on tail end of auto-commit time-out [#775](https://github.com/SOHU-Co/kafka-node/pull/775)
+
 ## 2017-09-11, Version 2.2.3
 * Improved recovery of `ConsumerGroup` from broker down and network issues [#758](https://github.com/SOHU-Co/kafka-node/pull/758)
 * Upgrade to snappy 3 [#760](https://github.com/SOHU-Co/kafka-node/pull/760)
