@@ -49,6 +49,66 @@ describe('Kafka Client', function () {
     });
   });
 
+  describe('#sendRequest', function () {
+    let sandbox;
+    before(function () {
+      sandbox = sinon.sandbox.create();
+    });
+
+    afterEach(function () {
+      sandbox.restore();
+    });
+
+    it('should call refreshBrokerMetadata if broker is not connected', function (done) {
+      const client = new Client({
+        autoConnect: false,
+        kafkaHost: 'localhost:9092'
+      });
+
+      const fakeSocket = new FakeSocket();
+      fakeSocket.destroyed = true;
+
+      const fakeBroker = new BrokerWrapper(fakeSocket);
+      fakeBroker.apiSupport = {};
+
+      const BrokerNotAvailableError = require('../lib/errors').BrokerNotAvailableError;
+
+      sandbox.stub(client, 'leaderByPartition').returns('1001');
+      sandbox.stub(client, 'brokerForLeader').returns(fakeBroker);
+      sandbox.stub(client, 'refreshBrokerMetadata');
+
+      const request = {
+        type: 'produce',
+        data: {
+          payloads: [
+            {
+              topic: 'test-topic',
+              partition: 0,
+              messages: [
+                {
+                  magic: 0,
+                  attributes: 0,
+                  key: 'test-key',
+                  value: 'test-message',
+                  timestamp: 1511365962702
+                }
+              ]
+            }
+          ]
+        },
+        args: [1, 100],
+        requireAcks: 1
+      };
+
+      client.sendRequest(request, function (error) {
+        sinon.assert.calledOnce(client.refreshBrokerMetadata);
+        error.should.not.be.empty;
+        error.should.be.an.instanceOf(BrokerNotAvailableError);
+        done();
+      });
+    });
+  });
+
   describe('Versions', function () {
     let client;
     before(function () {
