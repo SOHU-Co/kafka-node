@@ -9,27 +9,12 @@ var KeyedMessage = kafka.KeyedMessage;
 const _ = require('lodash');
 const assert = require('assert');
 const ConsumerGroup = kafka.ConsumerGroup;
+const sendMessage = require('./helpers/sendMessage');
 var client, producer, noAckProducer, producerKeyed;
 
 var host = process.env['KAFKA_TEST_HOST'] || '';
 
 describe('partitioner', function () {
-  function sendMessage (message, topic, done) {
-    var client = new KafkaClient({ kafkaHost: '127.0.0.1:9092' });
-    var producer = new HighLevelProducer(client, { requireAcks: 1 });
-
-    client.on('connect', function () {
-      producer.send([{ topic: topic, messages: message }], function (error) {
-        if (error) {
-          done(error);
-        } else {
-          done(null);
-        }
-        producer.close(_.noop);
-      });
-    });
-  }
-
   let topic, consumerGroup, messages;
   const createTopic = require('../docker/createTopic');
 
