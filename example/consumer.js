@@ -8,10 +8,7 @@ var argv = require('optimist').argv;
 var topic = argv.topic || 'topic1';
 
 var client = new Client('localhost:2181');
-var topics = [
-    {topic: topic, partition: 1},
-    {topic: topic, partition: 0}
-];
+var topics = [{ topic: topic, partition: 1 }, { topic: topic, partition: 0 }];
 var options = { autoCommit: false, fetchMaxWaitMs: 1000, fetchMaxBytes: 1024 * 1024 };
 
 var consumer = new Consumer(client, topics, options);
@@ -34,7 +31,7 @@ consumer.on('offsetOutOfRange', function (topic) {
     if (err) {
       return console.error(err);
     }
-    var min = Math.min(offsets[topic.topic][topic.partition]);
+    var min = Math.min.apply(null, offsets[topic.topic][topic.partition]);
     consumer.setOffset(topic.topic, topic.partition, min);
   });
 });
