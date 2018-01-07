@@ -3,12 +3,12 @@
 const sinon = require('sinon');
 const should = require('should');
 const ConsumerGroup = require('../lib/consumerGroup');
-const KafkaClient = require('../lib/kafkaClient');
-const HighLevelProducer = require('../lib/highLevelProducer');
+const sendMessage = require('./helpers/sendMessage');
+const _ = require('lodash');
 const host = process.env['KAFKA_TEST_HOST'] || '';
 const proxyquire = require('proxyquire').noCallThru();
 const EventEmitter = require('events').EventEmitter;
-const _ = require('lodash');
+
 const uuid = require('uuid');
 const async = require('async');
 const BrokerWrapper = require('../lib/wrapper/BrokerWrapper');
@@ -885,22 +885,6 @@ describe('ConsumerGroup', function () {
     sendMessage(buffer, topic, done);
 
     return buffer;
-  }
-
-  function sendMessage (message, topic, done) {
-    var client = new KafkaClient({ kafkaHost: '127.0.0.1:9092' });
-    var producer = new HighLevelProducer(client, { requireAcks: 1 });
-
-    client.on('connect', function () {
-      producer.send([{ topic: topic, messages: message, attributes: 0 }], function (error) {
-        if (error) {
-          done(error);
-        } else {
-          done(null);
-        }
-        producer.close(_.noop);
-      });
-    });
   }
 
   describe('fetchMaxBytes', function () {
