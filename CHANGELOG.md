@@ -3,6 +3,7 @@
 ## 2018-1-7, Version 2.3.1
 * Fix consumer example [#842](https://github.com/SOHU-Co/kafka-node/pull/842)
 * Fix issue where ConsumerGroupStream will autoCommit when the stream is explicitly closed [#843](https://github.com/SOHU-Co/kafka-node/pull/843)
+* Fix missing `highWaterOffset` using compression [#821](https://github.com/SOHU-Co/kafka-node/pull/821)
 * Fix Snappy buffer.from error using node 4 [#827](https://github.com/SOHU-Co/kafka-node/pull/827)
 * Fix `fromOffset` option not working in ConsumerStream [#794](https://github.com/SOHU-Co/kafka-node/pull/794)
 * Fixed issue where producer send failures failed to request refresh of the metadata [#810](https://github.com/SOHU-Co/kafka-node/pull/810)
