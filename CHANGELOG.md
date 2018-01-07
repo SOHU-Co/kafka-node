@@ -1,5 +1,13 @@
 # kafka-node CHANGELOG
 
+## 2018-1-7, Version 2.3.1
+* Fix consumer example [#842](https://github.com/SOHU-Co/kafka-node/pull/842)
+* Fix issue where ConsumerGroupStream will autoCommit when the stream is explicitly closed [#843](https://github.com/SOHU-Co/kafka-node/pull/843)
+* Fix missing `highWaterOffset` using compression [#821](https://github.com/SOHU-Co/kafka-node/pull/821)
+* Fix Snappy buffer.from error using node 4 [#827](https://github.com/SOHU-Co/kafka-node/pull/827)
+* Fix `fromOffset` option not working in ConsumerStream [#794](https://github.com/SOHU-Co/kafka-node/pull/794)
+* Fixed issue where producer send failures failed to request refresh of the metadata [#810](https://github.com/SOHU-Co/kafka-node/pull/810)
+
 ## 2017-11-17, Version 2.3.0
 
 * Add support for `ListGroups` and `DescribeGroups` protocol. They can be used through the new [Admin](https://github.com/SOHU-Co/kafka-node#admin) interface [#770](https://github.com/SOHU-Co/kafka-node/pull/770)
