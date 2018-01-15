@@ -76,7 +76,7 @@ describe('ConsumerGroupStream', function () {
             consumerGroupStream.on('readable', function () {
               const message = consumerGroupStream.read();
               message.offset.should.be.equal(lastReadOffset + 1);
-              callback(null);
+              consumerGroupStream.close(callback);
             });
           }
         ],
