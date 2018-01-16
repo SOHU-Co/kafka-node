@@ -1,5 +1,9 @@
 # kafka-node CHANGELOG
 
+## 2018-1-16, Version 2.3.2
+
+* Fix issue with `ConsumerGroupStream` where lag stays at one and resuming the consumer re-reads the last read message [#850](https://github.com/SOHU-Co/kafka-node/pull/850)
+
 ## 2018-1-7, Version 2.3.1
 * Fix consumer example [#842](https://github.com/SOHU-Co/kafka-node/pull/842)
 * Fix issue where ConsumerGroupStream will autoCommit when the stream is explicitly closed [#843](https://github.com/SOHU-Co/kafka-node/pull/843)
