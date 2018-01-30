@@ -506,6 +506,109 @@ describe('Kafka Client', function () {
     });
   });
 
+  describe('#updateMetadatas', function () {
+    let client, sandbox;
+
+    const updatedPartialMetadata = [
+      null,
+      {
+        metadata: {
+          topic1: {
+            '0': {
+              topic: 'topic1',
+              partition: 0,
+              leader: 1001
+            },
+            '1': {
+              topic: 'topic1',
+              partition: 1,
+              leader: 1001
+            },
+            '2': {
+              topic: 'topic1',
+              partition: 2,
+              leader: 1001
+            }
+          }
+        }
+      }
+    ];
+
+    beforeEach(function () {
+      sandbox = sinon.sandbox.create();
+      client = new Client({
+        connectRetryOptions: {
+          retries: 0
+        },
+        autoConnect: false,
+        kafkaHost: 'localhost:9093',
+        sslOptions: {
+          rejectUnauthorized: false
+        }
+      });
+    });
+
+    it('should extend topicMetadata by default instead of replace', function () {
+      client.topicMetadata = {
+        topic0: {
+          '0': {
+            topic: 'topic0',
+            partition: 0,
+            leader: 1001
+          }
+        },
+        topic1: {
+          '0': {
+            topic: 'topic1',
+            partition: 0,
+            leader: 1001
+          }
+        }
+      };
+      sandbox.stub(client, 'setBrokerMetadata');
+      client.updateMetadatas(updatedPartialMetadata);
+      client.topicMetadata.topic0.should.not.be.empty;
+      client.topicMetadata.topic1.should.have.property('1', {
+        topic: 'topic1',
+        partition: 1,
+        leader: 1001
+      });
+      client.topicMetadata.topic1.should.have.property('2', {
+        topic: 'topic1',
+        partition: 2,
+        leader: 1001
+      });
+      sinon.assert.calledWithExactly(client.setBrokerMetadata, null);
+    });
+
+    it('should replace if second parameter replaceTopicMetadata is true', function () {
+      client.topicMetadata = {
+        topic0: {
+          '0': {
+            topic: 'topic0',
+            partition: 0,
+            leader: 1001
+          }
+        },
+        topic1: {
+          '0': {
+            topic: 'topic1',
+            partition: 0,
+            leader: 1001
+          }
+        }
+      };
+      sandbox.stub(client, 'setBrokerMetadata');
+
+      client.topicMetadata.should.not.be.empty;
+
+      client.updateMetadatas(updatedPartialMetadata, true);
+
+      client.topicMetadata.should.not.have.property('topic0');
+      sinon.assert.calledWithExactly(client.setBrokerMetadata, null);
+    });
+  });
+
   describe('#refreshBrokerMetadata', function () {
     let sandbox, client;
 
