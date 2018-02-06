@@ -198,7 +198,7 @@ describe('Client', function () {
       var clientId = 'kafka-node-client-' + uuid.v4();
       client = new Client(host, clientId);
       client.on('error', function (error) {
-        error.message.should.be.eql('No kafka endpoint found for broker: 1001 with protocol plaintext:');
+        error.message.should.be.eql('No kafka endpoint found for broker: 1001 with protocol PLAINTEXT');
         done();
       });
 
@@ -224,7 +224,7 @@ describe('Client', function () {
       var clientId = 'kafka-node-client-' + uuid.v4();
       client = new Client(host, clientId, undefined, undefined, { rejectUnauthorized: false });
       client.on('error', function (error) {
-        error.message.should.be.eql('No kafka endpoint found for broker: 1001 with protocol ssl:');
+        error.message.should.be.eql('No kafka endpoint found for broker: 1001 with protocol SSL');
         done();
       });
 
