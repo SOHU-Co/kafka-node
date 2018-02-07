@@ -1,5 +1,9 @@
 # kafka-node CHANGELOG
 
+## 2018-02-06, Version 2.4.1
+
+* Fix issue where error callbacks for broker requests are not called when connection is closed [#863](https://github.com/SOHU-Co/kafka-node/pull/863)
+
 ## 2018-02-06, Version 2.4.0
 
 * Add compability to `Client` with broker configurations that separates external and internal traffic [#860](https://github.com/SOHU-Co/kafka-node/pull/860)

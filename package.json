@@ -14,7 +14,7 @@
     "lib"
   ],
   "bugs": "https://github.com/SOHU-co/kafka-node/issues",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "main": "kafka.js",
   "license": "MIT",
   "dependencies": {
