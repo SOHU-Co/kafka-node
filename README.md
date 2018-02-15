@@ -541,7 +541,7 @@ Similar API as `Consumer` with some exceptions. Methods like `pause` and `resume
 
 
 ## HighLevelConsumer
-⚠️ ***This consumer has been deprecated in the latest version of Kafka (0.10.1) and is likely to be removed in the future. Please use the ConsumerGroup instead.***
+⚠️ ***This consumer has been deprecated and is likely to be removed in the future. Please use the ConsumerGroup instead.***
 
 ### HighLevelConsumer(client, payloads, options)
 * `client`: client which keeps a connection with the Kafka server.
@@ -868,6 +868,13 @@ Same notes in the Notes section of [ConsumerStream](#consumerstream) applies to 
 * `consumerGroupOptions` same options to initialize a `ConsumerGroup`
 * `topics` a single or array of topics to subscribe to
 
+### commit(message, force, callback)
+This method can be used to commit manually when `autoCommit` is set to `false`.
+
+* `message` the original message or an object with `{topic, partition, offset}`
+* `force` a commit even if there's a pending commit
+* `callback` (*optional*)
+
 ### close(callback)
 Closes the `ConsumerGroup`. Calls `callback` when complete. If `autoCommit` is enabled calling close will also commit offsets consumed from the buffer.
 
@@ -913,6 +920,9 @@ var kafka = require('kafka-node'),
 ```
 
 ### commit(groupId, payloads, cb)
+
+> ⚠️**WARNING**: commits are made to zookeeper and is only compatible with `HighLevelConsumer` and will **NOT** with the new `ConsumerGroup`
+
 * `groupId`: consumer group
 * `payloads`: **Array**,array of `OffsetCommitRequest`, `OffsetCommitRequest` is a JSON object like:
 
@@ -938,6 +948,9 @@ var kafka = require('kafka-node'),
 ```
 
 ### fetchCommits(groupid, payloads, cb)
+
+> ⚠️**WARNING**: commits are from zookeeper and is only compatible with `HighLevelConsumer` and will **NOT** with the new `ConsumerGroup`
+
 Fetch the last committed offset in a topic of a specific consumer group
 
 * `groupId`: consumer group
