@@ -987,6 +987,33 @@ var kafka = require('kafka-node'),
     });
 ```
 
+### fetchCommitsV1(groupid, payloads, cb)
+
+> ⚠️**WARNING**: commits are from the broker and is only compatible with the new `ConsumerGroup` and will **NOT** with the old `HighLevelConsumer`
+
+Fetch the last committed offset in a topic of a specific consumer group
+
+* `groupId`: consumer group
+* `payloads`: **Array**,array of `OffsetFetchRequest`, `OffsetFetchRequest` is a JSON object like:
+
+``` js
+{
+   topic: 'topicName',
+   partition: 0 //default 0
+}
+```
+
+Example
+
+```js
+var kafka = require('kafka-node'),
+    client = new kafka.Client(),
+    offset = new kafka.Offset(client);
+    offset.fetchCommitsV1('groupId', [
+        { topic: 't', partition: 0 }
+    ], function (err, data) {
+    });
+```
 ### fetchLatestOffsets(topics, cb)
 
 Example
