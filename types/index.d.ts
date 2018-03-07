@@ -273,6 +273,7 @@ export interface ConsumerGroupOptions {
 
 export interface ConsumerGroupStreamOptions extends ConsumerGroupOptions {
   highWaterMark?: number;
+  treatTimeoutsAsSuccess?: boolean;
 }
 
 export interface Topic {

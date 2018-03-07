@@ -807,6 +807,7 @@ describe('ConsumerGroup', function () {
 
         sandbox.stub(consumerGroup, 'fetchOffset').yields(null, fetchOffsetResponse);
         sandbox.stub(consumerGroup, 'saveDefaultOffsets').yields(null);
+        sandbox.stub(consumerGroup, 'commit').yields(null);
 
         consumerGroup.handleSyncGroup(syncGroupResponse, function (error, ownsPartitions) {
           ownsPartitions.should.be.true;
