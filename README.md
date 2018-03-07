@@ -717,7 +717,10 @@ var options = {
   // how to recover from OutOfRangeOffset error (where save offset is past server retention) accepts same value as fromOffset
   outOfRangeOffset: 'earliest', // default
   migrateHLC: false,    // for details please see Migration section below
-  migrateRolling: true
+  migrateRolling: true,
+  // Callback to allow consumers with autoCommit false a chance to commit before a rebalance finishes
+  // isAlreadyMember will be false on the first connection, and true on rebalances triggered after that
+  onRebalance: (isAlreadyMember, callback) => { callback(); } // or null
 };
 
 var consumerGroup = new ConsumerGroup(options, ['RebalanceTopic', 'RebalanceTest']);
