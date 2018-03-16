@@ -109,118 +109,177 @@ describe('Kafka Client', function () {
     });
   });
 
-  describe('Versions', function () {
-    let client;
-    before(function () {
-      if (process.env.KAFKA_VERSION === '0.8') {
-        this.skip();
-      }
-    });
+  if (process.env.KAFKA_VERSION !== '0.8') {
+    describe('Versions', function () {
+      let client;
 
-    afterEach(function (done) {
-      client.close(done);
-    });
-
-    describe('#initializeBroker', function () {
-      it('should not call #getApiVersions if socket is longpolling', function (done) {
-        client = new Client({ kafkaHost: '127.0.0.1:9092', autoConnect: false });
-        const fakeBroker = new BrokerWrapper(new FakeSocket());
-        const apiVersionsSpy = sinon.spy(client, 'getApiVersions');
-        fakeBroker.socket.longpolling = true;
-        client.initializeBroker(fakeBroker, function (error) {
-          sinon.assert.notCalled(apiVersionsSpy);
-          done(error);
-        });
+      afterEach(function (done) {
+        client.close(done);
       });
 
-      it('should not call #getApiVersions if versions is disabled', function (done) {
-        client = new Client({ kafkaHost: '127.0.0.1:9092', autoConnect: false, versions: { disabled: true } });
-        client.options.versions.disabled.should.be.true;
-        const brokerInitSpy = sinon.spy(client, 'initializeBroker');
-        const apiVersionsSpy = sinon.spy(client, 'getApiVersions');
-        client.connect();
-        client.once('connect', function () {
-          sinon.assert.calledOnce(brokerInitSpy);
-          sinon.assert.notCalled(apiVersionsSpy);
-          brokerInitSpy.restore();
-          apiVersionsSpy.restore();
-          done();
-        });
-      });
-
-      it('should call #getApiVersions if versions is enabled', function (done) {
-        client = new Client({ kafkaHost: '127.0.0.1:9092', autoConnect: false });
-        client.options.versions.disabled.should.be.false;
-        const brokerInitSpy = sinon.spy(client, 'initializeBroker');
-        const apiVersionsSpy = sinon.spy(client, 'getApiVersions');
-        client.connect();
-        client.once('connect', function () {
-          sinon.assert.calledOnce(brokerInitSpy);
-          sinon.assert.calledOnce(apiVersionsSpy);
-          sinon.assert.callOrder(brokerInitSpy, apiVersionsSpy);
-          brokerInitSpy.restore();
-          apiVersionsSpy.restore();
-          done();
-        });
-      });
-
-      if (process.env.KAFKA_VERSION === '0.9') {
-        it('should return base support mapping', function (done) {
-          client = new Client({ kafkaHost: '127.0.0.1:9092' });
-          client.once('connect', function () {
-            const broker = client.brokerForLeader();
-            broker.isConnected().should.be.true;
-            broker.should.have.property('apiSupport');
-            broker.apiSupport.should.be.type('object');
-            _.forOwn(broker.apiSupport, function (support, api) {
-              if (support === null) {
-                return;
-              }
-              support.should.be.type('object');
-              support.should.have.keys('min', 'max', 'usable');
-            });
-            done();
+      describe('#initializeBroker', function () {
+        it('should not call #getApiVersions if socket is longpolling', function (done) {
+          client = new Client({
+            kafkaHost: '127.0.0.1:9092',
+            autoConnect: false
           });
-        });
-      }
-    });
-
-    describe('#getApiVersions', function () {
-      beforeEach(function (done) {
-        client = new Client({ kafkaHost: '127.0.0.1:9092' });
-        client.once('connect', done);
-      });
-
-      if (process.env.KAFKA_VERSION === '0.9') {
-        it('#getApiVersions failure for 0.9', function (done) {
-          client.getApiVersions(client.brokerForLeader(), function (error, results) {
-            error.should.be.an.instanceOf(TimeoutError);
-            done();
-          });
-        });
-      } else {
-        it('#getApiVersions returns results', function (done) {
-          client.getApiVersions(client.brokerForLeader(), function (error, results) {
-            should(results).not.be.empty;
-            _.forOwn(results, function (support, api) {
-              if (support === null) {
-                return;
-              }
-              support.should.have.keys('min', 'max', 'usable');
-            });
+          const fakeBroker = new BrokerWrapper(new FakeSocket());
+          const apiVersionsSpy = sinon.spy(client, 'getApiVersions');
+          fakeBroker.socket.longpolling = true;
+          client.initializeBroker(fakeBroker, function (error) {
+            sinon.assert.notCalled(apiVersionsSpy);
             done(error);
           });
         });
-      }
+
+        it('should not call #getApiVersions if versions is disabled', function (done) {
+          client = new Client({
+            kafkaHost: '127.0.0.1:9092',
+            autoConnect: false,
+            versions: {
+              disabled: true
+            }
+          });
+          client.options.versions.disabled.should.be.true;
+          const brokerInitSpy = sinon.spy(client, 'initializeBroker');
+          const apiVersionsSpy = sinon.spy(client, 'getApiVersions');
+          client.connect();
+          client.once('connect', function () {
+            sinon.assert.calledOnce(brokerInitSpy);
+            sinon.assert.notCalled(apiVersionsSpy);
+            brokerInitSpy.restore();
+            apiVersionsSpy.restore();
+            done();
+          });
+        });
+
+        it('should call #getApiVersions if versions is enabled', function (done) {
+          client = new Client({
+            kafkaHost: '127.0.0.1:9092',
+            autoConnect: false
+          });
+          client.options.versions.disabled.should.be.false;
+          const brokerInitSpy = sinon.spy(client, 'initializeBroker');
+          const apiVersionsSpy = sinon.spy(client, 'getApiVersions');
+          client.connect();
+          client.once('connect', function () {
+            sinon.assert.calledOnce(brokerInitSpy);
+            sinon.assert.calledOnce(apiVersionsSpy);
+            sinon.assert.callOrder(brokerInitSpy, apiVersionsSpy);
+            brokerInitSpy.restore();
+            apiVersionsSpy.restore();
+            done();
+          });
+        });
+
+        if (process.env.KAFKA_VERSION === '0.9') {
+          it('should return base support mapping', function (done) {
+            client = new Client({
+              kafkaHost: '127.0.0.1:9092'
+            });
+            client.once('connect', function () {
+              const broker = client.brokerForLeader();
+              broker.isConnected().should.be.true;
+              broker.should.have.property('apiSupport');
+              broker.apiSupport.should.be.type('object');
+              _.forOwn(broker.apiSupport, function (support, api) {
+                if (support === null) {
+                  return;
+                }
+                support.should.be.type('object');
+                support.should.have.keys('min', 'max', 'usable');
+              });
+              done();
+            });
+          });
+        }
+      });
+
+      describe('#getApiVersions', function () {
+        beforeEach(function (done) {
+          client = new Client({
+            kafkaHost: '127.0.0.1:9092'
+          });
+          client.once('connect', done);
+        });
+
+        if (process.env.KAFKA_VERSION === '0.9') {
+          it('#getApiVersions failure for 0.9', function (done) {
+            client.getApiVersions(client.brokerForLeader(), function (error, results) {
+              error.should.be.an.instanceOf(TimeoutError);
+              done();
+            });
+          });
+        } else {
+          it('#getApiVersions returns results', function (done) {
+            client.getApiVersions(client.brokerForLeader(), function (error, results) {
+              should(results).not.be.empty;
+              _.forOwn(results, function (support, api) {
+                if (support === null) {
+                  return;
+                }
+                support.should.have.keys('min', 'max', 'usable');
+              });
+              done(error);
+            });
+          });
+        }
+      });
     });
-  });
+
+    describe('#topicExists', function () {
+      const createTopic = require('../docker/createTopic');
+      let sandbox, client;
+
+      beforeEach(function (done) {
+        sandbox = sinon.sandbox.create();
+        client = new Client({
+          kafkaHost: 'localhost:9092'
+        });
+        client.once('ready', done);
+      });
+
+      afterEach(function (done) {
+        sandbox.restore();
+        client.close(done);
+      });
+
+      it('should not yield error when single topic exists', function (done) {
+        const topic = uuid.v4();
+
+        createTopic(topic, 1, 1).then(function () {
+          client.topicExists([topic], done);
+        });
+      });
+
+      it('should yield error when given group of topics do not exist', function (done) {
+        sandbox.spy(client, 'loadMetadataForTopics');
+        sandbox.spy(client, 'updateMetadatas');
+
+        const nonExistantTopics = _.times(3, () => uuid.v4());
+
+        client.topicExists(nonExistantTopics, function (error) {
+          error.should.be.an.instanceOf(TopicsNotExistError);
+          sinon.assert.calledOnce(client.updateMetadatas);
+          sinon.assert.calledWith(client.loadMetadataForTopics, []);
+          sinon.assert.callOrder(client.loadMetadataForTopics, client.updateMetadatas);
+          error.topics.should.be.eql(nonExistantTopics);
+          done();
+        });
+      });
+    });
+  }
 
   describe('#deleteDisconnected', function () {
     let sandbox, client, fakeBroker;
 
     before(function () {
       sandbox = sinon.sandbox.create();
-      client = new Client({ kafkaHost: '127.0.0.1:9092', autoConnect: false, requestTimeout: 4000 });
+      client = new Client({
+        kafkaHost: '127.0.0.1:9092',
+        autoConnect: false,
+        requestTimeout: 4000
+      });
       fakeBroker = new BrokerWrapper(new FakeSocket());
       fakeBroker.socket.addr = '127.0.0.1:9092';
     });
@@ -360,6 +419,7 @@ describe('Kafka Client', function () {
 
     it('should yield timeout error if not called by timeout', function (done) {
       client.options.requestTimeout = 400;
+
       function callback (error) {
         error.should.be.an.instanceOf(TimeoutError);
         error.message.should.be.exactly('Request timed out after 400ms');
@@ -462,18 +522,34 @@ describe('Kafka Client', function () {
     afterEach(function (done) {
       client.close(done);
     });
+    if (process.env.KAFKA_VERSION !== '0.8') {
+      it('should connect plaintext', function (done) {
+        client = new Client({
+          kafkaHost: 'localhost:9092'
+        });
+        client.once('error', done);
+        client.once('ready', function () {
+          client.brokerMetadata.should.not.be.empty;
+          client.ready.should.be.true;
+          done();
+        });
+      });
 
-    it('should connect plaintext', function (done) {
-      client = new Client({
-        kafkaHost: 'localhost:9092'
+      it('should connect SSL', function (done) {
+        client = new Client({
+          kafkaHost: 'localhost:9093',
+          sslOptions: {
+            rejectUnauthorized: false
+          }
+        });
+        client.once('error', done);
+        client.once('ready', function () {
+          client.ready.should.be.true;
+          client.brokerMetadata.should.not.be.empty;
+          done();
+        });
       });
-      client.once('error', done);
-      client.once('ready', function () {
-        client.brokerMetadata.should.not.be.empty;
-        client.ready.should.be.true;
-        done();
-      });
-    });
+    }
 
     it('should error when connecting to an invalid host', function (done) {
       client = new Client({
@@ -486,21 +562,6 @@ describe('Kafka Client', function () {
       client.on('error', function (error) {
         client.ready.should.be.false;
         error.code.should.be.eql('ECONNREFUSED');
-        done();
-      });
-    });
-
-    it('should connect SSL', function (done) {
-      client = new Client({
-        kafkaHost: 'localhost:9093',
-        sslOptions: {
-          rejectUnauthorized: false
-        }
-      });
-      client.once('error', done);
-      client.once('ready', function () {
-        client.ready.should.be.true;
-        client.brokerMetadata.should.not.be.empty;
         done();
       });
     });
@@ -757,48 +818,6 @@ describe('Kafka Client', function () {
       });
 
       clock.tick(10000);
-    });
-  });
-
-  describe('#topicExists', function () {
-    const createTopic = require('../docker/createTopic');
-    let sandbox, client;
-
-    beforeEach(function (done) {
-      sandbox = sinon.sandbox.create();
-      client = new Client({
-        kafkaHost: 'localhost:9092'
-      });
-      client.once('ready', done);
-    });
-
-    afterEach(function (done) {
-      sandbox.restore();
-      client.close(done);
-    });
-
-    it('should not yield error when single topic exists', function (done) {
-      const topic = uuid.v4();
-
-      createTopic(topic, 1, 1).then(function () {
-        client.topicExists([topic], done);
-      });
-    });
-
-    it('should yield error when given group of topics do not exist', function (done) {
-      sandbox.spy(client, 'loadMetadataForTopics');
-      sandbox.spy(client, 'updateMetadatas');
-
-      const nonExistantTopics = _.times(3, () => uuid.v4());
-
-      client.topicExists(nonExistantTopics, function (error) {
-        error.should.be.an.instanceOf(TopicsNotExistError);
-        sinon.assert.calledOnce(client.updateMetadatas);
-        sinon.assert.calledWith(client.loadMetadataForTopics, []);
-        sinon.assert.callOrder(client.loadMetadataForTopics, client.updateMetadatas);
-        error.topics.should.be.eql(nonExistantTopics);
-        done();
-      });
     });
   });
 });
