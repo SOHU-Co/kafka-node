@@ -865,6 +865,21 @@ For case 2 setting `migrateRolling` to `true` will allow the ConsumerGroup to st
 * Should never overwrite existing offsets
 * Only offsets for Topics that were once in the highLevelConsumer will be migrated over offsets for new topics will follow the `fromOffset` setting
 
+### close(force, cb)
+* `force`: **Boolean**, if set to true, it forces the consumer group to commit the current offset before closing, default `false`
+
+Example
+
+```js
+consumer.close(true, cb);
+consumer.close(cb); //force is disabled
+```
+
+If an error is returned by this call, then the commit operation failed and the consumer is not closed.
+
+Closing will wait until remaining calls complete with the client.
+
+
 ## ConsumerGroupStream
 
 The `ConsumerGroup` wrapped with a `Readable` stream interface. Read more about consuming `Readable` streams [here](https://nodejs.org/dist/v8.1.3/docs/api/stream.html#stream_readable_streams).
