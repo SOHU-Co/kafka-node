@@ -1055,7 +1055,9 @@ describe('ConsumerGroup', function () {
     let topic, newTopic, testMessage, consumerGroup;
 
     before('create the topics', done => {
-      [topic, newTopic, testMessage] = Array.from({length: 3}).map(val => uuid.v4());
+      topic = uuid.v4();
+      newTopic = uuid.v4();
+      testMessage = uuid.v4();
       consumerGroup = new ConsumerGroup({
         kafkaHost: host + ':9092',
         groupId: uuid.v4()
