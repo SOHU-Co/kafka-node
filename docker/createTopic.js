@@ -10,6 +10,7 @@ function createTopic (topicName, partitions, replicas) {
   const topic = `${topicName}:${partitions}:${replicas}`;
   const createResult = execa('docker-compose', [
     'exec',
+    '-T',
     'kafka',
     'bash',
     '-c',
