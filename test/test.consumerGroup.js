@@ -1050,4 +1050,53 @@ describe('ConsumerGroup', function () {
 
     async.series([addMessages, confirmMessages, confirmMessages], done);
   });
+
+  describe('#addTopics', function () {
+    let topic, newTopic, testMessage, consumerGroup;
+
+    before('create the topics', done => {
+      topic = uuid.v4();
+      newTopic = uuid.v4();
+      testMessage = uuid.v4();
+      consumerGroup = new ConsumerGroup({
+        kafkaHost: host + ':9092',
+        groupId: uuid.v4()
+      }, topic);
+      consumerGroup.once('connect', () => {
+        consumerGroup.client.createTopics([topic, newTopic], done);
+      });
+    });
+
+    after('close consumer group', done => {
+      consumerGroup.close(done);
+    });
+
+    it('should fetch messages from the topic added', done => {
+      let messages = [];
+      consumerGroup.on('message', message => {
+        messages.push(message);
+        if (messages.length === 2) {
+          messages.should.containDeep([
+            {
+              topic: topic,
+              value: testMessage
+            },
+            {
+              topic: newTopic,
+              value: testMessage
+            }
+          ]);
+          done();
+        }
+      });
+      consumerGroup.addTopics([newTopic], (error, result) => {
+        should(error).be.null;
+        result.should.be.eql(`Add Topics ${newTopic} Successfully`);
+        consumerGroup.once('connect', () => {
+          sendMessage(testMessage, topic, () => {});
+          sendMessage(testMessage, newTopic, () => {});
+        });
+      });
+    });
+  });
 });
