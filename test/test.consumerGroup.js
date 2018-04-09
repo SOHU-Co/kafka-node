@@ -1067,6 +1067,10 @@ describe('ConsumerGroup', function () {
       });
     });
 
+    after('close consumer group', done => {
+      consumerGroup.close(done);
+    });
+
     it('should fetch messages from the topic added', done => {
       let messages = [];
       consumerGroup.on('message', message => {
