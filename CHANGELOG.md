@@ -1,5 +1,13 @@
 # kafka-node CHANGELOG
 
+## 2018-04-09, Version 2.5.0
+* Explicitly cast key to string in hashCode function for `KeyedPartitioner` [#870](https://github.com/SOHU-Co/kafka-node/pull/870)
+* For consumer fetch loop we now clear `socket.waiting` before invoking callbacks [#819](https://github.com/SOHU-Co/kafka-node/pull/819)
+* Add Support for IPv6 [#818](https://github.com/SOHU-Co/kafka-node/pull/818)
+* Clear internal topicPayload array if no topic partitions are assigned to the `ConsumerGroup` [#888](https://github.com/SOHU-Co/kafka-node/pull/888)
+* Fix Stale Commit Queue for `ConsumerGroupStream` [#891](https://github.com/SOHU-Co/kafka-node/pull/891)
+* For rebalance case `ConsumerGroup` will try to commit before joining a group. Added `onRebalance` callback for manual commit users [#889](https://github.com/SOHU-Co/kafka-node/pull/889)
+
 ## 2018-02-06, Version 2.4.1
 
 * Fix issue where error callbacks for broker requests are not called when connection is closed [#863](https://github.com/SOHU-Co/kafka-node/pull/863)
