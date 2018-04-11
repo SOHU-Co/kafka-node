@@ -55,6 +55,9 @@ Kafka-node is a Node.js client with Zookeeper integration for Apache Kafka 0.8.1
 * SSL connections to brokers (Kafka 0.9+)
 * Consumer Groups managed by Kafka coordinator (Kafka 0.9+)
 * Connect directly to brokers (Kafka 0.9+)
+* Administrative APIs
+	* List Groups
+	* Describe Groups
 
 # Install Kafka
 Follow the [instructions](http://kafka.apache.org/documentation.html#quickstart) on the Kafka wiki to build Kafka 0.8 and get a test broker up and running.
