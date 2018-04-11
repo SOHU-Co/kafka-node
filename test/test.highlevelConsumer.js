@@ -430,6 +430,36 @@ describe('HighLevelConsumer', function () {
     });
   });
 
+  describe('#fetch', function () {
+    let client, highLevelConsumer, sandbox;
+    beforeEach(function () {
+      client = new FakeClient();
+
+      highLevelConsumer = new HighLevelConsumer(client, [{ topic: 'fake-topic' }]);
+
+      sandbox = sinon.sandbox.create();
+    });
+
+    afterEach(function () {
+      highLevelConsumer.close(function () {});
+      sandbox.restore();
+      client = null;
+      highLevelConsumer = null;
+    });
+
+    it('should not send fetch request when closing', function () {
+      const fetchStub = sandbox.stub(client, 'sendFetchRequest');
+      highLevelConsumer.ready = true;
+      highLevelConsumer.closing = true;
+      highLevelConsumer.fetch();
+      sinon.assert.notCalled(fetchStub);
+
+      highLevelConsumer.closing = false;
+      highLevelConsumer.fetch();
+      sinon.assert.calledOnce(fetchStub);
+    });
+  });
+
   describe('rebalance', function () {
     var client,
       highLevelConsumer,
