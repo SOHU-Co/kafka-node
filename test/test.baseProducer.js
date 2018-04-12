@@ -61,13 +61,15 @@ describe('BaseProducer', function () {
 
       it('kafkaClient', function (done) {
         const messageValue = uuid.v4();
+        const time = Date.now();
         producer.send(
           [
             {
               topic: topic,
               messages: messageValue,
               key: 'myKeyIsHere',
-              attributes: 1
+              attributes: 1,
+              timestamp: time
             }
           ],
           function (error) {
@@ -81,6 +83,9 @@ describe('BaseProducer', function () {
           console.log(message);
           message.key.should.be.exactly('myKeyIsHere');
           message.value.should.be.exactly(messageValue);
+          if (process.env.KAFKA_VERSION !== '0.8') {
+            should(message.timestamp.getTime()).be.exactly(time);
+          }
           done();
         });
       });
