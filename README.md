@@ -717,7 +717,7 @@ var options = {
   // Offsets to use for new groups other options could be 'earliest' or 'none' (none will emit an error if no offsets were saved)
   // equivalent to Java client's auto.offset.reset
   fromOffset: 'latest', // default
-
+  commitOffsetsOnFirstJoin: true, // on the very first time this consumer group subscribes to a topic, record the offset returned in fromOffset (latest/earliest)
   // how to recover from OutOfRangeOffset error (where save offset is past server retention) accepts same value as fromOffset
   outOfRangeOffset: 'earliest', // default
   migrateHLC: false,    // for details please see Migration section below
