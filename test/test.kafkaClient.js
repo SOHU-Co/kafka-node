@@ -712,6 +712,22 @@ describe('Kafka Client', function () {
       sinon.assert.notCalled(client.updateMetadatas);
       sinon.assert.notCalled(client.refreshBrokers);
     });
+
+    it('should not perform refreshBrokerMetadata if consumer is closing', function () {
+      sandbox.stub(client, 'getAvailableBroker');
+      sandbox.stub(client, 'loadMetadataFrom');
+      sandbox.stub(client, 'updateMetadatas');
+      sandbox.stub(client, 'refreshBrokers');
+      client.closing = true;
+
+      client.refreshBrokerMetadata();
+
+      client.closing.should.be.true;
+      sinon.assert.notCalled(client.getAvailableBroker);
+      sinon.assert.notCalled(client.loadMetadataFrom);
+      sinon.assert.notCalled(client.updateMetadatas);
+      sinon.assert.notCalled(client.refreshBrokers);
+    });
   });
 
   describe('Verify Timeout', function () {
