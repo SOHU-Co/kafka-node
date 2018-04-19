@@ -45,6 +45,7 @@ describe('ConsumerGroupStream', function () {
           },
 
           function (callback) {
+            callback = _.once(callback);
             const messagesToRead = _.clone(messages);
             consumerGroupStream = createConsumerGroupStream(topic, { autoCommit: true, groupId: groupId });
             consumerGroupStream.on('data', function (message) {
