@@ -512,9 +512,9 @@ describe('Consumer', function () {
         });
 
         describe('#pauseTopics|resumeTopics', function () {
-          const now = Date.now();
-          const topic1 = `_test_topic_1_${now}`;
-          const topic2 = `_test_topic_2_${now}`;
+          const suffix = uuid.v4();
+          const topic1 = `_test_topic_1_${suffix}`;
+          const topic2 = `_test_topic_2_${suffix}`;
 
           const createTopic = require('../docker/createTopic');
 
