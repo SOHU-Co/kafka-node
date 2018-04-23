@@ -23,7 +23,7 @@ function createConsumerGroupStream (topic, overrides) {
   return new ConsumerGroupStream(consumerOptions, topic);
 }
 
-describe('ConsumerGroupStream', function () {
+describe.only('ConsumerGroupStream', function () {
   let topic, groupId;
 
   beforeEach(function () {
