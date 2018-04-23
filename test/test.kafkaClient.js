@@ -502,6 +502,9 @@ describe('Kafka Client', function () {
           mechanism: 'plain',
           username: 'kafkanode',
           password: 'kafkanode'
+        },
+        connectRetryOptions: {
+          retries: 0
         }
       });
       client.once('error', done);
@@ -509,6 +512,32 @@ describe('Kafka Client', function () {
         client.ready.should.be.true;
         client.brokerMetadata.should.not.be.empty;
         done();
+      });
+    });
+
+    it('should not connect SASL/PLAIN with bad credentials', function (done) {
+      client = new Client({
+        kafkaHost: 'localhost:9094',
+        sasl: {
+          mechanism: 'plain',
+          username: 'kafkanode',
+          password: 'badpasswd'
+        },
+        connectRetryOptions: {
+          retries: 0
+        }
+      });
+      client.once('error', function (err) {
+        // we expect a SaslAuthenticationError with code 58
+        if (err.errorCode !== 58) {
+          done(err);
+          return;
+        }
+        done();
+      });
+      client.once('ready', function () {
+        var err = new Error('expected error!');
+        done(err);
       });
     });
   });
