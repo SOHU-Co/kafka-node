@@ -494,6 +494,23 @@ describe('Kafka Client', function () {
         done();
       });
     });
+
+    it('should connect SASL/PLAIN', function (done) {
+      client = new Client({
+        kafkaHost: 'localhost:9094',
+        sasl: {
+          mechanism: 'plain',
+          username: 'kafkanode',
+          password: 'kafkanode'
+        }
+      });
+      client.once('error', done);
+      client.once('ready', function () {
+        client.ready.should.be.true;
+        client.brokerMetadata.should.not.be.empty;
+        done();
+      });
+    });
   });
 
   describe('#updateMetadatas', function () {
