@@ -497,6 +497,17 @@ describe('Kafka Client', function () {
     });
 
     describe('using SASL authentication', function () {
+      before(function () {
+        // these tests should not run again Kafka 0.8 & 0.9
+        const supportsSaslPlain =
+          !process.env.KAFKA_VERSION ||
+          (process.env.KAFKA_VERSION !== '0.8' &&
+           process.env.KAFKA_VERSION !== '0.9');
+        if (!supportsSaslPlain) {
+          this.skip();
+        }
+      });
+
       it('should connect SASL/PLAIN', function (done) {
         client = new Client({
           kafkaHost: 'localhost:9094',
