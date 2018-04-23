@@ -470,7 +470,7 @@ describe('Kafka Client', function () {
         connectRetryOptions: {
           retries: 0
         },
-        kafkaHost: 'localhost:9094'
+        kafkaHost: 'localhost:9095'
       });
 
       client.on('error', function (error) {
