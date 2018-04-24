@@ -15,18 +15,13 @@ services:
     environment:
       KAFKA_ADVERTISED_HOST_NAME: ${KAFKA_ADVERTISED_HOST_NAME}
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_LISTENERS: "PLAINTEXT://:9092,SSL://:9093,SASL_PLAINTEXT://:9094"
-      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://${KAFKA_ADVERTISED_HOST_NAME}:9092,SSL://${KAFKA_ADVERTISED_HOST_NAME}:9093,SASL_PLAINTEXT://${KAFKA_ADVERTISED_HOST_NAME}:9094"
+      KAFKA_LISTENERS: "PLAINTEXT://:9092,SSL://:9093"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://${KAFKA_ADVERTISED_HOST_NAME}:9092,SSL://${KAFKA_ADVERTISED_HOST_NAME}:9093"
       KAFKA_SSL_KEYSTORE_LOCATION: "/var/private/ssl/certs/server.keystore.jks"
       KAFKA_SSL_KEYSTORE_PASSWORD: "password"
       KAFKA_SSL_KEY_PASSWORD: "password"
       KAFKA_SSL_TRUSTSTORE_LOCATION: "/var/private/ssl/certs/server.truststore.jks"
       KAFKA_SSL_TRUSTSTORE_PASSWORD: "password"
-      KAFKA_SASL_ENABLED_MECHANISMS: "PLAIN"
-      KAFKA_SECURITY_INTER_BROKER_PROTOCOL: "PLAINTEXT"
-      KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "true"
-      KAFKA_SUPER_USERS: "User:admin,User:broker"
-      KAFKA_OPTS: "-Djava.security.auth.login.config=/var/private/sasl/sasl.conf"
       KAFKA_CREATE_TOPICS: "DuplicateMessageTest:1:1,RebalanceTopic:3:1,ExampleTopic:1:1,RebalanceTest:1:1"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
