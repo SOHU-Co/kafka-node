@@ -1,5 +1,17 @@
 #!/bin/bash
 
+#
+# FIXME KAFKA_OPTS with the SASL config causes a 'bad substitution' error in
+# the sed commands below. Only seems to impact the 1.x images, not entirely
+# sure why.
+#
+# Swapping KAFKA_OPTS out temporarily lets us work around the issue.
+#
+if [[ -n "$KAFKA_OPTS" ]]; then
+    TEMP_KAFKA_OPTS="$KAFKA_OPTS"
+    unset KAFKA_OPTS
+fi
+
 if [[ -z "$KAFKA_PORT" ]]; then
     export KAFKA_PORT=9092
 fi
@@ -59,4 +71,4 @@ if [[ -n "$CUSTOM_INIT_SCRIPT" ]] ; then
 fi
 
 create-topics.sh &
-exec $KAFKA_HOME/bin/kafka-server-start.sh $KAFKA_HOME/config/server.properties
+KAFKA_OPTS="$TEMP_KAFKA_OPTS" exec $KAFKA_HOME/bin/kafka-server-start.sh $KAFKA_HOME/config/server.properties
