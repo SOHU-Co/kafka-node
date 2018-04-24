@@ -79,6 +79,13 @@ describe('Partitioner', function () {
         partitions[0].should.equal(1);
         partitions[1].should.equal(0);
       });
+
+      it('should return partitions based on a given buffer', function () {
+        var partitions = [partitioner.getPartition([0, 1, 2], Buffer.from([5, 4, 3, 2])), partitioner.getPartition([0, 1, 2], Buffer.from([3, 2, 1, 0]))];
+        partitions.should.have.length(2);
+        partitions[0].should.equal(2);
+        partitions[1].should.equal(0);
+      });
     });
   });
 

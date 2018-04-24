@@ -145,7 +145,7 @@ var kafka = require('kafka-node'),
 {
    topic: 'topicName',
    messages: ['message body'], // multi messages should be a array, single message can be just a string or a KeyedMessage instance
-   key: 'theKey', // only needed when using keyed partitioner
+   key: 'theKey', // string or buffer, only needed when using keyed partitioner
    partition: 0, // default 0
    attributes: 2, // default: 0
    timestamp: Date.now() // <-- defaults to Date.now() (only available with kafka v0.10 and KafkaClient only)
@@ -242,7 +242,7 @@ var kafka = require('kafka-node'),
 {
    topic: 'topicName',
    messages: ['message body'], // multi messages should be a array, single message can be just a string,
-   key: 'theKey', // only needed when using keyed partitioner
+   key: 'theKey', // string or buffer, only needed when using keyed partitioner
    attributes: 1,
    timestamp: Date.now() // <-- defaults to Date.now() (only available with kafka v0.10 and KafkaClient only)
 }
