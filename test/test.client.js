@@ -332,10 +332,7 @@ describe('Client', function () {
 
       sinon.spy(client, 'setupBrokerProfiles');
       sinon.stub(client, 'createBroker').returns({
-        socket: {
-          close: function () {},
-          end: function () {}
-        }
+        socket: new FakeSocket()
       });
 
       zk.emit('init', brokers);
