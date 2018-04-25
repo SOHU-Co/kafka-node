@@ -540,7 +540,7 @@ describe('Kafka Client', function () {
             retries: 0
           }
         });
-        client.once('auth_error', function (err) {
+        client.once('auth_error', function () {
           done();
         });
         client.once('ready', function () {
