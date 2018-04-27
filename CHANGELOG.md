@@ -1,5 +1,8 @@
 # kafka-node CHANGELOG
 
+## 2018-04-27, Version 2.6.1
+* Fix issue where duplicate messages are received when connecting to multiple brokers (restored dedicated consumer socket) [#956](https://github.com/SOHU-Co/kafka-node/pull/956)
+
 ## 2018-04-24, Version 2.6.0
 * Fix issue during the initial connection phase can end prematurely when metadata request failed [#920](https://github.com/SOHU-Co/kafka-node/pull/920)
 * Add `addTopics` method to the `ConsumerGroup` [#914](https://github.com/SOHU-Co/kafka-node/pull/914)
