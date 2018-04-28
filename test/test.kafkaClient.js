@@ -898,7 +898,7 @@ describe('Kafka Client', function () {
         should.not.exist(error);
         result.should.have.length(1);
         result[0].topic.should.be.exactly(topic);
-        result[0].error.should.be.exactly('Replication factor: 2 larger than available brokers: 1.');
+        result[0].error.toLowerCase().should.startWith('replication factor: 2 larger than available brokers: 1');
         done();
       });
     });
