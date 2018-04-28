@@ -839,4 +839,68 @@ describe('Kafka Client', function () {
       });
     });
   });
+
+  describe('#createTopicsV2', function () {
+    let sandbox, client;
+
+    beforeEach(function (done) {
+      sandbox = sinon.sandbox.create();
+      client = new Client({
+        kafkaHost: 'localhost:9092'
+      });
+      client.once('ready', done);
+    });
+
+    afterEach(function (done) {
+      sandbox.restore();
+      client.close(done);
+    });
+
+    it('should create given topics', function (done) {
+      const topic1 = uuid.v4();
+      const topic1ReplicationFactor = 1;
+      const topic1Partitions = 5;
+      const topic2 = uuid.v4();
+      const topic2ReplicationFactor = 1;
+      const topic2Partitions = 1;
+
+      client.createTopicsV2([
+        {
+          topic: topic1,
+          partitions: topic1Partitions,
+          replicationFactor: topic1ReplicationFactor
+        },
+        {
+          topic: topic2,
+          partitions: topic2Partitions,
+          replicationFactor: topic2ReplicationFactor
+        }
+      ], (error, result) => {
+        should.not.exist(error);
+        result.should.be.empty;
+        done();
+      });
+    });
+
+    it('should return topic creation errors', function (done) {
+      const topic = uuid.v4();
+      // Only 1 broker is available under test, so a replication factor > 1 is not possible
+      const topicReplicationFactor = 2;
+      const topicPartitions = 5;
+
+      client.createTopicsV2([
+        {
+          topic: topic,
+          partitions: topicPartitions,
+          replicationFactor: topicReplicationFactor
+        }
+      ], (error, result) => {
+        should.not.exist(error);
+        result.should.have.length(1);
+        result[0].topic.should.be.exactly(topic);
+        result[0].error.should.be.exactly('Replication factor: 2 larger than available brokers: 1.');
+        done();
+      });
+    });
+  });
 });
