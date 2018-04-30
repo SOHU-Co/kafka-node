@@ -149,8 +149,8 @@ export interface ConsumerOptions {
   fetchMinBytes?: number;
   fetchMaxBytes?: number;
   fromOffset?: boolean;
-  encoding?: string;
-  keyEncoding?: string;
+  encoding?: 'buffer' | 'utf8';
+  keyEncoding?: 'buffer' | 'utf8';
 }
 
 export interface HighLevelConsumerOptions extends ConsumerOptions {
@@ -176,6 +176,8 @@ export interface ConsumerGroupOptions {
   id?: string;
   groupId: string;
   sessionTimeout?: number;
+  encoding?: 'buffer' | 'utf8';
+  keyEncoding?: 'buffer' | 'utf8';
   protocol?: Array<"roundrobin" | "range" | CustomPartitionAssignmentProtocol>;
   fromOffset?: "earliest" | "latest" | "none";
   outOfRangeOffset?: "earliest" | "latest" | "none";
