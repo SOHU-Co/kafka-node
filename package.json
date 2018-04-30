@@ -68,7 +68,7 @@
     "url": "https://github.com/SOHU-Co/kafka-node.git"
   },
   "scripts": {
-    "test": "eslint . && ./run-tests.sh && nsp check",
+    "test": "eslint . && tsc --project types && ./run-tests.sh && nsp check",
     "startDocker": "./start-docker.sh",
     "stopDocker": "docker-compose down",
     "updateToc": "doctoc README.md --maxlevel 2 --notitle"
