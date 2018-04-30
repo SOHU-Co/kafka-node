@@ -41,8 +41,8 @@ export class Consumer {
   resume(): void;
   pauseTopics(topics: any[] /* Array<string|Topic> */): void;
   resumeTopics(topics: any[] /* Array<string|Topic> */): void;
-  close(force: boolean, cb: () => any): void;
-  close(cb: () => any): void;
+  close(force: boolean, cb: (error: Error) => any): void;
+  close(cb: (error: Error) => any): void;
 }
 
 export class HighLevelConsumer {
@@ -59,7 +59,7 @@ export class HighLevelConsumer {
   setOffset(topic: string, partition: number, offset: number): void;
   pause(): void;
   resume(): void;
-  close(force: boolean, cb: (error: any) => any): void;
+  close(force: boolean, cb: () => any): void;
   close(cb: () => any): void;
 }
 
@@ -68,6 +68,8 @@ export class ConsumerGroup extends HighLevelConsumer {
   generationId: number;
   memberId: string;
   client: KafkaClient & Client;
+  close(force: boolean, cb: (error: Error) => any): void;
+  close(cb: (error: Error) => any): void;
 }
 
 export class Offset {
