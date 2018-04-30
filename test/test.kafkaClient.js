@@ -844,6 +844,10 @@ describe('Kafka Client', function () {
     let sandbox, client;
 
     beforeEach(function (done) {
+      if (process.env.KAFKA_VERSION === '0.9') {
+        this.skip();
+      }
+
       sandbox = sinon.sandbox.create();
       client = new Client({
         kafkaHost: 'localhost:9092'
