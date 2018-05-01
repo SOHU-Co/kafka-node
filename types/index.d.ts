@@ -1,3 +1,5 @@
+import { Writable } from 'stream';
+
 export class Client {
   constructor(connectionString: string, clientId?: string, options?: ZKOptions, noBatchOptions?: AckBatchOptions, sslOptions?: any);
   close(cb?: () => void): void;
@@ -87,6 +89,14 @@ export class KeyedMessage {
   constructor(key: string, value: string | Buffer);
 }
 
+export class ProducerStream extends Writable {
+  constructor(options?: ProducerStreamOptions);
+  sendPayload(payloads: ProduceRequest[], cb: (error: any, data: any) => any): void;
+  close(cb?: () => any): void;
+  _write(message: ProduceRequest, encoding: 'buffer' | 'utf8', cb: (error: any, data: any) => any): void;
+  _writev(chunks: Chunk[], cb: (error: any, data: any) => any): void;
+}
+
 // # Interfaces
 
 export interface Message {
@@ -112,6 +122,12 @@ export interface KafkaClientOptions {
   connectRetryOptions?: RetryOptions;
   sslOptions?: any;
   clientId?: string;
+}
+
+export interface ProducerStreamOptions {
+  kafkaClient?: KafkaClientOptions;
+  producer?: ProducerOptions;
+  highWaterMark?: number;
 }
 
 export interface RetryOptions {
@@ -221,6 +237,10 @@ export interface OffsetFetchRequest {
   topic: string;
   partition?: number;
   offset?: number;
+}
+
+export interface Chunk {
+  chunk: ProduceRequest;
 }
 
 export class TopicsNotExistError extends Error {
