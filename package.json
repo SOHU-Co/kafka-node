@@ -11,11 +11,13 @@
   "files": [
     "kafka.js",
     "logging.js",
-    "lib"
+    "lib",
+    "types"
   ],
   "bugs": "https://github.com/SOHU-co/kafka-node/issues",
   "version": "2.6.1",
   "main": "kafka.js",
+  "types": "types/index.d.ts",
   "license": "MIT",
   "dependencies": {
     "async": "^2.5.0",
@@ -39,16 +41,17 @@
     "snappy": "^6.0.1"
   },
   "devDependencies": {
+    "@types/node": "^10.0.0",
     "coveralls": "^2.11.12",
     "doctoc": "^1.2.0",
     "eslint": "^3.17.1",
     "eslint-config-semistandard": "^11.0.0",
     "eslint-config-standard": "^10.2.1",
     "eslint-plugin-dependencies": "^2.2.0",
-    "eslint-plugin-promise": "^3.4.0",
-    "eslint-plugin-standard": "^3.0.1",
     "eslint-plugin-import": "^2.2.0",
     "eslint-plugin-node": "^4.2.2",
+    "eslint-plugin-promise": "^3.4.0",
+    "eslint-plugin-standard": "^3.0.1",
     "execa": "^0.6.1",
     "istanbul": "^0.4.4",
     "mocha": "^3.1.0",
@@ -57,14 +60,15 @@
     "proxyquire": "^1.7.10",
     "should": "^6.0.0",
     "sinon": "^2.0.0",
-    "through2": "^2.0.3"
+    "through2": "^2.0.3",
+    "typescript": "^2.8.3"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/SOHU-Co/kafka-node.git"
   },
   "scripts": {
-    "test": "eslint . && ./run-tests.sh && nsp check",
+    "test": "eslint . && tsc --project types && ./run-tests.sh && nsp check",
     "startDocker": "./start-docker.sh",
     "stopDocker": "docker-compose down",
     "updateToc": "doctoc README.md --maxlevel 2 --notitle"
