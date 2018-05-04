@@ -61,6 +61,8 @@
     "should": "^6.0.0",
     "sinon": "^2.0.0",
     "through2": "^2.0.3",
+    "tslint": "^5.10.0",
+    "tslint-config-semistandard": "^7.0.0",
     "typescript": "^2.8.3"
   },
   "repository": {
@@ -68,7 +70,8 @@
     "url": "https://github.com/SOHU-Co/kafka-node.git"
   },
   "scripts": {
-    "test": "eslint . && tsc --project types && ./run-tests.sh && nsp check",
+    "test:ts": "tslint --project ./types/tsconfig.json --config ./types/tslint.json && tsc --project types",
+    "test": "eslint . && npm run test:ts && ./run-tests.sh && nsp check",
     "startDocker": "./start-docker.sh",
     "stopDocker": "docker-compose down",
     "updateToc": "doctoc README.md --maxlevel 2 --notitle"
