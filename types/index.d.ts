@@ -1,100 +1,143 @@
 import { Writable } from 'stream';
 
 export class Client {
-  constructor(connectionString: string, clientId?: string, options?: ZKOptions, noBatchOptions?: AckBatchOptions, sslOptions?: any);
-  close(cb?: () => void): void;
-  topicExists(topics: string[], cb: (error?: TopicsNotExistError | any) => any): void;
-  refreshMetadata(topics: string[], cb?: (error?: any) => any): void;
-  sendOffsetCommitV2Request(group: string, generationId: number, memberId: string, commits: OffsetCommitRequest[], cb: (error: any, data: any) => any): void;
+  constructor (connectionString: string, clientId?: string, options?: ZKOptions, noBatchOptions?: AckBatchOptions, sslOptions?: any);
+
+  close (cb?: () => void): void;
+
+  topicExists (topics: string[], cb: (error?: TopicsNotExistError | any) => any): void;
+
+  refreshMetadata (topics: string[], cb?: (error?: any) => any): void;
+
+  sendOffsetCommitV2Request (group: string, generationId: number, memberId: string, commits: OffsetCommitRequest[], cb: (error: any, data: any) => any): void;
+
   // Note: socket_error is currently KafkaClient only, and zkReconnect is currently Client only.
-  on(eventName: "brokersChanged" | "close" | "connect" | "ready" | "reconnect" | "zkReconnect", cb: () => any): this;
-  on(eventName: "error" | "socket_error", cb: (error: any) => any): this;
+  on (eventName: 'brokersChanged' | 'close' | 'connect' | 'ready' | 'reconnect' | 'zkReconnect', cb: () => any): this;
+  on (eventName: 'error' | 'socket_error', cb: (error: any) => any): this;
 }
 
 export class KafkaClient extends Client {
-  constructor(options?: KafkaClientOptions);
-  connect(): void;
+  constructor (options?: KafkaClientOptions);
+
+  connect (): void;
 }
 
 export class Producer {
-  constructor(client: Client, options?: ProducerOptions, customPartitioner?: CustomPartitioner);
-  on(eventName: "ready", cb: () => any): void;
-  on(eventName: "error", cb: (error: any) => any): void;
-  send(payloads: ProduceRequest[], cb: (error: any, data: any) => any): void;
-  createTopics(topics: string[], async: boolean, cb: (error: any, data: any) => any): void;
-  createTopics(topics: string[], cb: (error: any, data: any) => any): void;
-  close(cb?: () => any): void;
+  constructor (client: Client, options?: ProducerOptions, customPartitioner?: CustomPartitioner);
+
+  on (eventName: 'ready', cb: () => any): void;
+  on (eventName: 'error', cb: (error: any) => any): void;
+
+  send (payloads: ProduceRequest[], cb: (error: any, data: any) => any): void;
+
+  createTopics (topics: string[], async: boolean, cb: (error: any, data: any) => any): void;
+  createTopics (topics: string[], cb: (error: any, data: any) => any): void;
+
+  close (cb?: () => any): void;
 }
 
 export class HighLevelProducer extends Producer {
 }
 
 export class Consumer {
-  constructor(client: Client, fetchRequests: Array<OffsetFetchRequest | string>, options: ConsumerOptions);
   client: Client;
-  on(eventName: "message", cb: (message: Message) => any): void;
-  on(eventName: "error" | "offsetOutOfRange", cb: (error: any) => any): void;
-  addTopics(topics: string[] | Topic[], cb: (error: any, added: string[] | Topic[]) => any, fromOffset?: boolean): void;
-  removeTopics(topics: string | string[], cb: (error: any, removed: number) => any): void;
-  commit(cb: (error: any, data: any) => any): void;
-  commit(force: boolean, cb: (error: any, data: any) => any): void;
-  setOffset(topic: string, partition: number, offset: number): void;
-  pause(): void;
-  resume(): void;
-  pauseTopics(topics: any[] /* Array<string|Topic> */): void;
-  resumeTopics(topics: any[] /* Array<string|Topic> */): void;
-  close(force: boolean, cb: (error: Error) => any): void;
-  close(cb: (error: Error) => any): void;
+
+  constructor (client: Client, fetchRequests: Array<OffsetFetchRequest | string>, options: ConsumerOptions);
+
+  on (eventName: 'message', cb: (message: Message) => any): void;
+  on (eventName: 'error' | 'offsetOutOfRange', cb: (error: any) => any): void;
+
+  addTopics (topics: string[] | Topic[], cb: (error: any, added: string[] | Topic[]) => any, fromOffset?: boolean): void;
+
+  removeTopics (topics: string | string[], cb: (error: any, removed: number) => any): void;
+
+  commit (cb: (error: any, data: any) => any): void;
+  commit (force: boolean, cb: (error: any, data: any) => any): void;
+
+  setOffset (topic: string, partition: number, offset: number): void;
+
+  pause (): void;
+
+  resume (): void;
+
+  pauseTopics (topics: any[] /* Array<string|Topic> */): void;
+
+  resumeTopics (topics: any[] /* Array<string|Topic> */): void;
+
+  close (force: boolean, cb: (error: Error) => any): void;
+  close (cb: (error: Error) => any): void;
 }
 
 export class HighLevelConsumer {
-  constructor(client: Client, payloads: Topic[], options: HighLevelConsumerOptions);
   client: Client;
-  on(eventName: "message", cb: (message: Message) => any): void;
-  on(eventName: "error" | "offsetOutOfRange", cb: (error: any) => any): void;
-  on(eventName: "rebalancing" | "rebalanced", cb: () => any): void;
-  addTopics(topics: string[] | Topic[], cb?: (error: any, added: string[] | Topic[]) => any): void;
-  removeTopics(topics: string | string[], cb: (error: any, removed: number) => any): void;
-  commit(cb: (error: any, data: any) => any): void;
-  commit(force: boolean, cb: (error: any, data: any) => any): void;
-  sendOffsetCommitRequest(commits: OffsetCommitRequest[], cb: (error: any, data: any) => any): void;
-  setOffset(topic: string, partition: number, offset: number): void;
-  pause(): void;
-  resume(): void;
-  close(force: boolean, cb: () => any): void;
-  close(cb: () => any): void;
+
+  constructor (client: Client, payloads: Topic[], options: HighLevelConsumerOptions);
+
+  on (eventName: 'message', cb: (message: Message) => any): void;
+  on (eventName: 'error' | 'offsetOutOfRange', cb: (error: any) => any): void;
+  on (eventName: 'rebalancing' | 'rebalanced', cb: () => any): void;
+
+  addTopics (topics: string[] | Topic[], cb?: (error: any, added: string[] | Topic[]) => any): void;
+
+  removeTopics (topics: string | string[], cb: (error: any, removed: number) => any): void;
+
+  commit (cb: (error: any, data: any) => any): void;
+  commit (force: boolean, cb: (error: any, data: any) => any): void;
+
+  sendOffsetCommitRequest (commits: OffsetCommitRequest[], cb: (error: any, data: any) => any): void;
+
+  setOffset (topic: string, partition: number, offset: number): void;
+
+  pause (): void;
+
+  resume (): void;
+
+  close (force: boolean, cb: () => any): void;
+  close (cb: () => any): void;
 }
 
 export class ConsumerGroup extends HighLevelConsumer {
-  constructor(options: ConsumerGroupOptions, topics: string[] | string);
   generationId: number;
   memberId: string;
   client: KafkaClient & Client;
-  close(force: boolean, cb: (error: Error) => any): void;
-  close(cb: (error: Error) => any): void;
+
+  constructor (options: ConsumerGroupOptions, topics: string[] | string);
+
+  close (force: boolean, cb: (error: Error) => any): void;
+  close (cb: (error: Error) => any): void;
 }
 
 export class Offset {
-  constructor(client: Client);
-  on(eventName: "ready" | "connect", cb: () => any): void;
-  on(eventName: "error", cb: (error: any) => any): void;
-  fetch(payloads: OffsetRequest[], cb: (error: any, data: any) => any): void;
-  commit(groupId: string, payloads: OffsetCommitRequest[], cb: (error: any, data: any) => any): void;
-  fetchCommits(groupId: string, payloads: OffsetFetchRequest[], cb: (error: any, data: any) => any): void;
-  fetchLatestOffsets(topics: string[], cb: (error: any, data: any) => any): void;
-  fetchEarliestOffsets(topics: string[], cb: (error: any, data: any) => any): void;
+  constructor (client: Client);
+
+  on (eventName: 'ready' | 'connect', cb: () => any): void;
+  on (eventName: 'error', cb: (error: any) => any): void;
+
+  fetch (payloads: OffsetRequest[], cb: (error: any, data: any) => any): void;
+
+  commit (groupId: string, payloads: OffsetCommitRequest[], cb: (error: any, data: any) => any): void;
+
+  fetchCommits (groupId: string, payloads: OffsetFetchRequest[], cb: (error: any, data: any) => any): void;
+
+  fetchLatestOffsets (topics: string[], cb: (error: any, data: any) => any): void;
+
+  fetchEarliestOffsets (topics: string[], cb: (error: any, data: any) => any): void;
 }
 
 export class KeyedMessage {
-  constructor(key: string, value: string | Buffer);
+  constructor (key: string, value: string | Buffer);
 }
 
 export class ProducerStream extends Writable {
-  constructor(options?: ProducerStreamOptions);
-  sendPayload(payloads: ProduceRequest[], cb: (error: any, data: any) => any): void;
-  close(cb?: () => any): void;
-  _write(message: ProduceRequest, encoding: 'buffer' | 'utf8', cb: (error: any, data: any) => any): void;
-  _writev(chunks: Chunk[], cb: (error: any, data: any) => any): void;
+  constructor (options?: ProducerStreamOptions);
+
+  sendPayload (payloads: ProduceRequest[], cb: (error: any, data: any) => any): void;
+
+  close (cb?: () => any): void;
+
+  _write (message: ProduceRequest, encoding: 'buffer' | 'utf8', cb: (error: any, data: any) => any): void;
+
+  _writev (chunks: Chunk[], cb: (error: any, data: any) => any): void;
 }
 
 // # Interfaces
@@ -180,7 +223,8 @@ export interface CustomPartitionAssignmentProtocol {
   name: string;
   version: number;
   userData: {};
-  assign(topicPattern: any, groupMembers: any, cb: (error: any, result: any) => void): void;
+
+  assign (topicPattern: any, groupMembers: any, cb: (error: any, result: any) => void): void;
 }
 
 export interface ConsumerGroupOptions {
@@ -194,9 +238,9 @@ export interface ConsumerGroupOptions {
   sessionTimeout?: number;
   encoding?: 'buffer' | 'utf8';
   keyEncoding?: 'buffer' | 'utf8';
-  protocol?: Array<"roundrobin" | "range" | CustomPartitionAssignmentProtocol>;
-  fromOffset?: "earliest" | "latest" | "none";
-  outOfRangeOffset?: "earliest" | "latest" | "none";
+  protocol?: Array<'roundrobin' | 'range' | CustomPartitionAssignmentProtocol>;
+  fromOffset?: 'earliest' | 'latest' | 'none';
+  outOfRangeOffset?: 'earliest' | 'latest' | 'none';
   migrateHLC?: boolean;
   migrateRolling?: boolean;
   autoCommit?: boolean;
