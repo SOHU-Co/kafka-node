@@ -840,7 +840,7 @@ describe('Kafka Client', function () {
     });
   });
 
-  describe('#createTopicsV2', function () {
+  describe('#createTopics', function () {
     let sandbox, client;
 
     beforeEach(function (done) {
@@ -868,7 +868,7 @@ describe('Kafka Client', function () {
       const topic2ReplicationFactor = 1;
       const topic2Partitions = 1;
 
-      client.createTopicsV2([
+      client.createTopics([
         {
           topic: topic1,
           partitions: topic1Partitions,
@@ -892,7 +892,7 @@ describe('Kafka Client', function () {
       const topicReplicationFactor = 2;
       const topicPartitions = 5;
 
-      client.createTopicsV2([
+      client.createTopics([
         {
           topic: topic,
           partitions: topicPartitions,
