@@ -841,14 +841,13 @@ describe('Kafka Client', function () {
   });
 
   describe('#createTopics', function () {
-    let sandbox, client;
+    let client;
 
     beforeEach(function (done) {
       if (process.env.KAFKA_VERSION === '0.9') {
         this.skip();
       }
 
-      sandbox = sinon.sandbox.create();
       client = new Client({
         kafkaHost: 'localhost:9092'
       });
@@ -856,7 +855,6 @@ describe('Kafka Client', function () {
     });
 
     afterEach(function (done) {
-      sandbox.restore();
       client.close(done);
     });
 
