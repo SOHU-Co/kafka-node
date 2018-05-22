@@ -880,7 +880,21 @@ describe('Kafka Client', function () {
       ], (error, result) => {
         should.not.exist(error);
         result.should.be.empty;
-        done();
+
+        // Verify topics were properly created with partitions + replication factor by fetching metadata again
+        const verifyPartitions = (topicMetadata, expectedPartitionCount, expectedReplicatonfactor) => {
+          for (let i = 0; i < expectedPartitionCount; i++) {
+            topicMetadata[i].partition.should.be.exactly(i);
+            topicMetadata[i].replicas.length.should.be.exactly(expectedReplicatonfactor);
+          }
+        };
+
+        client.loadMetadataForTopics([topic1, topic2], (error, result) => {
+          should.not.exist(error);
+          verifyPartitions(result[1].metadata[topic1], topic1Partitions, topic1ReplicationFactor);
+          verifyPartitions(result[1].metadata[topic2], topic2Partitions, topic2ReplicationFactor);
+          done();
+        });
       });
     });
 
