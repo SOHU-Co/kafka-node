@@ -15,6 +15,7 @@ function FakeSocket () {
   this.close = function () {};
   this.setKeepAlive = function () {};
   this.destroy = function () {};
+  this.write = function () {};
 }
 
 util.inherits(FakeSocket, EventEmitter);
