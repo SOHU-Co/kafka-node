@@ -806,4 +806,37 @@ describe('Kafka Client', function () {
       });
     });
   });
+
+  describe('#getListGroups', function () {
+    let client;
+
+    before(function () {
+      if (process.env.KAFKA_VERSION === '0.8') {
+        this.skip();
+      }
+    });
+
+    beforeEach(function (done) {
+      client = new Client({
+        kafkaHost: 'localhost:9092'
+      });
+      client.once('ready', done);
+    });
+
+    afterEach(function (done) {
+      client.close(done);
+    });
+
+    it('should error if the client is not ready', function (done) {
+      client = new Client({
+        kafkaHost: 'localhost:9092',
+        autoConnect: false
+      });
+      client.getListGroups(function (error, res) {
+        error.should.be.an.instanceOf(Error);
+        error.message.should.be.exactly('Client is not ready (getListGroups)');
+        done();
+      });
+    });
+  });
 });
