@@ -183,29 +183,34 @@ producer.on('error', function (err) {})
 ```
 > ⚠️**WARNING**: Batch multiple messages of the same topic/partition together as an array on the `messages` attribute otherwise you may lose messages!
 
-### createTopics(topics, async, cb)
-This method is used to create topics on the Kafka server. It only works when `auto.create.topics.enable`, on the Kafka server, is set to true. Our client simply sends a metadata request to the server which will auto create topics. When `async` is set to false, this method does not return until all topics are created, otherwise it returns immediately.
+### createTopics(topics, cb)
+This method is used to create topics on the Kafka server. It requires Kafka 0.10+.
 
 * `topics`: **Array**, array of topics
-* `async`: **Boolean**, async or sync
 * `cb`: **Function**, the callback
 
 Example:
 
 ``` js
-var kafka = require('kafka-node'),
-    Producer = kafka.Producer,
-    client = new kafka.Client(),
-    producer = new Producer(client);
-// Create topics sync
-producer.createTopics(['t','t1'], false, function (err, data) {
-    console.log(data);
-});
-// Create topics async
-producer.createTopics(['t'], true, function (err, data) {});
-producer.createTopics(['t'], function (err, data) {});// Simply omit 2nd arg
-```
+var kafka = require('kafka-node');
+var client = new kafka.KafkaClient();
 
+var topicsToCreate = [{
+  topic: 'topic1',
+  partitions: 1,
+  replicationFactor: 2
+},
+{
+  topic: 'topic2',
+  partitions: 5,
+  replicationFactor: 3
+}];
+
+client.createTopics(topics, (error, result) => {
+  // result is an array of any errors if a given topic could not be created 
+});
+
+```
 
 ## HighLevelProducer
 ### HighLevelProducer(client, [options], [customPartitioner])
