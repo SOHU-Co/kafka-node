@@ -4,7 +4,7 @@ const Admin = require('../lib/admin');
 const ConsumerGroup = require('../lib/consumerGroup');
 const uuid = require('uuid');
 
-describe.only('Admin', function () {
+describe('Admin', function () {
   describe('#listGroups', function () {
     const createTopic = require('../docker/createTopic');
     let admin, consumer;
