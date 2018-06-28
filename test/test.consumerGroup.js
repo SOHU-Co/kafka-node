@@ -1117,9 +1117,7 @@ describe('ConsumerGroup', function () {
     });
 
     after('close consumer group', done => {
-      setTimeout(() => {
-        consumerGroup.close(done);
-      }, 1000);
+      consumerGroup.close(done);
     });
 
     it('should not fetch messages from the topic removed', done => {
