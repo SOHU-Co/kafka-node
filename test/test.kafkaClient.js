@@ -540,8 +540,13 @@ describe('Kafka Client', function () {
             retries: 0
           }
         });
-        client.once('auth_error', function () {
-          done();
+        client.once('error', function (err) {
+          if (err instanceof SaslAuthenticationError) {
+            // expected
+            done();
+          } else {
+            done(err);
+          }
         });
         client.once('ready', function () {
           var err = new Error('expected error!');
