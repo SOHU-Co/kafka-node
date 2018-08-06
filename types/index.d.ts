@@ -1,4 +1,4 @@
-import { Writable } from 'stream';
+import { Readable, Writable } from 'stream';
 
 export class Client {
   constructor (connectionString: string, clientId?: string, options?: ZKOptions, noBatchOptions?: AckBatchOptions, sslOptions?: any);
@@ -66,6 +66,19 @@ export class Consumer {
 
   close (force: boolean, cb: (error: Error) => any): void;
   close (cb: (error: Error) => any): void;
+}
+
+export class ConsumerGroupStream extends Readable {
+  client: Client;
+  consumerGroup: ConsumerGroup;
+
+  constructor (options: ConsumerGroupStreamOptions, topics: string | string[]);
+
+  commit (message: Message, force?: boolean, cb?: (error: any, data: any) => any): void;
+
+  transmitMessages(): void;
+
+  close (cb: () => any): void;
 }
 
 export class HighLevelConsumer {
@@ -218,6 +231,18 @@ export interface HighLevelConsumerOptions extends ConsumerOptions {
   maxTickMessages?: number;
   rebalanceRetry?: RetryOptions;
 }
+
+export interface ConsumerGroupStreamOptions extends ConsumerOptions {
+  groupId: string,
+  kafkaHost: string,
+  id?: string;
+  onRebalance?: () => Promise<void>,
+  sessionTimeout?: number,
+  protocol?: any,
+  heartbeatInterval?: number,
+  highWaterMark?: number,
+}
+
 
 export interface CustomPartitionAssignmentProtocol {
   name: string;
