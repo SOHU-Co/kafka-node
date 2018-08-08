@@ -6,6 +6,7 @@ const sinon = require('sinon');
 const TimeoutError = require('../lib/errors/TimeoutError');
 const TopicsNotExistError = require('../lib/errors/TopicsNotExistError');
 const NotControllerError = require('../lib/errors/NotControllerError');
+const SaslAuthenticationError = require('../lib/errors/SaslAuthenticationError');
 const BrokerWrapper = require('../lib/wrapper/BrokerWrapper');
 const FakeSocket = require('./mocks/mockSocket');
 const should = require('should');
@@ -470,7 +471,7 @@ describe('Kafka Client', function () {
         connectRetryOptions: {
           retries: 0
         },
-        kafkaHost: 'localhost:9094'
+        kafkaHost: 'localhost:9095'
       });
 
       client.on('error', function (error) {
@@ -492,6 +493,65 @@ describe('Kafka Client', function () {
         client.ready.should.be.true;
         client.brokerMetadata.should.not.be.empty;
         done();
+      });
+    });
+
+    describe('using SASL authentication', function () {
+      before(function () {
+        // these tests should not run again Kafka 0.8 & 0.9
+        const supportsSaslPlain =
+          !process.env.KAFKA_VERSION ||
+          (process.env.KAFKA_VERSION !== '0.8' &&
+           process.env.KAFKA_VERSION !== '0.9');
+        if (!supportsSaslPlain) {
+          this.skip();
+        }
+      });
+
+      it('should connect SASL/PLAIN', function (done) {
+        client = new Client({
+          kafkaHost: 'localhost:9094',
+          sasl: {
+            mechanism: 'plain',
+            username: 'kafkanode',
+            password: 'kafkanode'
+          },
+          connectRetryOptions: {
+            retries: 0
+          }
+        });
+        client.once('error', done);
+        client.once('ready', function () {
+          client.ready.should.be.true;
+          client.brokerMetadata.should.not.be.empty;
+          done();
+        });
+      });
+
+      it('should not connect SASL/PLAIN with bad credentials', function (done) {
+        client = new Client({
+          kafkaHost: 'localhost:9094',
+          sasl: {
+            mechanism: 'plain',
+            username: 'kafkanode',
+            password: 'badpasswd'
+          },
+          connectRetryOptions: {
+            retries: 0
+          }
+        });
+        client.once('error', function (err) {
+          if (err instanceof SaslAuthenticationError) {
+            // expected
+            done();
+          } else {
+            done(err);
+          }
+        });
+        client.once('ready', function () {
+          var err = new Error('expected error!');
+          done(err);
+        });
       });
     });
   });
