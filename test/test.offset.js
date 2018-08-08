@@ -112,10 +112,12 @@ describe('Offset', function () {
     topics = [ { topic: topic, partition: 0 } ];
     groupId = `_groupId_commit_v1_test`;
     before(function (done) {
-      producer.send([{ topic, messages: ['firstMessage'] }], (err, data) => { console.log(`Producer sent data: ${JSON.stringify(data)}, err: ${JSON.stringify(err)}`); });
-      createCGandCommitToLatestOffset(groupId, topic, (err, highWaterOffset) => {
-        expectedCommittedOffset = highWaterOffset;
-        done(err);
+      producer.send([{ topic, messages: ['firstMessage'] }], (error) => {
+        if (error) done(error);
+        createCGandCommitToLatestOffset(groupId, topic, (err, highWaterOffset) => {
+          expectedCommittedOffset = highWaterOffset;
+          done(err);
+        });
       });
     });
 
@@ -198,12 +200,9 @@ const createCGandCommitToLatestOffset = (groupId, topic, cb) => {
     };
     var consumerGroup = new ConsumerGroup(consumerGroupOptions, topic);
     consumerGroup.on('message', (message) => {
-      console.log('got message');
-      console.log(`Got a message on the consumer group: ${JSON.stringify(message)}`);
       if (message.offset === message.highWaterOffset - 1) {
         setTimeout(() => {
           consumerGroup.close(true, () => {
-            console.log('closed cg');
             return cb(null, message.highWaterOffset);
           });
         }, 0);
