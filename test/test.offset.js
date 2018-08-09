@@ -4,6 +4,7 @@ var libPath = process.env['kafka-cov'] ? '../lib-cov/' : '../lib/';
 var Producer = require(libPath + 'producer');
 var Offset = require(libPath + 'offset');
 var Client = require(libPath + 'client');
+var ConsumerGroup = require(libPath + 'consumerGroup');
 const uuid = require('uuid');
 
 var client, producer, offset;
@@ -105,6 +106,47 @@ describe('Offset', function () {
     });
   });
 
+  describe('#fetchCommitsV1', function () {
+    var topic, topics, groupId, expectedCommittedOffset;
+    topic = `_exist_topic_3_test`;
+    topics = [ { topic: topic, partition: 0 } ];
+    groupId = `_groupId_commit_v1_test`;
+    before(function (done) {
+      producer.send([{ topic, messages: ['firstMessage'] }], (error) => {
+        if (error) done(error);
+        createCGandCommitToLatestOffset(groupId, topic, (err, highWaterOffset) => {
+          expectedCommittedOffset = highWaterOffset;
+          done(err);
+        });
+      });
+    });
+
+    it('should return -1 when the consumer group has no commits on the broker', function (done) {
+      var groupIdNoCommits = groupId + '2';
+      offset.fetchCommitsV1(groupIdNoCommits, topics, function (err, data) {
+        data.should.be.ok;
+        Object.keys(data)[0].should.equal(topic);
+        data[topic][0].should.equal(-1);
+        done(err);
+      });
+    });
+
+    it('should get the last committed offset consumer group on the broker', function (done) {
+      offset.fetchCommitsV1(groupId, topics, function (err, data) {
+        data.should.be.ok;
+        Object.keys(data)[0].should.equal(topic);
+        data[topic][0].should.equal(expectedCommittedOffset);
+        done(err);
+      });
+    });
+
+    it('should keep calling fetchCommits until offset is ready', function (done) {
+      var topic = '_exist_topic_3_test';
+      var topics = [ { topic: topic, offset: 10 } ];
+      offset.fetchCommitsV1('_groupId_commit_1_test', topics, done);
+    });
+  });
+
   describe('#fetchEarliestOffsets', function () {
     it('should callback with error if topic does not exist', function (done) {
       offset.fetchEarliestOffsets([uuid.v4()], function (error) {
@@ -146,3 +188,30 @@ describe('Offset', function () {
     });
   });
 });
+
+const createCGandCommitToLatestOffset = (groupId, topic, cb) => {
+  try {
+    var consumerGroupOptions = {
+      groupId: groupId,
+      fromOffset: 'earliest',
+      kafkaHost: 'localhost:9092',
+      autoCommitIntervalMs: 1,
+      autoCommit: true
+    };
+    var consumerGroup = new ConsumerGroup(consumerGroupOptions, topic);
+    consumerGroup.on('message', (message) => {
+      if (message.offset === message.highWaterOffset - 1) {
+        setTimeout(() => {
+          consumerGroup.close(true, () => {
+            return cb(null, message.highWaterOffset);
+          });
+        }, 0);
+      }
+    });
+    consumerGroup.on('error', (err) => {
+      return cb(err);
+    });
+  } catch (e) {
+    return cb(e);
+  }
+};

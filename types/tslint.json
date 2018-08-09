@@ -1,0 +1,11 @@
+{
+  "defaultSeverity": "error",
+  "extends": "tslint-config-semistandard",
+  "jsRules": {},
+  "rules": {
+    "no-empty": false,
+    "handle-callback-err": false,
+    "no-unused-variable": false
+  },
+  "rulesDirectory": []
+}

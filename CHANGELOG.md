@@ -1,5 +1,46 @@
 # kafka-node CHANGELOG
 
+## 2018-04-27, Version 2.6.1
+* Fix issue where duplicate messages are received when connecting to multiple brokers (restored dedicated consumer socket) [#956](https://github.com/SOHU-Co/kafka-node/pull/956)
+
+## 2018-04-24, Version 2.6.0
+* Fix issue during the initial connection phase can end prematurely when metadata request failed [#920](https://github.com/SOHU-Co/kafka-node/pull/920)
+* Add `addTopics` method to the `ConsumerGroup` [#914](https://github.com/SOHU-Co/kafka-node/pull/914)
+* Fix issue where yielding a result in `onRebalance` in `ConsumerGroup` leads to an exception being thrown [#922](https://github.com/SOHU-Co/kafka-node/pull/922)
+* Add support for Kafka Fetch versions 1 and 2 this enables produced timestamps to be read from the Consumer (Kafka 0.10+). Fetches also now share socket to the broker with other kafka requests (previously fetches were on a dedicated socket) [#871](https://github.com/SOHU-Co/kafka-node/pull/871)
+* Add support to auto commit on first join `ConsumerGroup` configured using `commitOffsetsOnFirstJoin` [#897](https://github.com/SOHU-Co/kafka-node/pull/897)
+* Add support for Buffers as keys, which is useful for Avro encoded keys [#932](https://github.com/SOHU-Co/kafka-node/pull/932)
+
+
+## 2018-04-09, Version 2.5.0
+* Explicitly cast key to string in hashCode function for `KeyedPartitioner` [#870](https://github.com/SOHU-Co/kafka-node/pull/870)
+* For consumer fetch loop we now clear `socket.waiting` before invoking callbacks [#819](https://github.com/SOHU-Co/kafka-node/pull/819)
+* Add Support for IPv6 [#818](https://github.com/SOHU-Co/kafka-node/pull/818)
+* Clear internal topicPayload array if no topic partitions are assigned to the `ConsumerGroup` [#888](https://github.com/SOHU-Co/kafka-node/pull/888)
+* Fix Stale Commit Queue for `ConsumerGroupStream` [#891](https://github.com/SOHU-Co/kafka-node/pull/891)
+* For rebalance case `ConsumerGroup` will try to commit before joining a group. Added `onRebalance` callback for manual commit users [#889](https://github.com/SOHU-Co/kafka-node/pull/889)
+
+## 2018-02-06, Version 2.4.1
+
+* Fix issue where error callbacks for broker requests are not called when connection is closed [#863](https://github.com/SOHU-Co/kafka-node/pull/863)
+
+## 2018-02-06, Version 2.4.0
+
+* Add compability to `Client` with broker configurations that separates external and internal traffic [#860](https://github.com/SOHU-Co/kafka-node/pull/860)
+* Fix issue where `updateMetadata()` wipes out entire topic metadata when only updating specific topics [#857](https://github.com/SOHU-Co/kafka-node/pull/857)
+
+## 2018-01-16, Version 2.3.2
+
+* Fix issue with `ConsumerGroupStream` where lag stays at one and resuming the consumer re-reads the last read message [#850](https://github.com/SOHU-Co/kafka-node/pull/850)
+
+## 2018-01-7, Version 2.3.1
+* Fix consumer example [#842](https://github.com/SOHU-Co/kafka-node/pull/842)
+* Fix issue where ConsumerGroupStream will autoCommit when the stream is explicitly closed [#843](https://github.com/SOHU-Co/kafka-node/pull/843)
+* Fix missing `highWaterOffset` using compression [#821](https://github.com/SOHU-Co/kafka-node/pull/821)
+* Fix Snappy buffer.from error using node 4 [#827](https://github.com/SOHU-Co/kafka-node/pull/827)
+* Fix `fromOffset` option not working in ConsumerStream [#794](https://github.com/SOHU-Co/kafka-node/pull/794)
+* Fixed issue where producer send failures failed to request refresh of the metadata [#810](https://github.com/SOHU-Co/kafka-node/pull/810)
+
 ## 2017-11-17, Version 2.3.0
 
 * Add support for `ListGroups` and `DescribeGroups` protocol. They can be used through the new [Admin](https://github.com/SOHU-Co/kafka-node#admin) interface [#770](https://github.com/SOHU-Co/kafka-node/pull/770)

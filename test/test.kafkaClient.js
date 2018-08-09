@@ -5,6 +5,8 @@ const Client = kafka.KafkaClient;
 const sinon = require('sinon');
 const TimeoutError = require('../lib/errors/TimeoutError');
 const TopicsNotExistError = require('../lib/errors/TopicsNotExistError');
+const NotControllerError = require('../lib/errors/NotControllerError');
+const SaslAuthenticationError = require('../lib/errors/SaslAuthenticationError');
 const BrokerWrapper = require('../lib/wrapper/BrokerWrapper');
 const FakeSocket = require('./mocks/mockSocket');
 const should = require('should');
@@ -122,17 +124,6 @@ describe('Kafka Client', function () {
     });
 
     describe('#initializeBroker', function () {
-      it('should not call #getApiVersions if socket is longpolling', function (done) {
-        client = new Client({ kafkaHost: '127.0.0.1:9092', autoConnect: false });
-        const fakeBroker = new BrokerWrapper(new FakeSocket());
-        const apiVersionsSpy = sinon.spy(client, 'getApiVersions');
-        fakeBroker.socket.longpolling = true;
-        client.initializeBroker(fakeBroker, function (error) {
-          sinon.assert.notCalled(apiVersionsSpy);
-          done(error);
-        });
-      });
-
       it('should not call #getApiVersions if versions is disabled', function (done) {
         client = new Client({ kafkaHost: '127.0.0.1:9092', autoConnect: false, versions: { disabled: true } });
         client.options.versions.disabled.should.be.true;
@@ -480,7 +471,7 @@ describe('Kafka Client', function () {
         connectRetryOptions: {
           retries: 0
         },
-        kafkaHost: 'localhost:9094'
+        kafkaHost: 'localhost:9095'
       });
 
       client.on('error', function (error) {
@@ -503,6 +494,168 @@ describe('Kafka Client', function () {
         client.brokerMetadata.should.not.be.empty;
         done();
       });
+    });
+
+    describe('using SASL authentication', function () {
+      before(function () {
+        // these tests should not run again Kafka 0.8 & 0.9
+        const supportsSaslPlain =
+          !process.env.KAFKA_VERSION ||
+          (process.env.KAFKA_VERSION !== '0.8' &&
+           process.env.KAFKA_VERSION !== '0.9');
+        if (!supportsSaslPlain) {
+          this.skip();
+        }
+      });
+
+      it('should connect SASL/PLAIN', function (done) {
+        client = new Client({
+          kafkaHost: 'localhost:9094',
+          sasl: {
+            mechanism: 'plain',
+            username: 'kafkanode',
+            password: 'kafkanode'
+          },
+          connectRetryOptions: {
+            retries: 0
+          }
+        });
+        client.once('error', done);
+        client.once('ready', function () {
+          client.ready.should.be.true;
+          client.brokerMetadata.should.not.be.empty;
+          done();
+        });
+      });
+
+      it('should not connect SASL/PLAIN with bad credentials', function (done) {
+        client = new Client({
+          kafkaHost: 'localhost:9094',
+          sasl: {
+            mechanism: 'plain',
+            username: 'kafkanode',
+            password: 'badpasswd'
+          },
+          connectRetryOptions: {
+            retries: 0
+          }
+        });
+        client.once('error', function (err) {
+          if (err instanceof SaslAuthenticationError) {
+            // expected
+            done();
+          } else {
+            done(err);
+          }
+        });
+        client.once('ready', function () {
+          var err = new Error('expected error!');
+          done(err);
+        });
+      });
+    });
+  });
+
+  describe('#updateMetadatas', function () {
+    let client, sandbox;
+
+    const updatedPartialMetadata = [
+      null,
+      {
+        metadata: {
+          topic1: {
+            '0': {
+              topic: 'topic1',
+              partition: 0,
+              leader: 1001
+            },
+            '1': {
+              topic: 'topic1',
+              partition: 1,
+              leader: 1001
+            },
+            '2': {
+              topic: 'topic1',
+              partition: 2,
+              leader: 1001
+            }
+          }
+        }
+      }
+    ];
+
+    beforeEach(function () {
+      sandbox = sinon.sandbox.create();
+      client = new Client({
+        connectRetryOptions: {
+          retries: 0
+        },
+        autoConnect: false,
+        kafkaHost: 'localhost:9093',
+        sslOptions: {
+          rejectUnauthorized: false
+        }
+      });
+    });
+
+    it('should extend topicMetadata by default instead of replace', function () {
+      client.topicMetadata = {
+        topic0: {
+          '0': {
+            topic: 'topic0',
+            partition: 0,
+            leader: 1001
+          }
+        },
+        topic1: {
+          '0': {
+            topic: 'topic1',
+            partition: 0,
+            leader: 1001
+          }
+        }
+      };
+      sandbox.stub(client, 'setBrokerMetadata');
+      client.updateMetadatas(updatedPartialMetadata);
+      client.topicMetadata.topic0.should.not.be.empty;
+      client.topicMetadata.topic1.should.have.property('1', {
+        topic: 'topic1',
+        partition: 1,
+        leader: 1001
+      });
+      client.topicMetadata.topic1.should.have.property('2', {
+        topic: 'topic1',
+        partition: 2,
+        leader: 1001
+      });
+      sinon.assert.calledWithExactly(client.setBrokerMetadata, null);
+    });
+
+    it('should replace if second parameter replaceTopicMetadata is true', function () {
+      client.topicMetadata = {
+        topic0: {
+          '0': {
+            topic: 'topic0',
+            partition: 0,
+            leader: 1001
+          }
+        },
+        topic1: {
+          '0': {
+            topic: 'topic1',
+            partition: 0,
+            leader: 1001
+          }
+        }
+      };
+      sandbox.stub(client, 'setBrokerMetadata');
+
+      client.topicMetadata.should.not.be.empty;
+
+      client.updateMetadatas(updatedPartialMetadata, true);
+
+      client.topicMetadata.should.not.have.property('topic0');
+      sinon.assert.calledWithExactly(client.setBrokerMetadata, null);
     });
   });
 
@@ -609,6 +762,22 @@ describe('Kafka Client', function () {
       sinon.assert.notCalled(client.updateMetadatas);
       sinon.assert.notCalled(client.refreshBrokers);
     });
+
+    it('should not perform refreshBrokerMetadata if consumer is closing', function () {
+      sandbox.stub(client, 'getAvailableBroker');
+      sandbox.stub(client, 'loadMetadataFrom');
+      sandbox.stub(client, 'updateMetadatas');
+      sandbox.stub(client, 'refreshBrokers');
+      client.closing = true;
+
+      client.refreshBrokerMetadata();
+
+      client.closing.should.be.true;
+      sinon.assert.notCalled(client.getAvailableBroker);
+      sinon.assert.notCalled(client.loadMetadataFrom);
+      sinon.assert.notCalled(client.updateMetadatas);
+      sinon.assert.notCalled(client.refreshBrokers);
+    });
   });
 
   describe('Verify Timeout', function () {
@@ -696,6 +865,297 @@ describe('Kafka Client', function () {
         error.topics.should.be.eql(nonExistantTopics);
         done();
       });
+    });
+  });
+
+  describe('#getListGroups', function () {
+    let client;
+
+    before(function () {
+      if (process.env.KAFKA_VERSION === '0.8') {
+        this.skip();
+      }
+    });
+
+    beforeEach(function (done) {
+      client = new Client({
+        kafkaHost: 'localhost:9092'
+      });
+      client.once('ready', done);
+    });
+
+    afterEach(function (done) {
+      client.close(done);
+    });
+
+    it('should error if the client is not ready', function (done) {
+      client = new Client({
+        kafkaHost: 'localhost:9092',
+        autoConnect: false
+      });
+      client.getListGroups(function (error, res) {
+        error.should.be.an.instanceOf(Error);
+        error.message.should.be.exactly('Client is not ready (getListGroups)');
+        done();
+      });
+    });
+  });
+
+  describe('#createTopics', function () {
+    let client;
+
+    beforeEach(function (done) {
+      if (process.env.KAFKA_VERSION === '0.9') {
+        return this.skip();
+      }
+
+      client = new Client({
+        kafkaHost: 'localhost:9092'
+      });
+      client.once('ready', done);
+    });
+
+    afterEach(function (done) {
+      client.close(done);
+    });
+
+    it('should create given topics', function (done) {
+      const topic1 = uuid.v4();
+      const topic1ReplicationFactor = 1;
+      const topic1Partitions = 5;
+      const topic2 = uuid.v4();
+      const topic2ReplicationFactor = 1;
+      const topic2Partitions = 1;
+
+      client.createTopics([
+        {
+          topic: topic1,
+          partitions: topic1Partitions,
+          replicationFactor: topic1ReplicationFactor
+        },
+        {
+          topic: topic2,
+          partitions: topic2Partitions,
+          replicationFactor: topic2ReplicationFactor
+        }
+      ], (error, result) => {
+        should.not.exist(error);
+        result.should.be.empty;
+
+        // Verify topics were properly created with partitions + replication factor by fetching metadata again
+        const verifyPartitions = (topicMetadata, expectedPartitionCount, expectedReplicatonfactor) => {
+          for (let i = 0; i < expectedPartitionCount; i++) {
+            topicMetadata[i].partition.should.be.exactly(i);
+            topicMetadata[i].replicas.length.should.be.exactly(expectedReplicatonfactor);
+          }
+        };
+
+        client.loadMetadataForTopics([topic1, topic2], (error, result) => {
+          should.not.exist(error);
+          verifyPartitions(result[1].metadata[topic1], topic1Partitions, topic1ReplicationFactor);
+          verifyPartitions(result[1].metadata[topic2], topic2Partitions, topic2ReplicationFactor);
+          done();
+        });
+      });
+    });
+
+    it('should return topic creation errors', function (done) {
+      const topic = uuid.v4();
+      // Only 1 broker is available under test, so a replication factor > 1 is not possible
+      const topicReplicationFactor = 2;
+      const topicPartitions = 5;
+
+      client.createTopics([
+        {
+          topic: topic,
+          partitions: topicPartitions,
+          replicationFactor: topicReplicationFactor
+        }
+      ], (error, result) => {
+        should.not.exist(error);
+        result.should.have.length(1);
+        result[0].topic.should.be.exactly(topic);
+        result[0].error.toLowerCase().should.startWith('replication factor: 2 larger than available brokers: 1');
+        done();
+      });
+    });
+  });
+
+  describe('#wrapControllerCheckIfNeeded', function () {
+    let client, sandbox;
+
+    beforeEach(function (done) {
+      if (process.env.KAFKA_VERSION === '0.9') {
+        return this.skip();
+      }
+
+      sandbox = sinon.sandbox.create();
+      client = new Client({
+        kafkaHost: 'localhost:9092'
+      });
+      client.once('ready', done);
+    });
+
+    afterEach(function (done) {
+      sandbox.restore();
+      client.close(done);
+    });
+
+    it('should not wrap again if already wrapped', function () {
+      const fn = _.noop;
+
+      const wrapped = client.wrapControllerCheckIfNeeded(_.noop, _.noop, [], fn);
+      const secondWrapped = client.wrapControllerCheckIfNeeded(_.noop, _.noop, [], wrapped);
+
+      wrapped.should.be.exactly(secondWrapped);
+    });
+
+    it('should wrap if not already wrapped', function () {
+      const fn = _.noop;
+
+      const wrapped = client.wrapControllerCheckIfNeeded(_.noop, _.noop, [], fn);
+
+      wrapped.should.not.be.exactly(fn);
+    });
+
+    it('should set controller id to null if NotControllerError was returned once', function () {
+      const fn = _.noop;
+      const wrapped = client.wrapControllerCheckIfNeeded(_.noop, _.noop, [], fn);
+      const setControllerIdSpy = sandbox.spy(client, 'setControllerId');
+      sandbox.stub(client, 'sendControllerRequest');
+
+      wrapped(new NotControllerError('not controller'));
+
+      sinon.assert.calledOnce(setControllerIdSpy);
+      sinon.assert.alwaysCalledWithExactly(setControllerIdSpy, null);
+    });
+
+    it('should send controller request again if NotControllerError was returned once', function () {
+      var encoder = () => undefined;
+      var decoder = () => undefined;
+      var args = [];
+      const fn = _.noop;
+      const wrapped = client.wrapControllerCheckIfNeeded(encoder, decoder, args, fn);
+      const setControllerIdSpy = sandbox.spy(client, 'setControllerId');
+      const sendControllerRequestSpy = sandbox.stub(client, 'sendControllerRequest');
+
+      wrapped(new NotControllerError('not controller'));
+
+      sinon.assert.calledOnce(setControllerIdSpy);
+      sinon.assert.alwaysCalledWithExactly(setControllerIdSpy, null);
+      sinon.assert.calledOnce(sendControllerRequestSpy);
+      sinon.assert.alwaysCalledWithExactly(sendControllerRequestSpy, encoder, decoder, args, wrapped);
+    });
+
+    it('should set controller id to null and call original callback if NotControllerError was returned on second try', function () {
+      const fnSpy = sandbox.spy();
+      const wrapped = client.wrapControllerCheckIfNeeded(_.noop, _.noop, [], fnSpy);
+      const setControllerIdSpy = sandbox.spy(client, 'setControllerId');
+      sandbox.stub(client, 'sendControllerRequest');
+
+      wrapped(new NotControllerError('not controller'));
+      wrapped(new NotControllerError('not controller'));
+
+      sinon.assert.calledTwice(setControllerIdSpy);
+      sinon.assert.alwaysCalledWithExactly(setControllerIdSpy, null);
+      sinon.assert.calledOnce(fnSpy);
+    });
+
+    it('should call original callback if another error was returned', function () {
+      const fnSpy = sandbox.spy();
+      const wrapped = client.wrapControllerCheckIfNeeded(_.noop, _.noop, [], fnSpy);
+      const setControllerIdSpy = sandbox.spy(client, 'setControllerId');
+
+      wrapped(new TimeoutError('operation timed out'));
+
+      sinon.assert.notCalled(setControllerIdSpy);
+      sinon.assert.calledOnce(fnSpy);
+    });
+
+    it('should call original callback if no error was returned', function () {
+      const fnSpy = sandbox.spy();
+      const wrapped = client.wrapControllerCheckIfNeeded(_.noop, _.noop, [], fnSpy);
+      const setControllerIdSpy = sandbox.spy(client, 'setControllerId');
+      const expectedResult = [];
+
+      wrapped(null, expectedResult);
+
+      sinon.assert.notCalled(setControllerIdSpy);
+      sinon.assert.calledOnce(fnSpy);
+      sinon.assert.alwaysCalledWith(fnSpy, null, expectedResult);
+    });
+  });
+
+  describe('#sendControllerRequest', function () {
+    let client, sandbox;
+
+    beforeEach(function (done) {
+      if (process.env.KAFKA_VERSION === '0.9') {
+        return this.skip();
+      }
+
+      sandbox = sinon.sandbox.create();
+      client = new Client({
+        kafkaHost: 'localhost:9092'
+      });
+      client.once('ready', done);
+    });
+
+    afterEach(function (done) {
+      sandbox.restore();
+      client.close(done);
+    });
+
+    it('should wrap callback', function () {
+      const fakeBroker = new BrokerWrapper(new FakeSocket());
+      sandbox.stub(client, 'getController').yields(null, fakeBroker);
+      sandbox.stub(client, 'queueCallback');
+      const wrapControllerSpy = sandbox.spy(client, 'wrapControllerCheckIfNeeded');
+      const callbackSpy = sandbox.spy();
+
+      client.sendControllerRequest(_.noop, _.noop, [], callbackSpy);
+
+      sinon.assert.calledOnce(wrapControllerSpy);
+    });
+
+    it('should be called twice when NotController error was returned', function () {
+      const fakeBroker = new BrokerWrapper(new FakeSocket());
+      sandbox.stub(client, 'getController').yields(null, fakeBroker);
+      sandbox.stub(client, 'queueCallback').callsFake((socket, correlationId, args) => {
+        args[1](new NotControllerError('not controller'));
+      });
+      const callbackSpy = sandbox.spy();
+      const sendControllerRequestSpy = sandbox.spy(client, 'sendControllerRequest');
+
+      client.sendControllerRequest(_.noop, _.noop, [], callbackSpy);
+
+      sinon.assert.calledTwice(sendControllerRequestSpy);
+    });
+
+    it('should call encoder and queue callback', function () {
+      const fakeBroker = new BrokerWrapper(new FakeSocket());
+      sandbox.stub(client, 'getController').yields(null, fakeBroker);
+      const queueCallbackSpy = sandbox.stub(client, 'queueCallback');
+      const encoder = sandbox.spy();
+      const decoder = _.noop;
+      const args = [];
+      const callback = _.noop;
+
+      client.sendControllerRequest(encoder, decoder, args, callback);
+
+      sinon.assert.calledOnce(encoder);
+      sinon.assert.calledOnce(queueCallbackSpy);
+    });
+
+    it('should return error if controller request fails', function () {
+      const error = new TimeoutError('operation timed out');
+      sandbox.stub(client, 'getController').yields(error);
+      const callbackSpy = sandbox.spy();
+
+      client.sendControllerRequest(null, null, null, callbackSpy);
+
+      sinon.assert.calledOnce(callbackSpy);
+      sinon.assert.alwaysCalledWithExactly(callbackSpy, error);
     });
   });
 });

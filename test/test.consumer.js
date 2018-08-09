@@ -237,6 +237,7 @@ describe('Consumer', function () {
           consumer.on('message', function (message) {
             message.topic.should.equal(EXISTS_TOPIC_2);
             message.value.should.equal('hello kafka');
+            message.highWaterOffset.should.be.above(0);
             message.partition.should.equal(0);
             offset.commit('_groupId_1_test', [message], function (err) {
               if (count++ === 0) done(err);
@@ -258,6 +259,7 @@ describe('Consumer', function () {
           consumer.on('message', function (message) {
             message.topic.should.equal(EXISTS_GZIP);
             message.value.should.equal('hello gzip');
+            message.highWaterOffset.should.be.above(0);
             offset.commit('_groupId_gzip_test', [message], function (err) {
               if (count++ === 0) {
                 consumer.close(function () {
@@ -282,6 +284,7 @@ describe('Consumer', function () {
           consumer.once('message', function (message) {
             message.topic.should.equal(EXISTS_SNAPPY);
             message.value.should.equal(SNAPPY_MESSAGE);
+            message.highWaterOffset.should.be.above(0);
             offset.commit('_groupId_snappy_test', [message], function (err) {
               if (count++ === 0) {
                 consumer.close(function () {
@@ -509,9 +512,9 @@ describe('Consumer', function () {
         });
 
         describe('#pauseTopics|resumeTopics', function () {
-          const now = Date.now();
-          const topic1 = `_test_topic_1_${now}`;
-          const topic2 = `_test_topic_2_${now}`;
+          const suffix = uuid.v4();
+          const topic1 = `_test_topic_1_${suffix}`;
+          const topic2 = `_test_topic_2_${suffix}`;
 
           const createTopic = require('../docker/createTopic');
 

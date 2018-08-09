@@ -9,6 +9,7 @@ services:
     ports:
       - "9092:9092"
       - "9093:9093"
+      - "9094:9094"
     depends_on:
       - zookeeper
     environment:
@@ -25,3 +26,4 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./docker/certs:/var/private/ssl/certs
+      - ./docker/sasl:/var/private/sasl

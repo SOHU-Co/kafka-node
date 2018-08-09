@@ -29,7 +29,7 @@ describe('Client', function () {
 
     it('should always consume entire response even if handlers are missing', function () {
       const fakeClient = {
-        unqueueCallback: sinon.stub().returns(null)
+        invokeResponseCallback: sinon.stub().returns(null)
       };
 
       sinon.spy(socket.buffer, 'consume');
@@ -42,13 +42,13 @@ describe('Client', function () {
       Client.prototype.handleReceivedData.call(fakeClient, socket);
       sinon.assert.calledOnce(socket.buffer.shallowSlice);
       sinon.assert.calledOnce(socket.buffer.consume);
-      sinon.assert.calledOnce(fakeClient.unqueueCallback);
+      sinon.assert.calledOnce(fakeClient.invokeResponseCallback);
       should(socket.waiting).be.empty;
     });
 
     it('should consume entire response if handlers are missing and set waiting to false for longpolling sockets', function () {
       const fakeClient = {
-        unqueueCallback: sinon.stub().returns(null)
+        invokeResponseCallback: sinon.stub().returns(null)
       };
 
       sinon.spy(socket.buffer, 'consume');
@@ -64,21 +64,29 @@ describe('Client', function () {
       Client.prototype.handleReceivedData.call(fakeClient, socket);
       sinon.assert.calledOnce(socket.buffer.shallowSlice);
       sinon.assert.calledOnce(socket.buffer.consume);
-      sinon.assert.calledOnce(fakeClient.unqueueCallback);
+      sinon.assert.calledOnce(fakeClient.invokeResponseCallback);
       socket.waiting.should.be.false;
     });
 
     it('should early return when buffer is beyond offset', function () {
+      const fakeClient = {
+        invokeResponseCallback: function () {}
+      };
+
       socket.buffer.append(Uint8Array.from([0, 0, 0]));
 
       const readSpy = sinon.spy(socket.buffer, 'readUInt32BE');
-      Client.prototype.handleReceivedData.call({}, socket);
+      Client.prototype.handleReceivedData.call(fakeClient, socket);
       sinon.assert.notCalled(readSpy);
     });
 
     it('should early return when buffer is empty', function () {
+      const fakeClient = {
+        invokeResponseCallback: function () {}
+      };
+
       const readSpy = sinon.spy(socket.buffer, 'readUInt32BE');
-      Client.prototype.handleReceivedData.call({}, socket);
+      Client.prototype.handleReceivedData.call(fakeClient, socket);
       sinon.assert.notCalled(readSpy);
     });
   });
@@ -198,7 +206,7 @@ describe('Client', function () {
       var clientId = 'kafka-node-client-' + uuid.v4();
       client = new Client(host, clientId);
       client.on('error', function (error) {
-        error.message.should.be.eql('No kafka endpoint found for broker: 1001 with protocol plaintext:');
+        error.message.should.be.eql('No kafka endpoint found for broker: 1001 with protocol PLAINTEXT');
         done();
       });
 
@@ -224,7 +232,7 @@ describe('Client', function () {
       var clientId = 'kafka-node-client-' + uuid.v4();
       client = new Client(host, clientId, undefined, undefined, { rejectUnauthorized: false });
       client.on('error', function (error) {
-        error.message.should.be.eql('No kafka endpoint found for broker: 1001 with protocol ssl:');
+        error.message.should.be.eql('No kafka endpoint found for broker: 1001 with protocol SSL');
         done();
       });
 
@@ -332,10 +340,7 @@ describe('Client', function () {
 
       sinon.spy(client, 'setupBrokerProfiles');
       sinon.stub(client, 'createBroker').returns({
-        socket: {
-          close: function () {},
-          end: function () {}
-        }
+        socket: new FakeSocket()
       });
 
       zk.emit('init', brokers);

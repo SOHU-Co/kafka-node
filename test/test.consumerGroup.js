@@ -3,12 +3,12 @@
 const sinon = require('sinon');
 const should = require('should');
 const ConsumerGroup = require('../lib/consumerGroup');
-const KafkaClient = require('../lib/kafkaClient');
-const HighLevelProducer = require('../lib/highLevelProducer');
+const sendMessage = require('./helpers/sendMessage');
+const _ = require('lodash');
 const host = process.env['KAFKA_TEST_HOST'] || '';
 const proxyquire = require('proxyquire').noCallThru();
 const EventEmitter = require('events').EventEmitter;
-const _ = require('lodash');
+
 const uuid = require('uuid');
 const async = require('async');
 const BrokerWrapper = require('../lib/wrapper/BrokerWrapper');
@@ -887,22 +887,6 @@ describe('ConsumerGroup', function () {
     return buffer;
   }
 
-  function sendMessage (message, topic, done) {
-    var client = new KafkaClient({ kafkaHost: '127.0.0.1:9092' });
-    var producer = new HighLevelProducer(client, { requireAcks: 1 });
-
-    client.on('connect', function () {
-      producer.send([{ topic: topic, messages: message, attributes: 0 }], function (error) {
-        if (error) {
-          done(error);
-        } else {
-          done(null);
-        }
-        producer.close(_.noop);
-      });
-    });
-  }
-
   describe('fetchMaxBytes', function () {
     let topic, consumerGroup;
     beforeEach(function (done) {
@@ -1065,5 +1049,54 @@ describe('ConsumerGroup', function () {
     }
 
     async.series([addMessages, confirmMessages, confirmMessages], done);
+  });
+
+  describe('#addTopics', function () {
+    let topic, newTopic, testMessage, consumerGroup;
+
+    before('create the topics', done => {
+      topic = uuid.v4();
+      newTopic = uuid.v4();
+      testMessage = uuid.v4();
+      consumerGroup = new ConsumerGroup({
+        kafkaHost: host + ':9092',
+        groupId: uuid.v4()
+      }, topic);
+      consumerGroup.once('connect', () => {
+        consumerGroup.client.createTopics([topic, newTopic], done);
+      });
+    });
+
+    after('close consumer group', done => {
+      consumerGroup.close(done);
+    });
+
+    it('should fetch messages from the topic added', done => {
+      let messages = [];
+      consumerGroup.on('message', message => {
+        messages.push(message);
+        if (messages.length === 2) {
+          messages.should.containDeep([
+            {
+              topic: topic,
+              value: testMessage
+            },
+            {
+              topic: newTopic,
+              value: testMessage
+            }
+          ]);
+          done();
+        }
+      });
+      consumerGroup.addTopics([newTopic], (error, result) => {
+        should(error).be.null;
+        result.should.be.eql(`Add Topics ${newTopic} Successfully`);
+        consumerGroup.once('connect', () => {
+          sendMessage(testMessage, topic, () => {});
+          sendMessage(testMessage, newTopic, () => {});
+        });
+      });
+    });
   });
 });

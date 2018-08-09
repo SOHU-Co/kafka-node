@@ -55,6 +55,9 @@ Kafka-node is a Node.js client with Zookeeper integration for Apache Kafka 0.8.1
 * SSL connections to brokers (Kafka 0.9+)
 * Consumer Groups managed by Kafka coordinator (Kafka 0.9+)
 * Connect directly to brokers (Kafka 0.9+)
+* Administrative APIs
+	* List Groups
+	* Describe Groups
 
 # Install Kafka
 Follow the [instructions](http://kafka.apache.org/documentation.html#quickstart) on the Kafka wiki to build Kafka 0.8 and get a test broker up and running.
@@ -86,6 +89,8 @@ New KafkaClient connects directly to Kafka brokers instead of connecting to zook
 * `connectRetryOptions` : object hash that applies to the initial connection. see [retry](https://www.npmjs.com/package/retry) module for these options.
 * `idleConnection` : allows the broker to disconnect an idle connection from a client (otherwise the clients continues to reconnect after being disconnected). The value is elapsed time in ms without any data written to the TCP socket. default: 5 minutes
 * `maxAsyncRequests` : maximum async operations at a time toward the kafka cluster. default: 10
+* `sslOptions`: **Object**, options to be passed to the tls broker sockets, ex. `{ rejectUnauthorized: false }` (Kafka 0.9+)
+* `sasl`: **Object**, SASL authentication configuration (only SASL/PLAIN is currently supported), ex. `{ mechanism: 'plain', username: 'foo', password: 'bar' }` (Kafka 0.10+)
 
 ### Example
 
@@ -141,7 +146,7 @@ var kafka = require('kafka-node'),
 {
    topic: 'topicName',
    messages: ['message body'], // multi messages should be a array, single message can be just a string or a KeyedMessage instance
-   key: 'theKey', // only needed when using keyed partitioner
+   key: 'theKey', // string or buffer, only needed when using keyed partitioner
    partition: 0, // default 0
    attributes: 2, // default: 0
    timestamp: Date.now() // <-- defaults to Date.now() (only available with kafka v0.10 and KafkaClient only)
@@ -179,29 +184,34 @@ producer.on('error', function (err) {})
 ```
 > ⚠️**WARNING**: Batch multiple messages of the same topic/partition together as an array on the `messages` attribute otherwise you may lose messages!
 
-### createTopics(topics, async, cb)
-This method is used to create topics on the Kafka server. It only works when `auto.create.topics.enable`, on the Kafka server, is set to true. Our client simply sends a metadata request to the server which will auto create topics. When `async` is set to false, this method does not return until all topics are created, otherwise it returns immediately.
+### createTopics(topics, cb)
+This method is used to create topics on the Kafka server. It requires Kafka 0.10+.
 
 * `topics`: **Array**, array of topics
-* `async`: **Boolean**, async or sync
 * `cb`: **Function**, the callback
 
 Example:
 
 ``` js
-var kafka = require('kafka-node'),
-    Producer = kafka.Producer,
-    client = new kafka.Client(),
-    producer = new Producer(client);
-// Create topics sync
-producer.createTopics(['t','t1'], false, function (err, data) {
-    console.log(data);
-});
-// Create topics async
-producer.createTopics(['t'], true, function (err, data) {});
-producer.createTopics(['t'], function (err, data) {});// Simply omit 2nd arg
-```
+var kafka = require('kafka-node');
+var client = new kafka.KafkaClient();
 
+var topicsToCreate = [{
+  topic: 'topic1',
+  partitions: 1,
+  replicationFactor: 2
+},
+{
+  topic: 'topic2',
+  partitions: 5,
+  replicationFactor: 3
+}];
+
+client.createTopics(topics, (error, result) => {
+  // result is an array of any errors if a given topic could not be created 
+});
+
+```
 
 ## HighLevelProducer
 ### HighLevelProducer(client, [options], [customPartitioner])
@@ -238,7 +248,7 @@ var kafka = require('kafka-node'),
 {
    topic: 'topicName',
    messages: ['message body'], // multi messages should be a array, single message can be just a string,
-   key: 'theKey', // only needed when using keyed partitioner
+   key: 'theKey', // string or buffer, only needed when using keyed partitioner
    attributes: 1,
    timestamp: Date.now() // <-- defaults to Date.now() (only available with kafka v0.10 and KafkaClient only)
 }
@@ -541,7 +551,7 @@ Similar API as `Consumer` with some exceptions. Methods like `pause` and `resume
 
 
 ## HighLevelConsumer
-⚠️ ***This consumer has been deprecated in the latest version of Kafka (0.10.1) and is likely to be removed in the future. Please use the ConsumerGroup instead.***
+⚠️ ***This consumer has been deprecated and is likely to be removed in the future. Please use the ConsumerGroup instead.***
 
 ### HighLevelConsumer(client, payloads, options)
 * `client`: client which keeps a connection with the Kafka server.
@@ -713,11 +723,14 @@ var options = {
   // Offsets to use for new groups other options could be 'earliest' or 'none' (none will emit an error if no offsets were saved)
   // equivalent to Java client's auto.offset.reset
   fromOffset: 'latest', // default
-
+  commitOffsetsOnFirstJoin: true, // on the very first time this consumer group subscribes to a topic, record the offset returned in fromOffset (latest/earliest)
   // how to recover from OutOfRangeOffset error (where save offset is past server retention) accepts same value as fromOffset
   outOfRangeOffset: 'earliest', // default
   migrateHLC: false,    // for details please see Migration section below
-  migrateRolling: true
+  migrateRolling: true,
+  // Callback to allow consumers with autoCommit false a chance to commit before a rebalance finishes
+  // isAlreadyMember will be false on the first connection, and true on rebalances triggered after that
+  onRebalance: (isAlreadyMember, callback) => { callback(); } // or null
 };
 
 var consumerGroup = new ConsumerGroup(options, ['RebalanceTopic', 'RebalanceTest']);
@@ -868,6 +881,13 @@ Same notes in the Notes section of [ConsumerStream](#consumerstream) applies to 
 * `consumerGroupOptions` same options to initialize a `ConsumerGroup`
 * `topics` a single or array of topics to subscribe to
 
+### commit(message, force, callback)
+This method can be used to commit manually when `autoCommit` is set to `false`.
+
+* `message` the original message or an object with `{topic, partition, offset}`
+* `force` a commit even if there's a pending commit
+* `callback` (*optional*)
+
 ### close(callback)
 Closes the `ConsumerGroup`. Calls `callback` when complete. If `autoCommit` is enabled calling close will also commit offsets consumed from the buffer.
 
@@ -913,6 +933,9 @@ var kafka = require('kafka-node'),
 ```
 
 ### commit(groupId, payloads, cb)
+
+> ⚠️**WARNING**: commits are made to zookeeper and is only compatible with `HighLevelConsumer` and will **NOT** with the new `ConsumerGroup`
+
 * `groupId`: consumer group
 * `payloads`: **Array**,array of `OffsetCommitRequest`, `OffsetCommitRequest` is a JSON object like:
 
@@ -938,6 +961,9 @@ var kafka = require('kafka-node'),
 ```
 
 ### fetchCommits(groupid, payloads, cb)
+
+> ⚠️**WARNING**: commits are from zookeeper and is only compatible with `HighLevelConsumer` and will **NOT** with the new `ConsumerGroup`
+
 Fetch the last committed offset in a topic of a specific consumer group
 
 * `groupId`: consumer group
@@ -962,6 +988,33 @@ var kafka = require('kafka-node'),
     });
 ```
 
+### fetchCommitsV1(groupid, payloads, cb)
+
+> ⚠️**WARNING**: commits are from the broker and is only compatible with the new `ConsumerGroup` and will **NOT** with the old `HighLevelConsumer`
+
+Fetch the last committed offset in a topic of a specific consumer group
+
+* `groupId`: consumer group
+* `payloads`: **Array**,array of `OffsetFetchRequest`, `OffsetFetchRequest` is a JSON object like:
+
+``` js
+{
+   topic: 'topicName',
+   partition: 0 //default 0
+}
+```
+
+Example
+
+```js
+var kafka = require('kafka-node'),
+    client = new kafka.Client(),
+    offset = new kafka.Offset(client);
+    offset.fetchCommitsV1('groupId', [
+        { topic: 't', partition: 0 }
+    ], function (err, data) {
+    });
+```
 ### fetchLatestOffsets(topics, cb)
 
 Example

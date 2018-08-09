@@ -4,7 +4,6 @@ var EventEmitter = require('events').EventEmitter;
 function FakeSocket () {
   EventEmitter.call(this);
 
-  this.destroy = function () {};
   this.unref = function () {};
 
   this.end = function () {
@@ -16,6 +15,7 @@ function FakeSocket () {
   this.close = function () {};
   this.setKeepAlive = function () {};
   this.destroy = function () {};
+  this.write = function () {};
 }
 
 util.inherits(FakeSocket, EventEmitter);
