@@ -138,7 +138,9 @@ export class Offset {
 }
 
 export class KeyedMessage {
-  constructor (key: string, value: string | Buffer);
+  key: string | Buffer;
+  value: string | Buffer;
+  constructor (key: string | Buffer, value: string | Buffer);
 }
 
 export class ProducerStream extends Writable {
@@ -161,7 +163,7 @@ export interface Message {
   offset?: number;
   partition?: number;
   highWaterOffset?: number;
-  key?: string;
+  key?: string | Buffer;
 }
 
 export interface ProducerOptions {
@@ -208,7 +210,7 @@ export interface ZKOptions {
 export interface ProduceRequest {
   topic: string;
   messages: any; // string[] | Array<KeyedMessage> | string | KeyedMessage
-  key?: string;
+  key?: string | Buffer;
   partition?: number;
   attributes?: number;
 }
