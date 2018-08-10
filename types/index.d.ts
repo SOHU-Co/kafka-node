@@ -232,18 +232,6 @@ export interface HighLevelConsumerOptions extends ConsumerOptions {
   rebalanceRetry?: RetryOptions;
 }
 
-export interface ConsumerGroupStreamOptions extends ConsumerOptions {
-  groupId: string,
-  kafkaHost: string,
-  id?: string;
-  onRebalance?: () => Promise<void>,
-  sessionTimeout?: number,
-  protocol?: any,
-  heartbeatInterval?: number,
-  highWaterMark?: number,
-}
-
-
 export interface CustomPartitionAssignmentProtocol {
   name: string;
   version: number;
@@ -279,6 +267,12 @@ export interface ConsumerGroupOptions {
   retryFactor?: number;
   retryMinTimeout?: number;
   connectOnReady?: boolean;
+  heartbeatInterval?: number;
+  onRebalance?: () => Promise<void>;
+}
+
+export interface ConsumerGroupStreamOptions extends ConsumerGroupOptions {
+  highWaterMark?: number;
 }
 
 export interface Topic {
