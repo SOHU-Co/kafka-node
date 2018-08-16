@@ -47,7 +47,7 @@ export class Consumer {
   on (eventName: 'message', cb: (message: Message) => any): void;
   on (eventName: 'error' | 'offsetOutOfRange', cb: (error: any) => any): void;
 
-  addTopics (topics: string[] | Topic[], cb: (error: any, added: string[] | Topic[]) => any, fromOffset?: boolean): void;
+  addTopics<T extends string[] | Topic[]> (topics: T, cb: (error: any, added: T) => any, fromOffset?: boolean): void;
 
   removeTopics (topics: string | string[], cb: (error: any, removed: number) => any): void;
 
