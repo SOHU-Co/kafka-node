@@ -1099,4 +1099,49 @@ describe('ConsumerGroup', function () {
       });
     });
   });
+
+  describe('#removeTopics', function () {
+    let topic, newTopic, testMessage, consumerGroup;
+
+    before('create the topics', done => {
+      topic = uuid.v4();
+      newTopic = uuid.v4();
+      testMessage = uuid.v4();
+      consumerGroup = new ConsumerGroup({
+        kafkaHost: host + ':9092',
+        groupId: uuid.v4()
+      }, [topic, newTopic]);
+      consumerGroup.once('connect', () => {
+        consumerGroup.client.createTopics([topic, newTopic], done);
+      });
+    });
+
+    after('close consumer group', done => {
+      consumerGroup.close(done);
+    });
+
+    it('should not fetch messages from the topic removed', done => {
+      let messages = [];
+      consumerGroup.on('message', message => {
+        messages.push(message);
+        if (messages.length === 1) {
+          messages.should.containDeep([
+            {
+              topic: topic,
+              value: testMessage
+            }
+          ]);
+          done();
+        }
+      });
+      consumerGroup.removeTopics([newTopic], (error, result) => {
+        should(error).be.null;
+        result.should.be.eql(`Remove Topics ${newTopic} Successfully`);
+        consumerGroup.once('connect', () => {
+          sendMessage(testMessage, newTopic, () => {});
+          sendMessage(testMessage, topic, () => {});
+        });
+      });
+    });
+  });
 });
