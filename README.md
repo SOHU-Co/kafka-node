@@ -1128,6 +1128,20 @@ Result:
 }
 ```
 
+### createTopics(topics, cb)
+
+```js
+var topics = [{
+  topic: 'topic1',
+  partitions: 1,
+  replicationFactor: 2
+}];
+admin.createTopics(topics, (err, res) => {
+  // result is an array of any errors if a given topic could not be created
+})
+```
+
+See [createTopics](#createtopicstopics-cb)
 
 # Troubleshooting / FAQ
 
