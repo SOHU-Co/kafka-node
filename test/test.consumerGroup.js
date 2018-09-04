@@ -145,6 +145,148 @@ describe('ConsumerGroup', function () {
     });
   });
 
+  describe('Topic partition change detection', function () {
+    let ConsumerGroup = null;
+    let consumerGroup = null;
+    let sandbox = null;
+
+    const fakeClient = new EventEmitter();
+    fakeClient.loadMetadataForTopics = function () {};
+
+    const FakeClient = function () {
+      return fakeClient;
+    };
+
+    beforeEach(function () {
+      sandbox = sinon.sandbox.create();
+      ConsumerGroup = proxyquire('../lib/consumerGroup', {
+        './client': FakeClient
+      });
+
+      consumerGroup = new ConsumerGroup(
+        {
+          host: 'gibberish',
+          connectOnReady: false
+        },
+        'TestTopic'
+      );
+    });
+
+    afterEach(function () {
+      sandbox.restore();
+    });
+
+    describe('#scheduleTopicPartitionCheck', function () {
+      let clock;
+      beforeEach(function () {
+        clock = sandbox.useFakeTimers();
+      });
+
+      it('should only have one schedule pending', function () {
+        const cgMock = sandbox.mock(consumerGroup);
+        consumerGroup.isLeader = true;
+        cgMock
+          .expects('_checkTopicPartitionChange')
+          .once()
+          .yields(null, true);
+        cgMock.expects('commit').never();
+        cgMock
+          .expects('leaveGroup')
+          .once()
+          .yields(null);
+        cgMock.expects('connect').once();
+
+        consumerGroup.scheduleTopicPartitionCheck();
+        consumerGroup.scheduleTopicPartitionCheck();
+
+        clock.tick(30000);
+
+        cgMock.verify();
+      });
+
+      it('should only schedule a check if consumer is a leader', function () {
+        const cgMock = sandbox.mock(consumerGroup);
+
+        consumerGroup.isLeader = false;
+
+        cgMock.expects('_checkTopicPartitionChange').never();
+        cgMock.expects('leaveGroup').never();
+        cgMock.expects('connect').never();
+        cgMock.expects('commit').never();
+
+        consumerGroup.scheduleTopicPartitionCheck();
+        clock.tick(30000);
+        cgMock.verify();
+      });
+    });
+
+    describe('#_checkTopicPartitionChange', function () {
+      it('should yield false when the topic/partition length are the same', function (done) {
+        sandbox.stub(consumerGroup.client, 'loadMetadataForTopics').yields(null, [
+          0,
+          {
+            metadata: {
+              aTopic: {
+                '0': {},
+                '1': {}
+              },
+              existingTopic: {
+                '0': {},
+                '1': {},
+                '2': {}
+              }
+            }
+          }
+        ]);
+
+        consumerGroup.topicPartitionLength = {
+          aTopic: 2,
+          existingTopic: 3
+        };
+
+        consumerGroup.topics = ['aTopic', 'existingTopic'];
+
+        consumerGroup._checkTopicPartitionChange(function (error, changed) {
+          sinon.assert.calledOnce(consumerGroup.client.loadMetadataForTopics);
+          should(changed).be.false;
+          done(error);
+        });
+      });
+
+      it('should yield true when the topic/partition length are different', function (done) {
+        sandbox.stub(consumerGroup.client, 'loadMetadataForTopics').yields(null, [
+          0,
+          {
+            metadata: {
+              nonExistantTopic: {
+                '0': {},
+                '1': {}
+              },
+              existingTopic: {
+                '0': {},
+                '1': {},
+                '2': {}
+              }
+            }
+          }
+        ]);
+
+        consumerGroup.topicPartitionLength = {
+          nonExistantTopic: 0,
+          existingTopic: 3
+        };
+
+        consumerGroup.topics = ['nonExistantTopic', 'existingTopic'];
+
+        consumerGroup._checkTopicPartitionChange(function (error, changed) {
+          sinon.assert.calledOnce(consumerGroup.client.loadMetadataForTopics);
+          should(changed).be.true;
+          done(error);
+        });
+      });
+    });
+  });
+
   describe('Broker offline recovery', function () {
     let sandbox = null;
     let consumerGroup = null;
@@ -1058,10 +1200,13 @@ describe('ConsumerGroup', function () {
       topic = uuid.v4();
       newTopic = uuid.v4();
       testMessage = uuid.v4();
-      consumerGroup = new ConsumerGroup({
-        kafkaHost: host + ':9092',
-        groupId: uuid.v4()
-      }, topic);
+      consumerGroup = new ConsumerGroup(
+        {
+          kafkaHost: host + ':9092',
+          groupId: uuid.v4()
+        },
+        topic
+      );
       consumerGroup.once('connect', () => {
         consumerGroup.client.createTopics([topic, newTopic], done);
       });
@@ -1107,10 +1252,13 @@ describe('ConsumerGroup', function () {
       topic = uuid.v4();
       newTopic = uuid.v4();
       testMessage = uuid.v4();
-      consumerGroup = new ConsumerGroup({
-        kafkaHost: host + ':9092',
-        groupId: uuid.v4()
-      }, [topic, newTopic]);
+      consumerGroup = new ConsumerGroup(
+        {
+          kafkaHost: host + ':9092',
+          groupId: uuid.v4()
+        },
+        [topic, newTopic]
+      );
       consumerGroup.once('connect', () => {
         consumerGroup.client.createTopics([topic, newTopic], done);
       });
