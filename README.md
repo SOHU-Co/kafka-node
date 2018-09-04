@@ -53,11 +53,13 @@ Kafka-node is a Node.js client with Zookeeper integration for Apache Kafka 0.8.1
 * Node Stream Consumers (ConsumerGroupStream Kafka 0.9+)
 * Manage topic Offsets
 * SSL connections to brokers (Kafka 0.9+)
+* SASL/PLAIN Authentication (Kafka 0.10+)
 * Consumer Groups managed by Kafka coordinator (Kafka 0.9+)
 * Connect directly to brokers (Kafka 0.9+)
 * Administrative APIs
 	* List Groups
 	* Describe Groups
+	* Create Topics
 
 # Install Kafka
 Follow the [instructions](http://kafka.apache.org/documentation.html#quickstart) on the Kafka wiki to build Kafka 0.8 and get a test broker up and running.
@@ -99,6 +101,9 @@ const client = new kafka.KafkaClient({kafkaHost: '10.3.100.196:9092'});
 ```
 
 ## Client
+
+⚠️ ***This zookeeper based client has been deprecated and is likely to be removed in the future. Please use the KafkaClient instead.***
+
 ### Client(connectionString, clientId, [zkOptions], [noAckBatchOptions], [sslOptions])
 * `connectionString`: Zookeeper connection string, default `localhost:2181/`
 * `clientId`: This is a user-supplied identifier for the client application, default `kafka-node-client`

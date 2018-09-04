@@ -1,5 +1,25 @@
 # kafka-node CHANGELOG
 
+## Unreleased, Version 3.0.0
+* Added TS definitions [#959](https://github.com/SOHU-Co/kafka-node/pull/959) [#965](https://github.com/SOHU-Co/kafka-node/pull/965) [#1022](https://github.com/SOHU-Co/kafka-node/pull/959) [#965](https://github.com/SOHU-Co/kafka-node/pull/1022) [#1049](https://github.com/SOHU-Co/kafka-node/pull/959) [#965](https://github.com/SOHU-Co/kafka-node/pull/1049)
+* Fixed issue where ConsumerGroup refresh metadata errors weren't being correctly emitted as 'error' [#971](https://github.com/SOHU-Co/kafka-node/pull/971)
+* Fixed issue where HighLevelConsumer throw `FailedToRebalanceConsumerError: NODE_EXISTS` when rebalancing [#981](https://github.com/SOHU-Co/kafka-node/pull/981)
+* Fixed Admin.listGroups error handling [#985](https://github.com/SOHU-Co/kafka-node/pull/985)
+* Added support to create topics (specifying partitions and replication) using the Admin API (supported in Kafka v0.10 only) [#958](https://github.com/SOHU-Co/kafka-node/pull/958)
+* Updated client to remove unnecessary zookeeper reconnect [#1011](https://github.com/SOHU-Co/kafka-node/pull/1011)
+* Remove noisy debug logs [#1009](https://github.com/SOHU-Co/kafka-node/pull/1009) [#1033](https://github.com/SOHU-Co/kafka-node/pull/1033)
+* Added SASL/PLAIN Authentication [#923](https://github.com/SOHU-Co/kafka-node/pull/1009) [#1033](https://github.com/SOHU-Co/kafka-node/pull/923)
+* Fixed issue where closing a client can still `refreshBrokerMetadata` [#1048](https://github.com/SOHU-Co/kafka-node/pull/1048)
+* Fixed empty messages caused by decoding partial messages from 2.0 broker [#1050](https://github.com/SOHU-Co/kafka-node/pull/1050)
+* Fix consumerGroup `removeTopics` not able to remove topics [#1012](https://github.com/SOHU-Co/kafka-node/pull/1012)
+* Added more descriptive errors as to why broker is not available [#1023](https://github.com/SOHU-Co/kafka-node/pull/1023)
+* Fix Admin API describe groups error handling [#1010](https://github.com/SOHU-Co/kafka-node/pull/1010)
+
+
+### BREAKING CHANGES
+* Dropped support for node 4
+* KafkaClient `createTopics` method drops the second async parameter since it uses the Admin API to create Topics
+
 ## 2018-04-27, Version 2.6.1
 * Fix issue where duplicate messages are received when connecting to multiple brokers (restored dedicated consumer socket) [#956](https://github.com/SOHU-Co/kafka-node/pull/956)
 
