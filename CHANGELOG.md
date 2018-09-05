@@ -1,6 +1,6 @@
 # kafka-node CHANGELOG
 
-## Unreleased, Version 3.0.0
+## 2018-09-05, Version 3.0.0
 * Added TS definitions [#959](https://github.com/SOHU-Co/kafka-node/pull/959) [#965](https://github.com/SOHU-Co/kafka-node/pull/965) [#1022](https://github.com/SOHU-Co/kafka-node/pull/959) [#965](https://github.com/SOHU-Co/kafka-node/pull/1022) [#1049](https://github.com/SOHU-Co/kafka-node/pull/959) [#965](https://github.com/SOHU-Co/kafka-node/pull/1049)
 * Fixed issue where ConsumerGroup refresh metadata errors weren't being correctly emitted as 'error' [#971](https://github.com/SOHU-Co/kafka-node/pull/971)
 * Fixed issue where HighLevelConsumer throw `FailedToRebalanceConsumerError: NODE_EXISTS` when rebalancing [#981](https://github.com/SOHU-Co/kafka-node/pull/981)
@@ -14,7 +14,7 @@
 * Fix consumerGroup `removeTopics` not able to remove topics [#1012](https://github.com/SOHU-Co/kafka-node/pull/1012)
 * Added more descriptive errors as to why broker is not available [#1023](https://github.com/SOHU-Co/kafka-node/pull/1023)
 * Fix Admin API describe groups error handling [#1010](https://github.com/SOHU-Co/kafka-node/pull/1010)
-
+* ConsumerGroup leader will now monitors metadata for new topics/partitions. Once change has been detected it will leave and join the group to trigger a rebalance. This interval is controlled by `topicPartitionCheckInterval` option (defaults to every 30 seconds) [#1057](https://github.com/SOHU-Co/kafka-node/pull/1057)
 
 ### BREAKING CHANGES
 * Dropped support for node 4
