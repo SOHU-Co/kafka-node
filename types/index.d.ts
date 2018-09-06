@@ -45,6 +45,7 @@ export class Consumer {
   constructor (client: Client, fetchRequests: Array<OffsetFetchRequest | string>, options: ConsumerOptions);
 
   on (eventName: 'message', cb: (message: Message) => any): void;
+  on (eventName: 'done', cb: () => any): void;
   on (eventName: 'error' | 'offsetOutOfRange', cb: (error: any) => any): void;
 
   addTopics<T extends string[] | Topic[]> (topics: T, cb: (error: any, added: T) => any, fromOffset?: boolean): void;
@@ -88,7 +89,7 @@ export class HighLevelConsumer {
 
   on (eventName: 'message', cb: (message: Message) => any): void;
   on (eventName: 'error' | 'offsetOutOfRange', cb: (error: any) => any): void;
-  on (eventName: 'rebalancing' | 'rebalanced', cb: () => any): void;
+  on (eventName: 'done' | 'rebalancing' | 'rebalanced', cb: () => any): void;
 
   addTopics (topics: string[] | Topic[], cb?: (error: any, added: string[] | Topic[]) => any): void;
 
@@ -115,6 +116,8 @@ export class ConsumerGroup extends HighLevelConsumer {
   client: KafkaClient & Client;
 
   constructor (options: ConsumerGroupOptions, topics: string[] | string);
+
+  on (eventName: 'connect', cb: () => any): void;
 
   close (force: boolean, cb: (error: Error) => any): void;
   close (cb: (error: Error) => any): void;
@@ -268,7 +271,7 @@ export interface ConsumerGroupOptions {
   retryMinTimeout?: number;
   connectOnReady?: boolean;
   heartbeatInterval?: number;
-  onRebalance?: () => Promise<void>;
+  onRebalance?: (isMember: boolean, cb: (err?: Error) => any) => void;
 }
 
 export interface ConsumerGroupStreamOptions extends ConsumerGroupOptions {
