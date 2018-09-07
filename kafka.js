@@ -1,6 +1,7 @@
 exports.HighLevelConsumer = require('./lib/highLevelConsumer');
 exports.HighLevelProducer = require('./lib/highLevelProducer');
 exports.ProducerStream = require('./lib/producerStream');
+exports.AsyncConsumerGroup = require('./lib/asyncConsumerGroup');
 exports.ConsumerGroup = require('./lib/consumerGroup');
 exports.ConsumerGroupStream = require('./lib/consumerGroupStream');
 exports.Consumer = require('./lib/consumer');
