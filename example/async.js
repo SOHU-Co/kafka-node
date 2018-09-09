@@ -4,12 +4,14 @@ const kafka = require('..');
 
 const options = {
   kafkaHost: 'localhost:9092',
-  groupId: 'kafka-node-demo'
+  groupId: 'kafka-node-demo',
+  maxUncommittedMessages: 5,
 };
 
 function doSomethingAsync () {
   return new Promise(resolve => {
-    setTimeout(() => resolve(), 50 + Math.random() * 200);
+    // setTimeout(() => resolve(), 50 + Math.random() * 200);
+    resolve();
   });
 }
 
