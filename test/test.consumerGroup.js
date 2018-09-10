@@ -230,35 +230,7 @@ describe('ConsumerGroup', function () {
                 '0': {},
                 '1': {}
               },
-              existingTopic: {
-                '0': {},
-                '1': {},
-                '2': {}
-              }
-            }
-          }
-        ]);
-
-        consumerGroup.topicPartitionLength = {
-          aTopic: 2,
-          existingTopic: 3
-        };
-
-        consumerGroup.topics = ['aTopic', 'existingTopic'];
-
-        consumerGroup._checkTopicPartitionChange(function (error, changed) {
-          sinon.assert.calledOnce(consumerGroup.client.loadMetadataForTopics);
-          should(changed).be.false;
-          done(error);
-        });
-      });
-
-      it('should yield true when the topic/partition length are different', function (done) {
-        sandbox.stub(consumerGroup.client, 'loadMetadataForTopics').yields(null, [
-          0,
-          {
-            metadata: {
-              nonExistantTopic: {
+              'foo.bar.topic': {
                 '0': {},
                 '1': {}
               },
@@ -272,11 +244,44 @@ describe('ConsumerGroup', function () {
         ]);
 
         consumerGroup.topicPartitionLength = {
-          nonExistantTopic: 0,
+          aTopic: 2,
+          'foo.bar.topic': 2,
           existingTopic: 3
         };
 
-        consumerGroup.topics = ['nonExistantTopic', 'existingTopic'];
+        consumerGroup.topics = ['aTopic', 'existingTopic', 'foo.bar.topic'];
+
+        consumerGroup._checkTopicPartitionChange(function (error, changed) {
+          sinon.assert.calledOnce(consumerGroup.client.loadMetadataForTopics);
+          should(changed).be.false;
+          done(error);
+        });
+      });
+
+      it('should yield true when the topic/partition length are different', function (done) {
+        sandbox.stub(consumerGroup.client, 'loadMetadataForTopics').yields(null, [
+          0,
+          {
+            metadata: {
+              'non.existant.topic': {
+                '0': {},
+                '1': {}
+              },
+              existingTopic: {
+                '0': {},
+                '1': {},
+                '2': {}
+              }
+            }
+          }
+        ]);
+
+        consumerGroup.topicPartitionLength = {
+          'non.existant.topic': 0,
+          existingTopic: 3
+        };
+
+        consumerGroup.topics = ['existingTopic', 'non.existant.topic'];
 
         consumerGroup._checkTopicPartitionChange(function (error, changed) {
           sinon.assert.calledOnce(consumerGroup.client.loadMetadataForTopics);
