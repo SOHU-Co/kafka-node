@@ -163,7 +163,6 @@ describe('Admin', function () {
     });
 
     it('should return an error if the resource (topic) doesnt exist', function (done) {
-      // TODO fix this before PR
       const request = {
         resourceType: 2,
         resourceName: '',
