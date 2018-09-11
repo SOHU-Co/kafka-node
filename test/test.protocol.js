@@ -4,7 +4,7 @@ const versionSupport = require('../lib/protocol/protocolVersions');
 const protocolStruct = require('../lib/protocol/protocol_struct');
 const _ = require('lodash');
 
-describe('Protocol', function () {
+describe.only('Protocol', function () {
   it('exports correct properties', function () {
     versionSupport.should.have.property('apiMap');
     versionSupport.should.have.property('maxSupport');

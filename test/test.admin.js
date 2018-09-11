@@ -114,7 +114,9 @@ describe('Admin', function () {
     });
 
     after(function (done) {
-      consumer.close(done);
+      if (consumer) {
+        consumer.close(done);
+      }
     });
 
     it('should describe a list of topic configs', function (done) {
