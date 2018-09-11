@@ -1,6 +1,6 @@
 # kafka-node CHANGELOG
 
-## 2018-09-10, Version 3.0.1
+## 2018-09-11, Version 3.0.1
 * Fixed issue with new topic/partition detection when topic contains dots [#1076](https://github.com/SOHU-Co/kafka-node/pull/1076)
 * Using double ended queue for message buffer in `ConsumerGroupStream` and `ConsumerStream` [#1067](https://github.com/SOHU-Co/kafka-node/pull/1067)
 * Fixed issue in `ConsumerGroupStream` where forcing a commit breaks auto commit. [#1066](https://github.com/SOHU-Co/kafka-node/pull/1066)
