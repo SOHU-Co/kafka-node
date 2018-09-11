@@ -1148,6 +1148,83 @@ admin.createTopics(topics, (err, res) => {
 
 See [createTopics](#createtopicstopics-cb)
 
+### describeConfigs(payload, cb)
+
+Fetch the configuration for the specified resources. It requires Kafka 0.11+.
+
+* `payload`: **Array**, array of resources
+* `cb`: **Function**, the callback
+
+Example:
+
+```js
+const resource = {
+  resourceType: '2',        // '2' for topic, '4' for broker
+  resourceName: 'my-topic-name',
+  configNames: []           // specific config names, or empty array to return all,
+  includeSynonyms: false,   // requires kafka 2.0+
+}
+
+admin.describeConfigs([resource], (err, res) => {
+  console.log(JSON.stringify(res,null,1));
+})
+```
+
+Result:
+
+```json
+[
+ {
+  "configEntries": [
+   {
+    "synonyms": [],
+    "configName": "compression.type",
+    "configValue": "producer",
+    "readOnly": false,
+    "configSource": 5,
+    "isSensitive": false
+   },
+   {
+    "synonyms": [],
+    "configName": "message.format.version",
+    "configValue": "0.10.2-IV0",
+    "readOnly": false,
+    "configSource": 4,
+    "isSensitive": false
+   },
+   {
+    "synonyms": [],
+    "configName": "file.delete.delay.ms",
+    "configValue": "60000",
+    "readOnly": false,
+    "configSource": 5,
+    "isSensitive": false
+   },
+   {
+    "synonyms": [],
+    "configName": "leader.replication.throttled.replicas",
+    "configValue": "",
+    "readOnly": false,
+    "configSource": 5,
+    "isSensitive": false
+   },
+   {
+    "synonyms": [],
+    "configName": "max.message.bytes",
+    "configValue": "1000012",
+    "readOnly": false,
+    "configSource": 5,
+    "isSensitive": false
+   },
+    ...
+  ],
+  "resourceType": "2",
+  "resourceName": "my-topic-name"
+ }
+]
+
+```
+
 # Troubleshooting / FAQ
 
 ## HighLevelProducer with KeyedPartitioner errors on first send
@@ -1316,6 +1393,12 @@ KAFKA_VERSION=0.9 npm test
 KAFKA_VERSION=0.10 npm test
 
 KAFKA_VERSION=0.11 npm test
+
+KAFKA_VERSION=1.0 npm test
+
+KAFKA_VERSION=1.1 npm test
+
+KAFKA_VERSION=2.0 npm test
 ```
 
 *See Docker hub [tags](https://hub.docker.com/r/wurstmeister/kafka/tags/) entry for which version is considered `latest`.
