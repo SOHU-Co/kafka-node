@@ -5,7 +5,7 @@ const ConsumerGroup = require('../lib/consumerGroup');
 const uuid = require('uuid');
 const should = require('should');
 
-describe('Admin', function () {
+describe.only('Admin', function () {
   describe('#listGroups', function () {
     const createTopic = require('../docker/createTopic');
     let admin, consumer;
@@ -116,6 +116,8 @@ describe('Admin', function () {
     after(function (done) {
       if (consumer) {
         consumer.close(done);
+      } else {
+        done();
       }
     });
 
