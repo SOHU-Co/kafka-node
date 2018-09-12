@@ -2,6 +2,7 @@
 
 const Admin = require('../lib/admin');
 const ConsumerGroup = require('../lib/consumerGroup');
+const KafkaClient = require('../lib/kafkaClient');
 const uuid = require('uuid');
 const should = require('should');
 
@@ -92,30 +93,24 @@ describe('Admin', function () {
 
   describe('#describeConfigs', function () {
     const createTopic = require('../docker/createTopic');
-    let admin, consumer;
+    let admin, client;
     const topic = uuid.v4();
-    const groupId = 'test-group-id';
 
     before(function (done) {
-      if (process.env.KAFKA_VERSION === '0.8' || process.env.KAFKA_VERSION === '0.9' || process.env.KAFKA_VERSION === '0.10') {
+      if (['0.8', '0.9', '0.10'].includes(process.env.KAFKA_VERSION)) {
         this.skip();
       }
 
       createTopic(topic, 1, 1).then(function () {
-        consumer = new ConsumerGroup({
-          kafkaHost: 'localhost:9092',
-          groupId: groupId
-        }, topic);
-        consumer.once('connect', function () {
-          admin = new Admin(consumer.client);
-          done();
-        });
+        client = new KafkaClient({kafkaHost: 'localhost:9092'});
+        admin = new Admin(client);
+        admin.once('ready', done);
       });
     });
 
     after(function (done) {
-      if (consumer) {
-        consumer.close(done);
+      if (client) {
+        client.close(done);
       } else {
         done();
       }
@@ -182,7 +177,7 @@ describe('Admin', function () {
       });
     });
 
-    it('should return error if the resource (broker) doesnt exist', function (done) {
+    it('should return an error if the resource (broker) doesnt exist', function (done) {
       const brokerId = '9999';
       const request = {
         resourceType: 4,
