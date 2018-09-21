@@ -1159,13 +1159,17 @@ Example:
 
 ```js
 const resource = {
-  resourceType: '2',        // '2' for topic, '4' for broker
+  resourceType: admin.RESOURCE_TYPES.topic,   // 'broker' or 'topic'
   resourceName: 'my-topic-name',
   configNames: []           // specific config names, or empty array to return all,
-  includeSynonyms: false,   // requires kafka 2.0+
 }
 
-admin.describeConfigs([resource], (err, res) => {
+const payload = {
+  resources: [resource],
+  includeSynonyms: false   // requires kafka 2.0+
+};
+
+admin.describeConfigs([payload], (err, res) => {
   console.log(JSON.stringify(res,null,1));
 })
 ```

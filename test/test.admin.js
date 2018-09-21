@@ -94,14 +94,14 @@ describe('Admin', function () {
   describe('#describeConfigs', function () {
     const createTopic = require('../docker/createTopic');
     let admin, client;
-    const topic = uuid.v4();
+    const topicName = uuid.v4();
 
     before(function (done) {
       if (['0.8', '0.9', '0.10'].includes(process.env.KAFKA_VERSION)) {
         this.skip();
       }
 
-      createTopic(topic, 1, 1).then(function () {
+      createTopic(topicName, 1, 1).then(function () {
         client = new KafkaClient({kafkaHost: 'localhost:9092'});
         admin = new Admin(client);
         admin.once('ready', done);
@@ -118,8 +118,8 @@ describe('Admin', function () {
 
     it('should describe a list of topic configs', function (done) {
       const request = {
-        resourceType: 2,
-        resourceName: topic,
+        resourceType: admin.RESOURCE_TYPES.topic,
+        resourceName: topicName,
         configNames: []
       };
       const payload = {
@@ -131,7 +131,7 @@ describe('Admin', function () {
         res.length.should.be.exactly(1);
         const entries = res[0];
         entries.should.have.property('resourceType').and.exactly('2');
-        entries.should.have.property('resourceName').and.exactly(topic);
+        entries.should.have.property('resourceName').and.exactly(topicName);
         entries.should.have.property('configEntries');
         entries.configEntries.length.should.be.greaterThan(1);
         done(error);
@@ -141,7 +141,7 @@ describe('Admin', function () {
     it('should describe a list of broker configs for a specific broker id', function (done) {
       const brokerName = '1001';
       const request = {
-        resourceType: 4,
+        resourceType: admin.RESOURCE_TYPES.broker,
         resourceName: brokerName,
         configNames: []
       };
@@ -163,7 +163,7 @@ describe('Admin', function () {
 
     it('should return an error if the resource (topic) doesnt exist', function (done) {
       const request = {
-        resourceType: 2,
+        resourceType: admin.RESOURCE_TYPES.topic,
         resourceName: '',
         configNames: []
       };
@@ -180,7 +180,7 @@ describe('Admin', function () {
     it('should return an error if the resource (broker) doesnt exist', function (done) {
       const brokerId = '9999';
       const request = {
-        resourceType: 4,
+        resourceType: admin.RESOURCE_TYPES.broker,
         resourceName: brokerId,
         configNames: []
       };
@@ -198,7 +198,7 @@ describe('Admin', function () {
     it('should return error for invalid resource type', function (done) {
       const request = {
         resourceType: 25,
-        resourceName: topic,
+        resourceName: topicName,
         configNames: []
       };
       const payload = {
@@ -207,7 +207,7 @@ describe('Admin', function () {
       };
       admin.describeConfigs(payload, function (error, res) {
         should.not.exist(res);
-        error.should.have.property('message').and.equal(`Unexpected resource type UNKNOWN for resource ${topic}`);
+        error.should.have.property('message').and.equal(`Unexpected resource type 25 for resource ${topicName}`);
         done();
       });
     });
