@@ -1169,7 +1169,7 @@ const payload = {
   includeSynonyms: false   // requires kafka 2.0+
 };
 
-admin.describeConfigs([payload], (err, res) => {
+admin.describeConfigs(payload, (err, res) => {
   console.log(JSON.stringify(res,null,1));
 })
 ```
