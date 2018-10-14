@@ -178,6 +178,9 @@ export interface KafkaClientOptions {
   connectRetryOptions?: RetryOptions;
   sslOptions?: any;
   clientId?: string;
+  idleConnection?: number;
+  maxAsyncRequests?: number;
+  sasl?: any;
 }
 
 export interface ProducerStreamOptions {
