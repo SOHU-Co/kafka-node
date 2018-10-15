@@ -1230,21 +1230,6 @@ This module uses the [debug module](https://github.com/visionmedia/debug) so you
 export DEBUG=kafka-node:*
 ```
 
-## How do I get a list of all topics?
-
-Call `client.loadMetadataForTopics` with a blank topic array to get the entire list of available topics (and available brokers).
-
-```js
-client.once('connect', function () {
-	client.loadMetadataForTopics([], function (error, results) {
-	  if (error) {
-	  	return console.error(error);
-	  }
-	  console.log('%j', _.get(results, '1.metadata'));
-	});
-});
-```
-
 ## For a new consumer how do I start consuming from the latest message in a partition?
 
 If you are using the new `ConsumerGroup` simply set `'latest'` to `fromOffset` option.
