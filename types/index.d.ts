@@ -246,6 +246,7 @@ export interface ConsumerGroupOptions {
   zk?: ZKOptions;
   batch?: AckBatchOptions;
   ssl?: boolean;
+  sslOptions?: any;
   id?: string;
   groupId: string;
   sessionTimeout?: number;
