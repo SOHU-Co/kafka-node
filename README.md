@@ -652,9 +652,10 @@ consumer.removeTopics(['t1', 't2'], function (err, removed) {
 });
 ```
 
-### commit(cb)
+### commit(force, cb)
 Commit offset of the current topics manually, this method should be called when a consumer leaves
 
+* `force`: **Boolean**, force a commit even if there's a pending commit, default false (optional)
 * `cb`: **Function**, the callback
 
 Example:
