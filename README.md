@@ -722,6 +722,7 @@ var options = {
   // An array of partition assignment protocols ordered by preference.
   // 'roundrobin' or 'range' string for built ins (see below to pass in custom assignment protocol)
   protocol: ['roundrobin'],
+  encoding: 'utf8', // default is utf8, use 'buffer' for binary data
 
   // Offsets to use for new groups other options could be 'earliest' or 'none' (none will emit an error if no offsets were saved)
   // equivalent to Java client's auto.offset.reset
