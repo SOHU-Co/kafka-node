@@ -901,6 +901,86 @@ describe('Kafka Client', function () {
     });
   });
 
+  describe('#getTopicConfigs', function () {
+    let client;
+
+    beforeEach(function (done) {
+      if (process.env.KAFKA_VERSION === '0.9' || process.env.KAFKA_VERSION === '0.10') {
+        return this.skip();
+      }
+
+      client = new Client({
+        kafkaHost: '127.0.0.1:9092'
+      });
+      client.once('ready', done);
+    });
+
+    it('should fetch all configs for topics', function (done) {
+      client.getTopicConfigs(['ExampleTopic', 'RebalanceTopic'], null, (error, res) => {
+        should.not.exist(error);
+        res['ExampleTopic'].should.not.be.empty;
+        res['RebalanceTopic'].should.not.be.empty;
+        done();
+      });
+    });
+
+    it('should fetch requested configs for topics', function (done) {
+      client.getTopicConfigs(['ExampleTopic', 'RebalanceTopic'], ['compression.type', 'message.format.version'], (error, res) => {
+        should.not.exist(error);
+        res['ExampleTopic'].length.should.be.exactly(2);
+        res['ExampleTopic'][0].name.should.be.exactly('compression.type');
+        res['ExampleTopic'][1].name.should.be.exactly('message.format.version');
+        res['RebalanceTopic'].length.should.be.exactly(2);
+        res['RebalanceTopic'][0].name.should.be.exactly('compression.type');
+        res['RebalanceTopic'][1].name.should.be.exactly('message.format.version');
+        done();
+      });
+    });
+  });
+
+  describe('#getClusterConfigs', function () {
+    let client;
+
+    beforeEach(function (done) {
+      if (process.env.KAFKA_VERSION === '0.9' || process.env.KAFKA_VERSION === '0.10') {
+        return this.skip();
+      }
+
+      client = new Client({
+        kafkaHost: '127.0.0.1:9092'
+      });
+      client.once('ready', done);
+    });
+
+    it('should fetch config for broker', function (done) {
+      const validBrokerId = Object.keys(client.brokerMetadata)[0];
+      client.getClusterConfigs(validBrokerId, null, (error, res) => {
+        should.not.exist(error);
+        res[validBrokerId].should.not.be.empty;
+        done();
+      });
+    });
+
+    it('should fetch requested configs for broker', function (done) {
+      const validBrokerId = Object.keys(client.brokerMetadata)[0];
+      client.getClusterConfigs(validBrokerId, ['advertised.host.name'], (error, res) => {
+        should.not.exist(error);
+        res[validBrokerId].length.should.be.exactly(1);
+        res[validBrokerId][0].name.should.be.exactly('advertised.host.name');
+        done();
+      });
+    });
+
+    it('should return error when invalid broker provided', function (done) {
+      const fakeBrokerId = 9999;
+      client.getClusterConfigs(fakeBrokerId, null, (error, res) => {
+        should.not.exist(res);
+        error.message.should.be.exactly('No broker with id ' + fakeBrokerId);
+        done();
+      });
+    });
+  });
+
   describe('#createTopics', function () {
     let client;
 
