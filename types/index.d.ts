@@ -18,7 +18,8 @@ export class Client {
 
 export class KafkaClient extends Client {
   constructor (options?: KafkaClientOptions);
-
+  
+  createTopics(topics: string[], cb: (error: any, data: any) => any): void;
   connect (): void;
 }
 
