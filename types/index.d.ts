@@ -23,7 +23,7 @@ export class KafkaClient extends Client {
 }
 
 export class Producer {
-  constructor (client: Client, options?: ProducerOptions, customPartitioner?: CustomPartitioner);
+  constructor (client: Client, options?: ProducerOptions, customPartitioner?: Partitioner | CustomPartitioner);
 
   on (eventName: 'ready', cb: () => any): void;
   on (eventName: 'error', cb: (error: any) => any): void;
@@ -76,7 +76,7 @@ export class ConsumerGroupStream extends Readable {
 
   commit (message: Message, force?: boolean, cb?: (error: any, data: any) => any): void;
 
-  transmitMessages(): void;
+  transmitMessages (): void;
 
   close (cb: () => any): void;
 }
@@ -311,4 +311,8 @@ export class TopicsNotExistError extends Error {
   topics: string | string[];
 }
 
-export type CustomPartitioner = (partitions: number[], key: any) => number;
+export class Partitioner {
+  getPartition (partitions: number[], key: any, payload: ProduceRequest): number;
+}
+
+export type CustomPartitioner = (partitions: number[], key: any, payload: ProduceRequest) => number;
