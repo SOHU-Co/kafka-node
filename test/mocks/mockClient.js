@@ -1,11 +1,10 @@
+'use strict';
+
 var util = require('util');
 var EventEmitter = require('events').EventEmitter;
-var FakeZookeeper = require('./mockZookeeper');
 
 function FakeClient () {
   EventEmitter.call(this);
-
-  this.zk = new FakeZookeeper();
 
   this.topicExists = function (topics, cb) {
     setImmediate(cb);
