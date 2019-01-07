@@ -1086,6 +1086,49 @@ describe('Kafka Client', function () {
     });
   });
 
+  describe('#loadMetadataForTopics', function () {
+    it('should request metadata from correct broker after ready', function (done) {
+      const client = new Client({ autoConnect: false });
+      const brokerAddr = uuid.v4();
+
+      const brokerForLeaderStub = sinon.stub(client, 'brokerForLeader');
+      sinon.spy(client, 'waitUntilReady');
+
+      const firstBroker = new BrokerWrapper(new FakeSocket());
+      const secondBroker = new BrokerWrapper(new FakeSocket());
+
+      firstBroker.socket.addr = brokerAddr;
+      secondBroker.socket.addr = brokerAddr;
+
+      brokerForLeaderStub.onFirstCall().returns(firstBroker);
+      brokerForLeaderStub.onSecondCall().returns(secondBroker);
+
+      client.connecting = true;
+      client.loadMetadataForTopics([], function (error, result) {
+        if (error) {
+          return done(error);
+        }
+        sinon.assert.calledTwice(brokerForLeaderStub);
+        done(null);
+      });
+
+      firstBroker.socket.destroyed = true;
+      secondBroker.apiSupport = {
+        metadata: {
+          usable: 0
+        }
+      };
+
+      sinon.stub(client, 'queueCallback').callsFake(function (socket, correlationId, coderAndCb) {
+        setImmediate(function () {
+          coderAndCb[1](null);
+        });
+      });
+
+      client.emit(firstBroker.getReadyEventName());
+    });
+  });
+
   describe('#sendControllerRequest', function () {
     let client, sandbox;
 
