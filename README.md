@@ -209,7 +209,30 @@ var topicsToCreate = [{
 {
   topic: 'topic2',
   partitions: 5,
-  replicationFactor: 3
+  replicationFactor: 3,
+  // Optional set of config entries
+  configEntries: [
+    {
+      name: 'compression.type',
+      value: 'gzip'
+    },
+    {
+      name: 'min.compaction.lag.ms',
+      value: '50'
+    }
+  ],
+  // Optional explicit partition / replica assignment
+  // When this property exists, partitions and replicationFactor properties are ignored
+  replicaAssignment: [ 
+    {
+      partition: 0,
+      replicas: [3, 4]
+    },
+    {
+      partition: 1,
+      replicas: [2, 1]
+    }
+  ]
 }];
 
 client.createTopics(topics, (error, result) => {

@@ -905,7 +905,7 @@ describe('Kafka Client', function () {
     let client;
 
     beforeEach(function (done) {
-      if (process.env.KAFKA_VERSION === '0.9') {
+      if (process.env.KAFKA_VERSION === '0.9' || process.env.KAFKA_VERSION === '0.10') {
         return this.skip();
       }
 
@@ -979,6 +979,147 @@ describe('Kafka Client', function () {
         done();
       });
     });
+
+    it('should create topics with config entries', function (done) {
+      const topic1 = uuid.v4();
+      const topic1ReplicationFactor = 1;
+      const topic1Partitions = 5;
+
+      client.createTopics([
+        {
+          topic: topic1,
+          partitions: topic1Partitions,
+          replicationFactor: topic1ReplicationFactor,
+          configEntries: [
+            {
+              name: 'compression.type',
+              value: 'gzip'
+            },
+            {
+              name: 'min.compaction.lag.ms',
+              value: '50'
+            }
+          ]
+        }
+      ], (error, result) => {
+        should.not.exist(error);
+        result.should.be.empty;
+
+        const resource = {
+          resourceType: 'topic',
+          resourceName: topic1,
+          configNames: []
+        };
+
+        const payload = {
+          resources: [resource]
+        };
+
+        client.describeConfigs(payload, (error, result) => {
+          should.not.exist(error);
+          result[0].resourceName.should.be.exactly(topic1);
+          result[0].configEntries.filter(c => { return c.configName === 'compression.type'; })[0].configValue.should.be.exactly('gzip');
+          result[0].configEntries.filter(c => { return c.configName === 'min.compaction.lag.ms'; })[0].configValue.should.be.exactly('50');
+          done();
+        });
+      });
+    });
+
+    it('should return topic creation errors with invalid config entries', function (done) {
+      const topic1 = uuid.v4();
+      const topic1ReplicationFactor = 1;
+      const topic1Partitions = 5;
+
+      client.createTopics([
+        {
+          topic: topic1,
+          partitions: topic1Partitions,
+          replicationFactor: topic1ReplicationFactor,
+          configEntries: [
+            {
+              name: 'compression.ty',
+              value: 'gzip'
+            }
+          ]
+        }
+      ], (error, result) => {
+        should.not.exist(error);
+        result.should.have.length(1);
+        result[0].topic.should.be.exactly(topic1);
+        result[0].error.toLowerCase().should.startWith('unknown topic config name: compression.ty');
+        done();
+      });
+    });
+
+    it('should create topics with explicit replica assignments if both simple and explicit assignment is provided', function (done) {
+      const topic1 = uuid.v4();
+      const topic1ReplicationFactor = 1;
+      const topic1Partitions = 5;
+
+      client.createTopics([
+        {
+          topic: topic1,
+          partitions: topic1Partitions,
+          replicationFactor: topic1ReplicationFactor,
+          replicaAssignment: [{
+            partition: 0,
+            replicas: [1001]
+          },
+          {
+            partition: 1,
+            replicas: [1001]
+          }]
+        }
+      ], (error, result) => {
+        should.not.exist(error);
+        result.should.be.empty;
+
+        client.loadMetadataForTopics([topic1], (error, result) => {
+          should.not.exist(error);
+
+          const topicMetadata = result[1].metadata[topic1];
+          Object.keys(topicMetadata).should.have.length(2);
+          topicMetadata['0'].partition.should.be.exactly(0);
+          topicMetadata['0'].replicas.should.have.length(1);
+          topicMetadata['1'].partition.should.be.exactly(1);
+          topicMetadata['1'].replicas.should.have.length(1);
+          done();
+        });
+      });
+    });
+
+    it('should create topics with replica assignments if only explicit assignment is provided', function (done) {
+      const topic1 = uuid.v4();
+
+      client.createTopics([
+        {
+          topic: topic1,
+          replicaAssignment: [{
+            partition: 0,
+            replicas: [1001]
+          },
+          {
+            partition: 1,
+            replicas: [1001]
+          }]
+        }
+      ], (error, result) => {
+        should.not.exist(error);
+        result.should.be.empty;
+
+        client.loadMetadataForTopics([topic1], (error, result) => {
+          should.not.exist(error);
+
+          const topicMetadata = result[1].metadata[topic1];
+          Object.keys(topicMetadata).should.have.length(2);
+          topicMetadata['0'].partition.should.be.exactly(0);
+          topicMetadata['0'].replicas.should.have.length(1);
+          topicMetadata['1'].partition.should.be.exactly(1);
+          topicMetadata['1'].replicas.should.have.length(1);
+          done();
+        });
+      });
+    });
   });
 
   describe('#wrapControllerCheckIfNeeded', function () {
@@ -1004,8 +1145,8 @@ describe('Kafka Client', function () {
     it('should not wrap again if already wrapped', function () {
       const fn = _.noop;
 
-      const wrapped = client.wrapControllerCheckIfNeeded(_.noop, _.noop, [], fn);
-      const secondWrapped = client.wrapControllerCheckIfNeeded(_.noop, _.noop, [], wrapped);
+      const wrapped = client.wrapControllerCheckIfNeeded('', [], fn);
+      const secondWrapped = client.wrapControllerCheckIfNeeded('', [], wrapped);
 
       wrapped.should.be.exactly(secondWrapped);
     });
@@ -1020,7 +1161,8 @@ describe('Kafka Client', function () {
 
     it('should set controller id to null if NotControllerError was returned once', function () {
       const fn = _.noop;
-      const wrapped = client.wrapControllerCheckIfNeeded(_.noop, _.noop, [], fn);
+      const requestType = 'createTopics';
+      const wrapped = client.wrapControllerCheckIfNeeded(requestType, [], fn);
       const setControllerIdSpy = sandbox.spy(client, 'setControllerId');
       sandbox.stub(client, 'sendControllerRequest');
 
@@ -1031,11 +1173,10 @@ describe('Kafka Client', function () {
     });
 
     it('should send controller request again if NotControllerError was returned once', function () {
-      var encoder = () => undefined;
-      var decoder = () => undefined;
       var args = [];
+      const requestType = 'createTopics';
       const fn = _.noop;
-      const wrapped = client.wrapControllerCheckIfNeeded(encoder, decoder, args, fn);
+      const wrapped = client.wrapControllerCheckIfNeeded(requestType, args, fn);
       const setControllerIdSpy = sandbox.spy(client, 'setControllerId');
       const sendControllerRequestSpy = sandbox.stub(client, 'sendControllerRequest');
 
@@ -1044,12 +1185,13 @@ describe('Kafka Client', function () {
       sinon.assert.calledOnce(setControllerIdSpy);
       sinon.assert.alwaysCalledWithExactly(setControllerIdSpy, null);
       sinon.assert.calledOnce(sendControllerRequestSpy);
-      sinon.assert.alwaysCalledWithExactly(sendControllerRequestSpy, encoder, decoder, args, wrapped);
+      sinon.assert.alwaysCalledWithExactly(sendControllerRequestSpy, requestType, args, wrapped);
     });
 
     it('should set controller id to null and call original callback if NotControllerError was returned on second try', function () {
       const fnSpy = sandbox.spy();
-      const wrapped = client.wrapControllerCheckIfNeeded(_.noop, _.noop, [], fnSpy);
+      const requestType = 'createTopics';
+      const wrapped = client.wrapControllerCheckIfNeeded(requestType, [], fnSpy);
       const setControllerIdSpy = sandbox.spy(client, 'setControllerId');
       sandbox.stub(client, 'sendControllerRequest');
 
@@ -1063,7 +1205,8 @@ describe('Kafka Client', function () {
 
     it('should call original callback if another error was returned', function () {
       const fnSpy = sandbox.spy();
-      const wrapped = client.wrapControllerCheckIfNeeded(_.noop, _.noop, [], fnSpy);
+      const requestType = 'createTopics';
+      const wrapped = client.wrapControllerCheckIfNeeded(requestType, [], fnSpy);
       const setControllerIdSpy = sandbox.spy(client, 'setControllerId');
 
       wrapped(new TimeoutError('operation timed out'));
@@ -1074,7 +1217,8 @@ describe('Kafka Client', function () {
 
     it('should call original callback if no error was returned', function () {
       const fnSpy = sandbox.spy();
-      const wrapped = client.wrapControllerCheckIfNeeded(_.noop, _.noop, [], fnSpy);
+      const requestType = 'createTopics';
+      const wrapped = client.wrapControllerCheckIfNeeded(requestType, [], fnSpy);
       const setControllerIdSpy = sandbox.spy(client, 'setControllerId');
       const expectedResult = [];
 
@@ -1150,52 +1294,53 @@ describe('Kafka Client', function () {
     });
 
     it('should wrap callback', function () {
+      const requestType = 'createTopics';
       const fakeBroker = new BrokerWrapper(new FakeSocket());
-      sandbox.stub(client, 'getController').yields(null, fakeBroker);
+      sandbox.stub(client, 'getController').yields(null, fakeBroker, 1);
       sandbox.stub(client, 'queueCallback');
       const wrapControllerSpy = sandbox.spy(client, 'wrapControllerCheckIfNeeded');
       const callbackSpy = sandbox.spy();
 
-      client.sendControllerRequest(_.noop, _.noop, [], callbackSpy);
+      client.sendControllerRequest(requestType, [], callbackSpy);
 
       sinon.assert.calledOnce(wrapControllerSpy);
     });
 
     it('should be called twice when NotController error was returned', function () {
+      const requestType = 'createTopics';
       const fakeBroker = new BrokerWrapper(new FakeSocket());
-      sandbox.stub(client, 'getController').yields(null, fakeBroker);
-      sandbox.stub(client, 'queueCallback').callsFake((socket, correlationId, args) => {
-        args[1](new NotControllerError('not controller'));
+      sandbox.stub(client, 'getController').yields(null, fakeBroker, 1);
+      sandbox.stub(client, 'sendRequestToBroker').callsFake((brokerId, requestType, args, callback) => {
+        callback(new NotControllerError('not controller'));
       });
       const callbackSpy = sandbox.spy();
       const sendControllerRequestSpy = sandbox.spy(client, 'sendControllerRequest');
 
-      client.sendControllerRequest(_.noop, _.noop, [], callbackSpy);
+      client.sendControllerRequest(requestType, [], callbackSpy);
 
       sinon.assert.calledTwice(sendControllerRequestSpy);
     });
 
-    it('should call encoder and queue callback', function () {
+    it('should send request to controller', function () {
+      const requestType = 'createTopics';
       const fakeBroker = new BrokerWrapper(new FakeSocket());
-      sandbox.stub(client, 'getController').yields(null, fakeBroker);
-      const queueCallbackSpy = sandbox.stub(client, 'queueCallback');
-      const encoder = sandbox.spy();
-      const decoder = _.noop;
+      sandbox.stub(client, 'getController').yields(null, fakeBroker, 1);
+      const sendRequestSpy = sandbox.stub(client, 'sendRequestToBroker');
       const args = [];
       const callback = _.noop;
 
-      client.sendControllerRequest(encoder, decoder, args, callback);
+      client.sendControllerRequest(requestType, args, callback);
 
-      sinon.assert.calledOnce(encoder);
-      sinon.assert.calledOnce(queueCallbackSpy);
+      sinon.assert.calledOnce(sendRequestSpy);
     });
 
     it('should return error if controller request fails', function () {
+      const requestType = 'createTopics';
       const error = new TimeoutError('operation timed out');
       sandbox.stub(client, 'getController').yields(error);
       const callbackSpy = sandbox.spy();
 
-      client.sendControllerRequest(null, null, null, callbackSpy);
+      client.sendControllerRequest(requestType, null, callbackSpy);
 
       sinon.assert.calledOnce(callbackSpy);
       sinon.assert.alwaysCalledWithExactly(callbackSpy, error);
