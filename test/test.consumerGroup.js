@@ -13,7 +13,7 @@ const async = require('async');
 const BrokerWrapper = require('../lib/wrapper/BrokerWrapper');
 const FakeSocket = require('./mocks/mockSocket');
 
-xdescribe('ConsumerGroup', function () {
+describe('ConsumerGroup', function () {
   describe('#constructor', function () {
     var ConsumerGroup;
     var fakeClient = sinon.stub().returns(new EventEmitter());
@@ -331,7 +331,7 @@ xdescribe('ConsumerGroup', function () {
       fakeClient = sandbox.stub().returns(new EventEmitter());
 
       ConsumerGroup = proxyquire('../lib/consumerGroup', {
-        './client': fakeClient
+        './kafkaClient': fakeClient
       });
 
       consumerGroup = new ConsumerGroup(
@@ -641,8 +641,9 @@ xdescribe('ConsumerGroup', function () {
       sandbox.useFakeTimers();
     });
 
-    afterEach(function () {
+    afterEach(function (done) {
       sandbox.restore();
+      consumerGroup.close(done);
     });
 
     it('throws exception if consumerGroup is not ready', function () {
@@ -706,8 +707,9 @@ xdescribe('ConsumerGroup', function () {
       sandbox = sinon.sandbox.create();
     });
 
-    afterEach(function () {
+    afterEach(function (done) {
       sandbox.restore();
+      consumerGroup.close(done);
     });
 
     describe('options.fromOffset is "none"', function () {
@@ -841,7 +843,9 @@ xdescribe('ConsumerGroup', function () {
         new ConsumerGroup(
           {
             kafkaHost: 'localhost:9092',
-            migrateHLC: true
+            migrateHLC: true,
+            connectOnReady: false,
+            autoConnect: false
           },
           'TestTopic'
         );
@@ -906,8 +910,9 @@ xdescribe('ConsumerGroup', function () {
       sandbox.stub(consumerGroup, 'connect');
     });
 
-    afterEach(function () {
+    afterEach(function (done) {
       sandbox.restore();
+      consumerGroup.close(done);
     });
 
     it('should throw an exception if passed in a empty timeout', function () {
@@ -972,7 +977,7 @@ xdescribe('ConsumerGroup', function () {
           function (callback) {
             createTopic(topic, 1, 1).then(function () {
               callback(null);
-            });
+            }, callback);
           },
           function (callback) {
             if (producer.ready) {
@@ -1085,7 +1090,8 @@ xdescribe('ConsumerGroup', function () {
       testMessage = uuid.v4();
       consumerGroup = new ConsumerGroup(
         {
-          groupId: uuid.v4()
+          groupId: uuid.v4(),
+          autoCommit: false
         },
         [topic, newTopic]
       );
