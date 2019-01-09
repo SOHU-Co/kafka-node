@@ -3,11 +3,11 @@
 var kafka = require('..');
 var Consumer = kafka.Consumer;
 var Offset = kafka.Offset;
-var Client = kafka.Client;
+var Client = kafka.KafkaClient;
 var argv = require('optimist').argv;
 var topic = argv.topic || 'topic1';
 
-var client = new Client('localhost:2181');
+var client = new Client({ kafaHost: 'localhost:9092' });
 var topics = [{ topic: topic, partition: 1 }, { topic: topic, partition: 0 }];
 var options = { autoCommit: false, fetchMaxWaitMs: 1000, fetchMaxBytes: 1024 * 1024 };
 

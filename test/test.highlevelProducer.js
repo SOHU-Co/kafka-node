@@ -3,7 +3,6 @@
 var kafka = require('..');
 var HighLevelProducer = kafka.HighLevelProducer;
 var uuid = require('uuid');
-var Client = kafka.Client;
 var KafkaClient = kafka.KafkaClient;
 var KeyedMessage = kafka.KeyedMessage;
 const _ = require('lodash');
@@ -11,8 +10,6 @@ const assert = require('assert');
 const ConsumerGroup = kafka.ConsumerGroup;
 const sendMessage = require('./helpers/sendMessage');
 var client, producer, noAckProducer, producerKeyed;
-
-var host = process.env['KAFKA_TEST_HOST'] || '';
 
 describe('partitioner', function () {
   let topic, consumerGroup, messages;
@@ -35,7 +32,7 @@ describe('partitioner', function () {
   });
 
   afterEach(function (done) {
-    consumerGroup.close(done);
+    consumerGroup && consumerGroup.close(done);
   });
 
   it('should distribute messages round-robin using cyclic', function (done) {
@@ -65,16 +62,6 @@ describe('partitioner', function () {
     useKafkaClient: true
   },
   {
-    name: 'PLAINTEXT HighLevelProducer using Client'
-  },
-  {
-    name: 'SSL Producer using Client',
-    sslOptions: {
-      rejectUnauthorized: false
-    },
-    suiteTimeout: 30000
-  },
-  {
     name: 'SSL Producer using KafkaClient',
     useKafkaClient: true,
     sslOptions: {
@@ -95,16 +82,12 @@ describe('partitioner', function () {
       if (suiteTimeout) {
         this.timeout(suiteTimeout);
       }
-      var clientId = 'kafka-node-client-' + uuid.v4();
-      if (testParameters.useKafkaClient) {
-        const kafkaHost = 'localhost:' + (sslOptions != null ? '9093' : '9092');
-        client = new KafkaClient({
-          kafkaHost: kafkaHost,
-          sslOptions: sslOptions
-        });
-      } else {
-        client = new Client(host, clientId, undefined, undefined, sslOptions);
-      }
+      const kafkaHost = 'localhost:' + (sslOptions != null ? '9093' : '9092');
+      client = new KafkaClient({
+        kafkaHost: kafkaHost,
+        sslOptions: sslOptions
+      });
+
       producer = new HighLevelProducer(client);
       noAckProducer = new HighLevelProducer(client, { requireAcks: 0 });
       producerKeyed = new HighLevelProducer(client, { partitionerType: HighLevelProducer.PARTITIONER_TYPES.keyed });
@@ -273,9 +256,7 @@ describe('partitioner', function () {
         );
       });
 
-      it('should send message to specified partition even when producer configured with keyed partitioner', function (
-        done
-      ) {
+      it('should send message to specified partition even when producer configured with keyed partitioner', function (done) {
         producerKeyed.send([{ key: '12345', partition: 0, topic: EXISTS_TOPIC_3, messages: 'hello kafka' }], function (
           err,
           message
@@ -291,7 +272,7 @@ describe('partitioner', function () {
       var client, producer;
 
       before(function (done) {
-        client = new Client(host);
+        client = new KafkaClient();
         producer = new HighLevelProducer(client);
         producer.on('ready', done);
       });

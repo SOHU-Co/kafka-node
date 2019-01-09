@@ -12,8 +12,116 @@ const FakeSocket = require('./mocks/mockSocket');
 const should = require('should');
 const _ = require('lodash');
 const uuid = require('uuid');
+const BufferList = require('bl');
+const retry = require('retry');
 
 describe('Kafka Client', function () {
+  describe('Discover Group Coordinator', function () {
+    let client;
+    beforeEach(function (done) {
+      client = new Client();
+      client.once('connect', done);
+    });
+
+    afterEach(function (done) {
+      client.close(done);
+    });
+
+    it('#sendGroupCoordinatorRequest', function (done) {
+      var operation = retry.operation();
+      operation.attempt(function () {
+        client.sendGroupCoordinatorRequest('ExampleTopic', function (error, response) {
+          if (operation.retry(error)) {
+            return;
+          }
+          should(error).be.null;
+          response.coordinatorPort.should.be.eql(9092);
+          response.coordinatorHost.should.be.eql('127.0.0.1');
+          done();
+        });
+      });
+    });
+  });
+
+  describe('#handleReceivedData', function () {
+    let socket;
+
+    beforeEach(function () {
+      socket = {
+        buffer: new BufferList()
+      };
+    });
+
+    it('should always consume entire response even if handlers are missing', function () {
+      const fakeClient = {
+        invokeResponseCallback: sinon.stub().returns(null)
+      };
+
+      sinon.spy(socket.buffer, 'consume');
+      sinon
+        .stub(socket.buffer, 'readUInt32BE')
+        .onFirstCall()
+        .returns(0);
+      sinon.stub(socket.buffer, 'shallowSlice').returns({
+        readUInt32BE: sinon.stub().returns(25)
+      });
+
+      socket.buffer.append(Uint8Array.from([0, 0, 0, 0]));
+      Client.prototype.handleReceivedData.call(fakeClient, socket);
+      sinon.assert.calledOnce(socket.buffer.shallowSlice);
+      sinon.assert.calledOnce(socket.buffer.consume);
+      sinon.assert.calledOnce(fakeClient.invokeResponseCallback);
+      should(socket.waiting).be.empty;
+    });
+
+    it('should consume entire response if handlers are missing and set waiting to false for longpolling sockets', function () {
+      const fakeClient = {
+        invokeResponseCallback: sinon.stub().returns(null)
+      };
+
+      sinon.spy(socket.buffer, 'consume');
+      sinon
+        .stub(socket.buffer, 'readUInt32BE')
+        .onFirstCall()
+        .returns(0);
+      sinon.stub(socket.buffer, 'shallowSlice').returns({
+        readUInt32BE: sinon.stub().returns(25)
+      });
+
+      socket.longpolling = true;
+      socket.waiting = true;
+
+      socket.buffer.append(Uint8Array.from([0, 0, 0, 0]));
+      Client.prototype.handleReceivedData.call(fakeClient, socket);
+      sinon.assert.calledOnce(socket.buffer.shallowSlice);
+      sinon.assert.calledOnce(socket.buffer.consume);
+      sinon.assert.calledOnce(fakeClient.invokeResponseCallback);
+      socket.waiting.should.be.false;
+    });
+
+    it('should early return when buffer is beyond offset', function () {
+      const fakeClient = {
+        invokeResponseCallback: function () {}
+      };
+
+      socket.buffer.append(Uint8Array.from([0, 0, 0]));
+
+      const readSpy = sinon.spy(socket.buffer, 'readUInt32BE');
+      Client.prototype.handleReceivedData.call(fakeClient, socket);
+      sinon.assert.notCalled(readSpy);
+    });
+
+    it('should early return when buffer is empty', function () {
+      const fakeClient = {
+        invokeResponseCallback: function () {}
+      };
+
+      const readSpy = sinon.spy(socket.buffer, 'readUInt32BE');
+      Client.prototype.handleReceivedData.call(fakeClient, socket);
+      sinon.assert.notCalled(readSpy);
+    });
+  });
+
   describe('#parseHostList', function () {
     it('initial hosts should be parsed if single host is provided', function () {
       const client = new Client({
@@ -113,12 +221,6 @@ describe('Kafka Client', function () {
 
   describe('Versions', function () {
     let client;
-    before(function () {
-      if (process.env.KAFKA_VERSION === '0.8') {
-        this.skip();
-      }
-    });
-
     afterEach(function (done) {
       client.close(done);
     });
@@ -500,9 +602,7 @@ describe('Kafka Client', function () {
       before(function () {
         // these tests should not run again Kafka 0.8 & 0.9
         const supportsSaslPlain =
-          !process.env.KAFKA_VERSION ||
-          (process.env.KAFKA_VERSION !== '0.8' &&
-           process.env.KAFKA_VERSION !== '0.9');
+          !process.env.KAFKA_VERSION || (process.env.KAFKA_VERSION !== '0.8' && process.env.KAFKA_VERSION !== '0.9');
         if (!supportsSaslPlain) {
           this.skip();
         }
@@ -871,19 +971,6 @@ describe('Kafka Client', function () {
   describe('#getListGroups', function () {
     let client;
 
-    before(function () {
-      if (process.env.KAFKA_VERSION === '0.8') {
-        this.skip();
-      }
-    });
-
-    beforeEach(function (done) {
-      client = new Client({
-        kafkaHost: 'localhost:9092'
-      });
-      client.once('ready', done);
-    });
-
     afterEach(function (done) {
       client.close(done);
     });
@@ -904,11 +991,13 @@ describe('Kafka Client', function () {
   describe('#createTopics', function () {
     let client;
 
-    beforeEach(function (done) {
+    before(function () {
       if (process.env.KAFKA_VERSION === '0.9' || process.env.KAFKA_VERSION === '0.10') {
         return this.skip();
       }
+    });
 
+    beforeEach(function (done) {
       client = new Client({
         kafkaHost: 'localhost:9092'
       });
@@ -927,36 +1016,39 @@ describe('Kafka Client', function () {
       const topic2ReplicationFactor = 1;
       const topic2Partitions = 1;
 
-      client.createTopics([
-        {
-          topic: topic1,
-          partitions: topic1Partitions,
-          replicationFactor: topic1ReplicationFactor
-        },
-        {
-          topic: topic2,
-          partitions: topic2Partitions,
-          replicationFactor: topic2ReplicationFactor
-        }
-      ], (error, result) => {
-        should.not.exist(error);
-        result.should.be.empty;
-
-        // Verify topics were properly created with partitions + replication factor by fetching metadata again
-        const verifyPartitions = (topicMetadata, expectedPartitionCount, expectedReplicatonfactor) => {
-          for (let i = 0; i < expectedPartitionCount; i++) {
-            topicMetadata[i].partition.should.be.exactly(i);
-            topicMetadata[i].replicas.length.should.be.exactly(expectedReplicatonfactor);
+      client.createTopics(
+        [
+          {
+            topic: topic1,
+            partitions: topic1Partitions,
+            replicationFactor: topic1ReplicationFactor
+          },
+          {
+            topic: topic2,
+            partitions: topic2Partitions,
+            replicationFactor: topic2ReplicationFactor
           }
-        };
-
-        client.loadMetadataForTopics([topic1, topic2], (error, result) => {
+        ],
+        (error, result) => {
           should.not.exist(error);
-          verifyPartitions(result[1].metadata[topic1], topic1Partitions, topic1ReplicationFactor);
-          verifyPartitions(result[1].metadata[topic2], topic2Partitions, topic2ReplicationFactor);
-          done();
-        });
-      });
+          result.should.be.empty;
+
+          // Verify topics were properly created with partitions + replication factor by fetching metadata again
+          const verifyPartitions = (topicMetadata, expectedPartitionCount, expectedReplicatonfactor) => {
+            for (let i = 0; i < expectedPartitionCount; i++) {
+              topicMetadata[i].partition.should.be.exactly(i);
+              topicMetadata[i].replicas.length.should.be.exactly(expectedReplicatonfactor);
+            }
+          };
+
+          client.loadMetadataForTopics([topic1, topic2], (error, result) => {
+            should.not.exist(error);
+            verifyPartitions(result[1].metadata[topic1], topic1Partitions, topic1ReplicationFactor);
+            verifyPartitions(result[1].metadata[topic2], topic2Partitions, topic2ReplicationFactor);
+            done();
+          });
+        }
+      );
     });
 
     it('should return topic creation errors', function (done) {
@@ -965,19 +1057,22 @@ describe('Kafka Client', function () {
       const topicReplicationFactor = 2;
       const topicPartitions = 5;
 
-      client.createTopics([
-        {
-          topic: topic,
-          partitions: topicPartitions,
-          replicationFactor: topicReplicationFactor
+      client.createTopics(
+        [
+          {
+            topic: topic,
+            partitions: topicPartitions,
+            replicationFactor: topicReplicationFactor
+          }
+        ],
+        (error, result) => {
+          should.not.exist(error);
+          result.should.have.length(1);
+          result[0].topic.should.be.exactly(topic);
+          result[0].error.toLowerCase().should.startWith('replication factor: 2 larger than available brokers: 1');
+          done();
         }
-      ], (error, result) => {
-        should.not.exist(error);
-        result.should.have.length(1);
-        result[0].topic.should.be.exactly(topic);
-        result[0].error.toLowerCase().should.startWith('replication factor: 2 larger than available brokers: 1');
-        done();
-      });
+      );
     });
 
     it('should create topics with config entries', function (done) {
@@ -985,44 +1080,55 @@ describe('Kafka Client', function () {
       const topic1ReplicationFactor = 1;
       const topic1Partitions = 5;
 
-      client.createTopics([
-        {
-          topic: topic1,
-          partitions: topic1Partitions,
-          replicationFactor: topic1ReplicationFactor,
-          configEntries: [
-            {
-              name: 'compression.type',
-              value: 'gzip'
-            },
-            {
-              name: 'min.compaction.lag.ms',
-              value: '50'
-            }
-          ]
-        }
-      ], (error, result) => {
-        should.not.exist(error);
-        result.should.be.empty;
-
-        const resource = {
-          resourceType: 'topic',
-          resourceName: topic1,
-          configNames: []
-        };
-
-        const payload = {
-          resources: [resource]
-        };
-
-        client.describeConfigs(payload, (error, result) => {
+      client.createTopics(
+        [
+          {
+            topic: topic1,
+            partitions: topic1Partitions,
+            replicationFactor: topic1ReplicationFactor,
+            configEntries: [
+              {
+                name: 'compression.type',
+                value: 'gzip'
+              },
+              {
+                name: 'min.compaction.lag.ms',
+                value: '50'
+              }
+            ]
+          }
+        ],
+        (error, result) => {
           should.not.exist(error);
-          result[0].resourceName.should.be.exactly(topic1);
-          result[0].configEntries.filter(c => { return c.configName === 'compression.type'; })[0].configValue.should.be.exactly('gzip');
-          result[0].configEntries.filter(c => { return c.configName === 'min.compaction.lag.ms'; })[0].configValue.should.be.exactly('50');
-          done();
-        });
-      });
+          result.should.be.empty;
+
+          const resource = {
+            resourceType: 'topic',
+            resourceName: topic1,
+            configNames: []
+          };
+
+          const payload = {
+            resources: [resource]
+          };
+
+          client.describeConfigs(payload, (error, result) => {
+            should.not.exist(error);
+            result[0].resourceName.should.be.exactly(topic1);
+            result[0].configEntries
+              .filter(c => {
+                return c.configName === 'compression.type';
+              })[0]
+              .configValue.should.be.exactly('gzip');
+            result[0].configEntries
+              .filter(c => {
+                return c.configName === 'min.compaction.lag.ms';
+              })[0]
+              .configValue.should.be.exactly('50');
+            done();
+          });
+        }
+      );
     });
 
     it('should return topic creation errors with invalid config entries', function (done) {
@@ -1030,25 +1136,28 @@ describe('Kafka Client', function () {
       const topic1ReplicationFactor = 1;
       const topic1Partitions = 5;
 
-      client.createTopics([
-        {
-          topic: topic1,
-          partitions: topic1Partitions,
-          replicationFactor: topic1ReplicationFactor,
-          configEntries: [
-            {
-              name: 'compression.ty',
-              value: 'gzip'
-            }
-          ]
+      client.createTopics(
+        [
+          {
+            topic: topic1,
+            partitions: topic1Partitions,
+            replicationFactor: topic1ReplicationFactor,
+            configEntries: [
+              {
+                name: 'compression.ty',
+                value: 'gzip'
+              }
+            ]
+          }
+        ],
+        (error, result) => {
+          should.not.exist(error);
+          result.should.have.length(1);
+          result[0].topic.should.be.exactly(topic1);
+          result[0].error.toLowerCase().should.startWith('unknown topic config name: compression.ty');
+          done();
         }
-      ], (error, result) => {
-        should.not.exist(error);
-        result.should.have.length(1);
-        result[0].topic.should.be.exactly(topic1);
-        result[0].error.toLowerCase().should.startWith('unknown topic config name: compression.ty');
-        done();
-      });
+      );
     });
 
     it('should create topics with explicit replica assignments if both simple and explicit assignment is provided', function (done) {
@@ -1056,69 +1165,79 @@ describe('Kafka Client', function () {
       const topic1ReplicationFactor = 1;
       const topic1Partitions = 5;
 
-      client.createTopics([
-        {
-          topic: topic1,
-          partitions: topic1Partitions,
-          replicationFactor: topic1ReplicationFactor,
-          replicaAssignment: [{
-            partition: 0,
-            replicas: [1001]
-          },
+      client.createTopics(
+        [
           {
-            partition: 1,
-            replicas: [1001]
-          }]
-        }
-      ], (error, result) => {
-        should.not.exist(error);
-        result.should.be.empty;
-
-        client.loadMetadataForTopics([topic1], (error, result) => {
+            topic: topic1,
+            partitions: topic1Partitions,
+            replicationFactor: topic1ReplicationFactor,
+            replicaAssignment: [
+              {
+                partition: 0,
+                replicas: [1001]
+              },
+              {
+                partition: 1,
+                replicas: [1001]
+              }
+            ]
+          }
+        ],
+        (error, result) => {
           should.not.exist(error);
+          result.should.be.empty;
 
-          const topicMetadata = result[1].metadata[topic1];
-          Object.keys(topicMetadata).should.have.length(2);
-          topicMetadata['0'].partition.should.be.exactly(0);
-          topicMetadata['0'].replicas.should.have.length(1);
-          topicMetadata['1'].partition.should.be.exactly(1);
-          topicMetadata['1'].replicas.should.have.length(1);
-          done();
-        });
-      });
+          client.loadMetadataForTopics([topic1], (error, result) => {
+            should.not.exist(error);
+
+            const topicMetadata = result[1].metadata[topic1];
+            Object.keys(topicMetadata).should.have.length(2);
+            topicMetadata['0'].partition.should.be.exactly(0);
+            topicMetadata['0'].replicas.should.have.length(1);
+            topicMetadata['1'].partition.should.be.exactly(1);
+            topicMetadata['1'].replicas.should.have.length(1);
+            done();
+          });
+        }
+      );
     });
 
     it('should create topics with replica assignments if only explicit assignment is provided', function (done) {
       const topic1 = uuid.v4();
 
-      client.createTopics([
-        {
-          topic: topic1,
-          replicaAssignment: [{
-            partition: 0,
-            replicas: [1001]
-          },
+      client.createTopics(
+        [
           {
-            partition: 1,
-            replicas: [1001]
-          }]
-        }
-      ], (error, result) => {
-        should.not.exist(error);
-        result.should.be.empty;
-
-        client.loadMetadataForTopics([topic1], (error, result) => {
+            topic: topic1,
+            replicaAssignment: [
+              {
+                partition: 0,
+                replicas: [1001]
+              },
+              {
+                partition: 1,
+                replicas: [1001]
+              }
+            ]
+          }
+        ],
+        (error, result) => {
           should.not.exist(error);
+          result.should.be.empty;
 
-          const topicMetadata = result[1].metadata[topic1];
-          Object.keys(topicMetadata).should.have.length(2);
-          topicMetadata['0'].partition.should.be.exactly(0);
-          topicMetadata['0'].replicas.should.have.length(1);
-          topicMetadata['1'].partition.should.be.exactly(1);
-          topicMetadata['1'].replicas.should.have.length(1);
-          done();
-        });
-      });
+          client.loadMetadataForTopics([topic1], (error, result) => {
+            should.not.exist(error);
+
+            const topicMetadata = result[1].metadata[topic1];
+            Object.keys(topicMetadata).should.have.length(2);
+            topicMetadata['0'].partition.should.be.exactly(0);
+            topicMetadata['0'].replicas.should.have.length(1);
+            topicMetadata['1'].partition.should.be.exactly(1);
+            topicMetadata['1'].replicas.should.have.length(1);
+            done();
+          });
+        }
+      );
     });
   });
 

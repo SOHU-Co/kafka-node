@@ -83,9 +83,7 @@ describe('BaseProducer', function () {
           console.log(message);
           message.key.should.be.exactly('myKeyIsHere');
           message.value.should.be.exactly(messageValue);
-          if (process.env.KAFKA_VERSION !== '0.8') {
-            should(message.timestamp.getTime()).be.exactly(time);
-          }
+          should(message.timestamp.getTime()).be.exactly(time);
           done();
         });
       });

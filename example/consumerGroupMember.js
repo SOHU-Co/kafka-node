@@ -2,7 +2,7 @@ var async = require('async');
 var ConsumerGroup = require('..').ConsumerGroup;
 
 var consumerOptions = {
-  host: '127.0.0.1:2181',
+  kafkaHost: '127.0.0.1:9092',
   groupId: 'ExampleTestGroup',
   sessionTimeout: 15000,
   protocol: ['roundrobin'],
@@ -11,11 +11,11 @@ var consumerOptions = {
 
 var topics = ['RebalanceTopic', 'RebalanceTest'];
 
-var consumerGroup = new ConsumerGroup(Object.assign({id: 'consumer1'}, consumerOptions), topics);
+var consumerGroup = new ConsumerGroup(Object.assign({ id: 'consumer1' }, consumerOptions), topics);
 consumerGroup.on('error', onError);
 consumerGroup.on('message', onMessage);
 
-var consumerGroup2 = new ConsumerGroup(Object.assign({id: 'consumer2'}, consumerOptions), topics);
+var consumerGroup2 = new ConsumerGroup(Object.assign({ id: 'consumer2' }, consumerOptions), topics);
 consumerGroup2.on('error', onError);
 consumerGroup2.on('message', onMessage);
 consumerGroup2.on('connect', function () {
@@ -26,7 +26,7 @@ consumerGroup2.on('connect', function () {
   }, 25000);
 });
 
-var consumerGroup3 = new ConsumerGroup(Object.assign({id: 'consumer3'}, consumerOptions), topics);
+var consumerGroup3 = new ConsumerGroup(Object.assign({ id: 'consumer3' }, consumerOptions), topics);
 consumerGroup3.on('error', onError);
 consumerGroup3.on('message', onMessage);
 
@@ -36,7 +36,13 @@ function onError (error) {
 }
 
 function onMessage (message) {
-  console.log('%s read msg Topic="%s" Partition=%s Offset=%d', this.client.clientId, message.topic, message.partition, message.offset);
+  console.log(
+    '%s read msg Topic="%s" Partition=%s Offset=%d',
+    this.client.clientId,
+    message.topic,
+    message.partition,
+    message.offset
+  );
 }
 
 process.once('SIGINT', function () {

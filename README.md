@@ -8,7 +8,7 @@ Kafka-node
 <!--[![NPM](https://nodei.co/npm-dl/kafka-node.png?height=3)](https://nodei.co/npm/kafka-node/)-->
 
 
-Kafka-node is a Node.js client with Zookeeper integration for Apache Kafka 0.8.1 and later.
+Kafka-node is a Node.js client with Zookeeper integration for Apache Kafka 0.9 and later.
 
 # Table of Contents
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
@@ -19,13 +19,11 @@ Kafka-node is a Node.js client with Zookeeper integration for Apache Kafka 0.8.1
 - [Install Kafka](#install-kafka)
 - [API](#api)
   - [KafkaClient](#kafkaclient)
-  - [Client](#client)
   - [Producer](#producer)
   - [HighLevelProducer](#highlevelproducer)
   - [ProducerStream](#producerstream)
   - [Consumer](#consumer)
   - [ConsumerStream](#consumerstream)
-  - [HighLevelConsumer](#highlevelconsumer)
   - [ConsumerGroup](#consumergroup)
   - [ConsumerGroupStream](#consumergroupstream)
   - [Offset](#offset)
@@ -35,8 +33,7 @@ Kafka-node is a Node.js client with Zookeeper integration for Apache Kafka 0.8.1
   - [How do I debug an issue?](#how-do-i-debug-an-issue)
   - [How do I get a list of all topics?](#how-do-i-get-a-list-of-all-topics)
   - [For a new consumer how do I start consuming from the latest message in a partition?](#for-a-new-consumer-how-do-i-start-consuming-from-the-latest-message-in-a-partition)
-  - [FailedToRebalanceConsumerError: Exception: NODE_EXISTS[-110]](#failedtorebalanceconsumererror-exception-node_exists-110)
-  - [HighLevelConsumer does not consume on all partitions](#highlevelconsumer-does-not-consume-on-all-partitions)
+  - [ConsumerGroup does not consume on all partitions](#consumergroup-does-not-consume-on-all-partitions)
   - [How to throttle messages / control the concurrency of processing messages](#how-to-throttle-messages--control-the-concurrency-of-processing-messages)
   - [How do I produce and consume binary data?](#how-do-i-produce-and-consume-binary-data)
   - [What are these node-gyp and snappy errors?](#what-are-these-node-gyp-and-snappy-errors)
@@ -47,7 +44,7 @@ Kafka-node is a Node.js client with Zookeeper integration for Apache Kafka 0.8.1
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Features
-* Consumer and High Level Consumer
+* Consumer
 * Producer and High Level Producer
 * Node Stream Producer (Kafka 0.9+)
 * Node Stream Consumers (ConsumerGroupStream Kafka 0.9+)
@@ -62,26 +59,13 @@ Kafka-node is a Node.js client with Zookeeper integration for Apache Kafka 0.8.1
 	* Create Topics
 
 # Install Kafka
-Follow the [instructions](http://kafka.apache.org/documentation.html#quickstart) on the Kafka wiki to build Kafka 0.8 and get a test broker up and running.
+Follow the [instructions](http://kafka.apache.org/documentation.html#quickstart) on the Kafka wiki to build Kafka and get a test broker up and running.
 
 # API
 
 ## KafkaClient
 
-New KafkaClient connects directly to Kafka brokers instead of connecting to zookeeper for broker discovery.
-
-### New Features
-
-* Kafka **ONLY** no zookeeper
-* Added request timeout
-* Added connection timeout and retry
-
-### Notable differences
-
-* Constructor accepts an single options object (see below)
-* Unlike the original `Client` `KafkaClient` will not emit socket errors it will do its best to recover and only emit errors when it has exhausted its recovery attempts
-* `ready` event is only emitted after successful connection to a broker and metadata request to that broker
-* `Client` uses zookeeper to discover the SSL kafka host/port since we connect directly to the broker this host/port for SSL need to be correct
+New KafkaClient connects directly to Kafka brokers.
 
 ### Options
 * `kafkaHost` : A string of kafka broker/host combination delimited by comma for example: `kafka-1.us-east-1.myapp.com:9093,kafka-2.us-east-1.myapp.com:9093,kafka-3.us-east-1.myapp.com:9093` default: `localhost:9092`.
@@ -99,22 +83,6 @@ New KafkaClient connects directly to Kafka brokers instead of connecting to zook
 ```javascript
 const client = new kafka.KafkaClient({kafkaHost: '10.3.100.196:9092'});
 ```
-
-## Client
-
-⚠️ ***This zookeeper based client has been deprecated and is likely to be removed in the future. Please use the KafkaClient instead.***
-
-### Client(connectionString, clientId, [zkOptions], [noAckBatchOptions], [sslOptions])
-* `connectionString`: Zookeeper connection string, default `localhost:2181/`
-* `clientId`: This is a user-supplied identifier for the client application, default `kafka-node-client`
-* `zkOptions`: **Object**, Zookeeper options, see [node-zookeeper-client](https://github.com/alexguan/node-zookeeper-client#client-createclientconnectionstring-options)
-* `noAckBatchOptions`: **Object**, when requireAcks is disabled on Producer side we can define the batch properties, 'noAckBatchSize' in bytes and 'noAckBatchAge' in milliseconds. The default value is `{ noAckBatchSize: null, noAckBatchAge: null }` and it acts as if there was no batch
-* `sslOptions`: **Object**, options to be passed to the tls broker sockets, ex. { rejectUnauthorized: false } (Kafka +0.9)
-
-### close(cb)
-Closes the connection to Zookeeper and the brokers so that the node process can exit gracefully.
-
-* `cb`: **Function**, the callback
 
 ## Producer
 ### Producer(client, [options], [customPartitioner])
@@ -135,7 +103,7 @@ Closes the connection to Zookeeper and the brokers so that the node process can 
 ``` js
 var kafka = require('kafka-node'),
     Producer = kafka.Producer,
-    client = new kafka.Client(),
+    client = new kafka.KafkaClient(),
     producer = new Producer(client);
 ```
 
@@ -172,7 +140,7 @@ Example:
 var kafka = require('kafka-node'),
     Producer = kafka.Producer,
     KeyedMessage = kafka.KeyedMessage,
-    client = new kafka.Client(),
+    client = new kafka.KafkaClient(),
     producer = new Producer(client),
     km = new KeyedMessage('key', 'message'),
     payloads = [
@@ -258,7 +226,7 @@ client.createTopics(topicsToCreate, (error, result) => {
 ``` js
 var kafka = require('kafka-node'),
     HighLevelProducer = kafka.HighLevelProducer,
-    client = new kafka.Client(),
+    client = new kafka.KafkaClient(),
     producer = new HighLevelProducer(client);
 ```
 
@@ -287,7 +255,7 @@ Example:
 ``` js
 var kafka = require('kafka-node'),
     HighLevelProducer = kafka.HighLevelProducer,
-    client = new kafka.Client(),
+    client = new kafka.KafkaClient(),
     producer = new HighLevelProducer(client),
     payloads = [
         { topic: 'topic1', messages: 'hi' },
@@ -327,8 +295,6 @@ producer.createTopics(['t'], function (err, data) {});// Simply omit 2nd arg
 ## ProducerStream
 
 ### ProducerStream (options)
-
-**Requires**: Kafka v0.9+
 
 #### Options
 * `highWaterMark` size of write buffer (Default: 100)
@@ -437,7 +403,7 @@ Example:
 ``` js
 var kafka = require('kafka-node'),
     Consumer = kafka.Consumer,
-    client = new kafka.Client(),
+    client = new kafka.KafkaClient(),
     consumer = new Consumer(
         client,
         [
@@ -575,149 +541,6 @@ Similar API as `Consumer` with some exceptions. Methods like `pause` and `resume
 
 ### ConsumerStream(client, payloads, options)
 
-
-## HighLevelConsumer
-⚠️ ***This consumer has been deprecated and is likely to be removed in the future. Please use the ConsumerGroup instead.***
-
-### HighLevelConsumer(client, payloads, options)
-* `client`: client which keeps a connection with the Kafka server.
-* `payloads`: **Array**,array of `FetchRequest`, `FetchRequest` is a JSON object like:
-
-``` js
-{
-   topic: 'topicName'
-}
-```
-
-* `options`: options for consumer,
-
-```js
-{
-    // Consumer group id, default `kafka-node-group`
-    groupId: 'kafka-node-group',
-    // Optional consumer id, defaults to groupId + uuid
-    id: 'my-consumer-id',
-    // Auto commit config
-    autoCommit: true,
-    autoCommitIntervalMs: 5000,
-    // The max wait time is the maximum amount of time in milliseconds to block waiting if insufficient data is available at the time the request is issued, default 100ms
-    fetchMaxWaitMs: 100,
-    // This is the minimum number of bytes of messages that must be available to give a response, default 1 byte
-    fetchMinBytes: 1,
-    // The maximum bytes to include in the message set for this partition. This helps bound the size of the response.
-    fetchMaxBytes: 1024 * 1024,
-    // If set true, consumer will fetch message from the given offset in the payloads
-    fromOffset: false,
-    // If set to 'buffer', values will be returned as raw buffer objects.
-    encoding: 'utf8'
-}
-```
-Example:
-
-``` js
-var kafka = require('kafka-node'),
-    HighLevelConsumer = kafka.HighLevelConsumer,
-    client = new kafka.Client(),
-    consumer = new HighLevelConsumer(
-        client,
-        [
-            { topic: 't' }, { topic: 't1' }
-        ],
-        {
-            groupId: 'my-group'
-        }
-    );
-```
-
-### on('message', onMessage);
-By default, we will consume messages from the last committed offset of the current group
-
-* `onMessage`: **Function**, callback when new message comes
-
-Example:
-
-``` js
-consumer.on('message', function (message) {
-    console.log(message);
-});
-```
-
-### on('error', function (err) {})
-
-
-### on('offsetOutOfRange', function (err) {})
-
-### addTopics(topics, cb)
-Add topics to current consumer, if any topic to be added not exists, return error
-* `topics`: **Array**, array of topics to add
-* `cb`: **Function**,the callback
-
-Example:
-
-``` js
-consumer.addTopics(['t1', 't2'], function (err, added) {
-});
-
-or
-
-consumer.addTopics([{ topic: 't1', offset: 10 }], function (err, added) {
-}, true);
-```
-
-### removeTopics(topics, cb)
-* `topics`: **Array**, array of topics to remove
-* `cb`: **Function**, the callback
-
-Example:
-
-``` js
-consumer.removeTopics(['t1', 't2'], function (err, removed) {
-});
-```
-
-### commit(cb)
-Commit offset of the current topics manually, this method should be called when a consumer leaves
-
-* `cb`: **Function**, the callback
-
-Example:
-
-``` js
-consumer.commit(function(err, data) {
-});
-```
-
-### setOffset(topic, partition, offset)
-Set offset of the given topic
-
-* `topic`: **String**
-
-* `partition`: **Number**
-
-* `offset`: **Number**
-
-Example:
-
-``` js
-consumer.setOffset('topic', 0, 0);
-```
-
-### pause()
-Pause the consumer. ***Calling `pause` does not automatically stop messages from being emitted.*** This is because pause just stops the kafka consumer fetch loop. Each iteration of the fetch loop can obtain a batch of messages (limited by `fetchMaxBytes`).
-
-### resume()
-Resume the consumer. Resumes the fetch loop.
-
-### close(force, cb)
-* `force`: **Boolean**, if set to true, it forces the consumer to commit the current offset before closing, default `false`
-
-Example:
-
-```js
-consumer.close(true, cb);
-consumer.close(cb); //force is disabled
-```
-
 ## ConsumerGroup
 
 The new consumer group uses Kafka broker coordinators instead of Zookeeper to manage consumer groups. This is supported in **Kafka version 0.9** and above only.
@@ -766,6 +589,7 @@ var consumerGroup = new ConsumerGroup(options, ['RebalanceTopic', 'RebalanceTest
 
 var consumerGroup = new ConsumerGroup(options, 'RebalanceTopic');
 ```
+
 
 ### Custom Partition Assignment Protocol
 
@@ -868,30 +692,38 @@ You can pass a custom assignment strategy to the `protocol` array with the inter
 ]
 ```
 
+### on('message', onMessage);
+By default, we will consume messages from the last committed offset of the current group
 
-### Auto migration from the v0.8 based highLevelConsumer
+* `onMessage`: **Function**, callback when new message comes
 
-We have two options for automatic migration from existing `highLevelConsumer` group. This is useful to preserve the previous committed offsets for your group.
+Example:
 
-We support two use cases:
-
-1. You have downtime and your old HLC consumers are no longer available
-2. Where the old HLC group is still up and working and you are doing a rolling deploy with zero downtime
-
-For case 1 use below setting:
-
-```js
-{
-	migrateHLC: true, // default is false
-	migrateRolling: false // default is true
-}
+``` js
+consumer.on('message', function (message) {
+    console.log(message);
+});
 ```
 
-For case 2 setting `migrateRolling` to `true` will allow the ConsumerGroup to start monitoring `zk` nodes for when topic ownership are relinquished by the old HLC consumer. Once this is done the ConsumerGroup will connect and the previous HLC offsets from zookeeper will be migrated automatically to the new Kafka broker based coordinator.
+### on('error', function (err) {})
 
-* Group name should be consistent with old highLevelConsumer
-* Should never overwrite existing offsets
-* Only offsets for Topics that were once in the highLevelConsumer will be migrated over offsets for new topics will follow the `fromOffset` setting
+### on('offsetOutOfRange', function (err) {})
+
+### pause()
+Pause the consumer. ***Calling `pause` does not automatically stop messages from being emitted.*** This is because pause just stops the kafka consumer fetch loop. Each iteration of the fetch loop can obtain a batch of messages (limited by `fetchMaxBytes`).
+
+### resume()
+Resume the consumer. Resumes the fetch loop.
+
+### close(force, cb)
+* `force`: **Boolean**, if set to true, it forces the consumer to commit the current offset before closing, default `false`
+
+Example:
+
+```js
+consumer.close(true, cb);
+consumer.close(cb); //force is disabled
+```
 
 ## ConsumerGroupStream
 
@@ -1301,25 +1133,7 @@ Otherwise:
 Reference issue [#342](https://github.com/SOHU-Co/kafka-node/issues/342)
 
 
-## FailedToRebalanceConsumerError: Exception: NODE_EXISTS[-110]
-
-This error can occur when a HLC is killed and restarted quickly. The ephemeral nodes linked to the previous session are not relinquished in zookeeper when `SIGINT` is sent and instead relinquished when zookeeper session timeout is reached. The timeout can be adjusted using the `sessionTimeout` zookeeper option when the `Client` is created (the default is 30000ms).
-
-Example handler:
-
-```js
-process.on('SIGINT', function () {
-    highLevelConsumer.close(true, function () {
-        process.exit();
-    });
-});
-```
-
-Alternatively, you can avoid this issue entirely by omitting the HLC's `id` and a unique one will be generated for you.
-
-Reference issue [#90](https://github.com/SOHU-Co/kafka-node/issues/90)
-
-## HighLevelConsumer does not consume on all partitions
+## ConsumerGroup does not consume on all partitions
 
 Your partition will be stuck if the `fetchMaxBytes` is smaller than the message produced.  Increase `fetchMaxBytes` value should resolve this issue.
 
@@ -1413,8 +1227,6 @@ Achieved using the `KAFKA_VERSION` environment variable.
 npm test
 
 # Runs test against other versions:
-
-KAFKA_VERSION=0.8 npm test
 
 KAFKA_VERSION=0.9 npm test
 

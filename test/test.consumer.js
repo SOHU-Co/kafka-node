@@ -4,7 +4,7 @@ var libPath = process.env['KAFKA_COV'] ? '../lib-cov/' : '../lib/';
 var Consumer = require(libPath + 'consumer');
 var Producer = require(libPath + 'producer');
 var Offset = require(libPath + 'offset');
-var Client = require(libPath + 'client');
+var Client = require(libPath + 'kafkaClient');
 var should = require('should');
 var uuid = require('uuid');
 var TopicsNotExistError = require(libPath + 'errors').TopicsNotExistError;
@@ -23,7 +23,9 @@ var EXISTS_SNAPPY = '_exists_snappy'; // + TOPIC_POSTFIX
 var SNAPPY_MESSAGE = new Array(20).join('snappy');
 
 var host = process.env['KAFKA_TEST_HOST'] || '';
-function noop () { console.log(arguments); }
+function noop () {
+  console.log(arguments);
+}
 
 describe('Consumer', function () {
   describe('#setOffset', function () {
@@ -32,15 +34,12 @@ describe('Consumer', function () {
     beforeEach(function () {
       client = new FakeClient();
 
-      consumer = new Consumer(
-        client,
-        [ {topic: 'fake-topic'} ]
-      );
+      consumer = new Consumer(client, [{ topic: 'fake-topic' }]);
 
       clearTimeout(consumer.checkPartitionOwnershipInterval);
       consumer.payloads = [
-        {topic: 'fake-topic', partition: '0', offset: 0, maxBytes: 1048576, metadata: 'm'},
-        {topic: 'fake-topic', partition: '1', offset: 0, maxBytes: 1048576, metadata: 'm'}
+        { topic: 'fake-topic', partition: '0', offset: 0, maxBytes: 1048576, metadata: 'm' },
+        { topic: 'fake-topic', partition: '1', offset: 0, maxBytes: 1048576, metadata: 'm' }
       ];
     });
 
@@ -136,7 +135,7 @@ describe('Consumer', function () {
       should.throws(function () {
         var client = new FakeClient(host);
         // eslint-disable-next-line no-new
-        new Consumer(client, [ { topic: EXISTS_TOPIC_2 } ], {groupId: groupId});
+        new Consumer(client, [{ topic: EXISTS_TOPIC_2 }], { groupId: groupId });
       }, InvalidConfigError);
     }
 
@@ -144,7 +143,7 @@ describe('Consumer', function () {
       should.doesNotThrow(function () {
         var client = new FakeClient(host);
         // eslint-disable-next-line no-new
-        new Consumer(client, [ { topic: EXISTS_TOPIC_2 } ], {groupId: groupId});
+        new Consumer(client, [{ topic: EXISTS_TOPIC_2 }], { groupId: groupId });
       });
     }
 
@@ -186,31 +185,31 @@ describe('Consumer', function () {
     var sslOptions = testParameters.sslOptions || undefined;
     var suiteTimeout = testParameters.suiteTimeout || null;
     var suiteName = testParameters.name;
+    const kafkaHost = '127.0.0.1:' + (sslOptions == null ? '9092' : '9093');
 
     function createClient () {
-      var clientId = 'kafka-node-client-' + uuid.v4();
-      return new Client(host, clientId, undefined, undefined, sslOptions);
+      return new Client({ kafkaHost, sslOptions });
     }
 
     describe(suiteName, function () {
       before(function (done) {
-        if (suiteTimeout) { this.timeout(suiteTimeout); }
+        if (suiteTimeout) {
+          this.timeout(suiteTimeout);
+        }
         client = createClient();
         producer = new Producer(client);
         offset = new Offset(client);
         producer.on('ready', function () {
-          producer.createTopics([
-            EXISTS_TOPIC_1,
-            EXISTS_TOPIC_2,
-            EXISTS_GZIP,
-            EXISTS_SNAPPY
-          ], true, function (err) {
+          producer.createTopics([EXISTS_TOPIC_1, EXISTS_TOPIC_2, EXISTS_GZIP, EXISTS_SNAPPY], true, function (err) {
             if (err) return done(err);
-            producer.send([
-              { topic: EXISTS_TOPIC_2, messages: 'hello kafka' },
-              { topic: EXISTS_GZIP, messages: 'hello gzip', attributes: 1 },
-              { topic: EXISTS_SNAPPY, messages: SNAPPY_MESSAGE, attributes: 2 }
-            ], done);
+            producer.send(
+              [
+                { topic: EXISTS_TOPIC_2, messages: 'hello kafka' },
+                { topic: EXISTS_GZIP, messages: 'hello gzip', attributes: 1 },
+                { topic: EXISTS_SNAPPY, messages: SNAPPY_MESSAGE, attributes: 2 }
+              ],
+              done
+            );
           });
         });
       });
@@ -225,8 +224,10 @@ describe('Consumer', function () {
 
       describe('events', function () {
         it('should emit message when get new message', function (done) {
-          if (suiteTimeout) { this.timeout(suiteTimeout); }
-          var topics = [ { topic: EXISTS_TOPIC_2 } ];
+          if (suiteTimeout) {
+            this.timeout(suiteTimeout);
+          }
+          var topics = [{ topic: EXISTS_TOPIC_2 }];
           var options = { autoCommit: false, groupId: '_groupId_1_test' };
           var consumer = new Consumer(client, topics, options);
           var count = 0;
@@ -246,8 +247,10 @@ describe('Consumer', function () {
         });
 
         it('should decode gzip messages', function (done) {
-          if (suiteTimeout) { this.timeout(suiteTimeout); }
-          var topics = [ { topic: EXISTS_GZIP } ];
+          if (suiteTimeout) {
+            this.timeout(suiteTimeout);
+          }
+          var topics = [{ topic: EXISTS_GZIP }];
           var options = { autoCommit: false, groupId: '_groupId_gzip_test' };
           var client = createClient();
           var consumer = new Consumer(client, topics, options);
@@ -271,8 +274,10 @@ describe('Consumer', function () {
         });
 
         it('should decode snappy messages', function (done) {
-          if (suiteTimeout) { this.timeout(suiteTimeout); }
-          var topics = [ { topic: EXISTS_SNAPPY } ];
+          if (suiteTimeout) {
+            this.timeout(suiteTimeout);
+          }
+          var topics = [{ topic: EXISTS_SNAPPY }];
           var options = { autoCommit: false, groupId: '_groupId_snappy_test' };
           var client = createClient();
           var consumer = new Consumer(client, topics, options);
@@ -296,17 +301,18 @@ describe('Consumer', function () {
         });
 
         it('should emit error when topic not exists', function (done) {
-          var topics = [ { topic: '_not_exist_topic_1_test' } ];
+          var topics = [{ topic: '_not_exist_topic_1_test' }];
           var consumer = new Consumer(client, topics);
           consumer.on('error', function (error) {
-            error.should.be.an.instanceOf(TopicsNotExistError)
+            error.should.be.an
+              .instanceOf(TopicsNotExistError)
               .and.have.property('message', 'The topic(s) _not_exist_topic_1_test do not exist');
             done();
           });
         });
 
         it('should emit offsetOutOfRange when offset out of range', function (done) {
-          var topics = [ { topic: EXISTS_TOPIC_1, offset: 100 } ];
+          var topics = [{ topic: EXISTS_TOPIC_1, offset: 100 }];
           var options = { fromOffset: true, autoCommit: false };
           var count = 0;
           var client = createClient();
@@ -341,14 +347,22 @@ describe('Consumer', function () {
 
           it('should return error when using payload as well', function (done) {
             var options = { autoCommit: false, groupId: '_groupId_1_test' };
-            var topics = [{topic: '_not_exist_topic_1_test', offset: 42}];
+            var topics = [{ topic: '_not_exist_topic_1_test', offset: 42 }];
             var consumer = new Consumer(client, [], options);
             consumer.on('error', noop);
-            consumer.addTopics(topics, function (err) {
-              err.topics.length.should.equal(1);
-              err.topics.should.eql(topics.map(function (p) { return p.topic; }));
-              done();
-            }, true);
+            consumer.addTopics(
+              topics,
+              function (err) {
+                err.topics.length.should.equal(1);
+                err.topics.should.eql(
+                  topics.map(function (p) {
+                    return p.topic;
+                  })
+                );
+                done();
+              },
+              true
+            );
           });
         });
 
@@ -360,21 +374,33 @@ describe('Consumer', function () {
             consumer.on('error', noop);
             consumer.addTopics(topics, function (err, data) {
               data.should.eql(topics);
-              consumer.payloads.some(function (p) { return p.topic === topics[0]; }).should.be.ok;
+              consumer.payloads.some(function (p) {
+                return p.topic === topics[0];
+              }).should.be.ok;
               done(err);
             });
           });
 
           it('should add with given offset', function (done) {
             var options = { autoCommit: false, groupId: '_groupId_addTopics_test' };
-            var topics = [{topic: EXISTS_TOPIC_2, offset: 42}];
+            var topics = [{ topic: EXISTS_TOPIC_2, offset: 42 }];
             var consumer = new Consumer(client, [], options);
             consumer.on('error', noop);
-            consumer.addTopics(topics, function (err, data) {
-              data.should.eql(topics.map(function (p) { return p.topic; }));
-              consumer.payloads.some(function (p) { return p.topic === topics[0].topic && p.offset === topics[0].offset; }).should.be.ok;
-              done(err);
-            }, true);
+            consumer.addTopics(
+              topics,
+              function (err, data) {
+                data.should.eql(
+                  topics.map(function (p) {
+                    return p.topic;
+                  })
+                );
+                consumer.payloads.some(function (p) {
+                  return p.topic === topics[0].topic && p.offset === topics[0].offset;
+                }).should.be.ok;
+                done(err);
+              },
+              true
+            );
           });
         });
 
@@ -402,18 +428,20 @@ describe('Consumer', function () {
             consumer.on('error', noop);
 
             consumer.setOffset(EXISTS_TOPIC_2, 0, 100);
-            consumer.payloads.filter(function (p) {
-              return p.topic === EXISTS_TOPIC_2;
-            })[0].offset.should.equal(100);
+            consumer.payloads
+              .filter(function (p) {
+                return p.topic === EXISTS_TOPIC_2;
+              })[0]
+              .offset.should.equal(100);
           });
         });
 
         describe('#commit', function () {
           it('should commit offset of current topics', function (done) {
-            var topics = [ { topic: EXISTS_TOPIC_2 } ];
+            var topics = [{ topic: EXISTS_TOPIC_2 }];
             var options = { autoCommit: false, groupId: '_groupId_commit_test' };
 
-            var client = new Client(host);
+            var client = new Client();
             var consumer = new Consumer(client, topics, options);
             var count = 0;
             consumer.on('error', noop);
@@ -484,8 +512,8 @@ describe('Consumer', function () {
 
         describe('#close', function () {
           it('should close the consumer', function (done) {
-            var client = new Client(host);
-            var topics = [ { topic: EXISTS_TOPIC_2 } ];
+            var client = new Client();
+            var topics = [{ topic: EXISTS_TOPIC_2 }];
             var options = { autoCommit: false, groupId: '_groupId_close_test' };
 
             var consumer = new Consumer(client, topics, options);
@@ -497,8 +525,8 @@ describe('Consumer', function () {
           });
 
           it('should commit the offset if force', function (done) {
-            var client = new Client(host);
-            var topics = [ { topic: EXISTS_TOPIC_2 } ];
+            var client = new Client();
+            var topics = [{ topic: EXISTS_TOPIC_2 }];
             var force = true;
             var options = { autoCommit: false, groupId: '_groupId_close_test' };
 
@@ -534,10 +562,10 @@ describe('Consumer', function () {
           it('should pause or resume the topics', function (done) {
             var client = createClient();
             var topics = [
-              {topic: topic1, partition: 0},
-              {topic: topic1, partition: 1},
-              {topic: topic2, partition: 0},
-              {topic: topic2, partition: 1}
+              { topic: topic1, partition: 0 },
+              { topic: topic1, partition: 1 },
+              { topic: topic2, partition: 0 },
+              { topic: topic2, partition: 1 }
             ];
             var consumer = new Consumer(client, topics, {});
             consumer.on('error', function () {});
@@ -546,24 +574,22 @@ describe('Consumer', function () {
               return { topic: p.topic, partition: p.partition };
             }
             function compare (p1, p2) {
-              return p1.topic === p2.topic
-                ? p1.partition - p2.partition
-                : p1.topic > p2.topic;
+              return p1.topic === p2.topic ? p1.partition - p2.partition : p1.topic > p2.topic;
             }
 
             consumer.payloads.should.eql(topics);
             consumer.pauseTopics([topic1, { topic: topic2, partition: 0 }]);
             consumer.payloads.map(normalize).should.eql([{ topic: topic2, partition: 1 }]);
 
-            consumer.resumeTopics([{topic: topic1, partition: 0}]);
-            consumer.payloads.map(normalize).sort(compare).should.eql([
-              {topic: topic1, partition: 0},
-              {topic: topic2, partition: 1}
-            ]);
-            consumer.pausedPayloads.map(normalize).sort(compare).should.eql([
-              {topic: topic1, partition: 1},
-              {topic: topic2, partition: 0}
-            ]);
+            consumer.resumeTopics([{ topic: topic1, partition: 0 }]);
+            consumer.payloads
+              .map(normalize)
+              .sort(compare)
+              .should.eql([{ topic: topic1, partition: 0 }, { topic: topic2, partition: 1 }]);
+            consumer.pausedPayloads
+              .map(normalize)
+              .sort(compare)
+              .should.eql([{ topic: topic1, partition: 1 }, { topic: topic2, partition: 0 }]);
 
             consumer.resumeTopics([topic1, topic2]);
             consumer.payloads.sort(compare).should.eql(topics);
@@ -576,25 +602,28 @@ describe('Consumer', function () {
 
         describe('Consumer', function () {
           before(function (done) {
-            if (suiteTimeout) { this.timeout(suiteTimeout); }
+            if (suiteTimeout) {
+              this.timeout(suiteTimeout);
+            }
             client = createClient();
             producer = new Producer(client);
             offset = new Offset(client);
             producer.on('ready', function () {
-              producer.createTopics([
-                EXISTS_TOPIC_1,
-                EXISTS_TOPIC_2,
-                EXISTS_GZIP,
-                EXISTS_SNAPPY
-              ], false, function (err, created) {
+              producer.createTopics([EXISTS_TOPIC_1, EXISTS_TOPIC_2, EXISTS_GZIP, EXISTS_SNAPPY], false, function (
+                err,
+                created
+              ) {
                 if (err) return done(err);
 
                 function useNewTopics () {
-                  producer.send([
-                    { topic: EXISTS_TOPIC_2, messages: 'hello kafka' },
-                    { topic: EXISTS_GZIP, messages: 'hello gzip', attributes: 1 },
-                    { topic: EXISTS_SNAPPY, messages: SNAPPY_MESSAGE, attributes: 2 }
-                  ], done);
+                  producer.send(
+                    [
+                      { topic: EXISTS_TOPIC_2, messages: 'hello kafka' },
+                      { topic: EXISTS_GZIP, messages: 'hello gzip', attributes: 1 },
+                      { topic: EXISTS_SNAPPY, messages: SNAPPY_MESSAGE, attributes: 2 }
+                    ],
+                    done
+                  );
                 }
                 // Ensure leader selection happened
                 setTimeout(useNewTopics, 1000);

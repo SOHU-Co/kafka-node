@@ -6,7 +6,7 @@ var through2 = require('through2');
 var libPath = process.env['KAFKA_COV'] ? '../lib-cov/' : '../lib/';
 var ConsumerStream = require(libPath + 'consumerStream');
 var Producer = require(libPath + 'producer');
-var Client = require(libPath + 'client');
+var Client = require(libPath + 'kafkaClient');
 var EventCounter = require('./helpers/EventCounter');
 
 const TOPIC_POSTFIX = '_test_' + Date.now();
@@ -15,8 +15,6 @@ const APPEND_TOPIC_1 = '_append_1' + TOPIC_POSTFIX;
 const COMMIT_STREAM_TOPIC_1 = '_commit_stream_1' + TOPIC_POSTFIX;
 const COMMIT_STREAM_TOPIC_2 = '_commit_stream_2' + TOPIC_POSTFIX;
 const COMMIT_STREAM_TOPIC_3 = '_commit_stream_3' + TOPIC_POSTFIX;
-
-var host = process.env['KAFKA_TEST_HOST'] || '';
 
 function createTopicAndProduceMessages (producer, topic, numberOfMessages, done) {
   if (!done) {
@@ -33,7 +31,7 @@ function createTopicAndProduceMessages (producer, topic, numberOfMessages, done)
 
 describe('ConsumerStream', function () {
   it("should emit both a 'message' and a 'data' event for each message", function (done) {
-    var client = new Client(host);
+    var client = new Client();
     var producer = new Producer(client);
     producer.once('ready', function () {
       createTopicAndProduceMessages(producer, EXISTS_TOPIC_1, 100, function () {
@@ -64,7 +62,7 @@ describe('ConsumerStream', function () {
     });
   });
   it('should continue polling for new messages appended after consuming all existing messages', function (done) {
-    var client = new Client(host);
+    var client = new Client();
     var producer = new Producer(client);
     producer.once('ready', function () {
       createTopicAndProduceMessages(producer, APPEND_TOPIC_1, 20, function () {
@@ -104,7 +102,7 @@ describe('ConsumerStream', function () {
     it('should instantiate a consumer stream and increment commit manually', function (done) {
       const groupId = '_commitStream_1_test';
       const topic = COMMIT_STREAM_TOPIC_1;
-      var client = new Client(host);
+      var client = new Client();
       var producer = new Producer(client);
       producer.once('ready', function () {
         createTopicAndProduceMessages(producer, topic, 20, function () {
@@ -142,7 +140,7 @@ describe('ConsumerStream', function () {
     xit('should commit when the autocommit message count is reached', function (done) {
       const groupId = '_commitStream_2_test';
       const topic = COMMIT_STREAM_TOPIC_2;
-      var client = new Client(host);
+      var client = new Client();
       var producer = new Producer(client);
       producer.once('ready', function () {
         createTopicAndProduceMessages(producer, topic, 20, function () {
@@ -171,7 +169,7 @@ describe('ConsumerStream', function () {
     xit('should autocommit after a given interval in milliseconds', function (done) {
       const groupId = '_commitStream_3_test';
       const topic = COMMIT_STREAM_TOPIC_3;
-      var client = new Client(host);
+      var client = new Client();
       var producer = new Producer(client);
       producer.once('ready', function () {
         createTopicAndProduceMessages(producer, topic, 20, function () {
