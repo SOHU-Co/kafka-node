@@ -13,7 +13,7 @@ const async = require('async');
 const BrokerWrapper = require('../lib/wrapper/BrokerWrapper');
 const FakeSocket = require('./mocks/mockSocket');
 
-describe('ConsumerGroup', function () {
+xdescribe('ConsumerGroup', function () {
   describe('#constructor', function () {
     var ConsumerGroup;
     var fakeClient = sinon.stub().returns(new EventEmitter());

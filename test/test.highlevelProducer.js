@@ -32,7 +32,7 @@ describe('partitioner', function () {
   });
 
   afterEach(function (done) {
-    consumerGroup.close(done);
+    consumerGroup && consumerGroup.close(done);
   });
 
   it('should distribute messages round-robin using cyclic', function (done) {
