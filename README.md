@@ -235,7 +235,7 @@ var topicsToCreate = [{
   ]
 }];
 
-client.createTopics(topics, (error, result) => {
+client.createTopics(topicsToCreate, (error, result) => {
   // result is an array of any errors if a given topic could not be created 
 });
 
