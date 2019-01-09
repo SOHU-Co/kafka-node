@@ -3,26 +3,11 @@ import * as kafka from '..';
 /**
  * KAFKA CLIENT
  */
-const basicClient = new kafka.Client('localhost:2181/', 'sendMessage');
-
-const optionsClient = new kafka.Client(
-  'localhost:2181/',
-  'sendMessage',
-  { sessionTimeout: 30000, spinDelay: 1000, retries: 0 },
-  { noAckBatchSize: 1000, noAckBatchAge: 1000 * 10 },
-  { rejectUnauthorized: false }
-);
-
-optionsClient.topicExists(['topic'], (error: any) => { });
-optionsClient.refreshMetadata(['topic'], (error: any) => { });
-optionsClient.close();
-optionsClient.sendOffsetCommitV2Request('group', 0, 'memberId', [], () => { });
-optionsClient.close(() => { });
 
 const basicKafkaClient = new kafka.KafkaClient();
 
 const optionsKafkaClient = new kafka.KafkaClient({
-  kafkaHost: 'localhost:2181',
+  kafkaHost: 'localhost:9092',
   connectTimeout: 1000,
   requestTimeout: 1000,
   autoConnect: true,
@@ -38,9 +23,9 @@ optionsKafkaClient.connect();
 /**
  * KAFKA PRODUCER
  */
-const optionsProducer = new kafka.Producer(basicClient, { requireAcks: 0, ackTimeoutMs: 0, partitionerType: 0 });
+const optionsProducer = new kafka.Producer(basicKafkaClient, { requireAcks: 0, ackTimeoutMs: 0, partitionerType: 0 });
 
-const producer = new kafka.Producer(basicClient);
+const producer = new kafka.Producer(basicKafkaClient);
 producer.on('error', (error: Error) => { });
 producer.on('ready', () => {
   const messages = [
@@ -63,7 +48,7 @@ producer.on('ready', () => {
 /**
  * KAFKA HIGH LEVEL PRODUCER
  */
-const highLevelProducer = new kafka.HighLevelProducer(basicClient);
+const highLevelProducer = new kafka.HighLevelProducer(basicKafkaClient);
 
 highLevelProducer.on('error', (error: Error) => { });
 highLevelProducer.on('ready', () => {
@@ -88,7 +73,7 @@ highLevelProducer.on('ready', () => {
  * KAFKA CONSUMER
  */
 const fetchRequests = [{ topic: 'awesome' }];
-const consumer = new kafka.Consumer(basicClient, fetchRequests, { groupId: 'abcde', autoCommit: true });
+const consumer = new kafka.Consumer(basicKafkaClient, fetchRequests, { groupId: 'abcde', autoCommit: true });
 
 consumer.on('error', (error: Error) => { });
 consumer.on('offsetOutOfRange', (error: Error) => { });
@@ -121,45 +106,11 @@ consumer.close(true, () => { });
 consumer.close((err: any) => { });
 
 /**
- * KAFKA HIGH LEVEL CONSUMER
- */
-const fetchRequests1 = [{ topic: 'awesome' }];
-const hlConsumer = new kafka.HighLevelConsumer(basicClient, fetchRequests1, { groupId: 'abcde', autoCommit: true });
-
-hlConsumer.on('error', (error: Error) => { });
-hlConsumer.on('offsetOutOfRange', (error: Error) => { });
-hlConsumer.on('message', (message: kafka.Message) => {
-  const topic = message.topic;
-  const value = message.value;
-  const offset = message.offset;
-  const partition = message.partition;
-  const highWaterOffset = message.highWaterOffset;
-  const key = message.key;
-});
-
-hlConsumer.addTopics(['t1', 't2'], (err: any, added: any) => { });
-hlConsumer.addTopics([{ topic: 't1', offset: 10 }], (err: any, added: any) => { });
-
-hlConsumer.removeTopics(['t1', 't2'], (err: any, removed: number) => { });
-hlConsumer.removeTopics('t2', (err: any, removed: number) => { });
-
-hlConsumer.commit((err: any, data: any) => { });
-hlConsumer.commit(true, (err: any, data: any) => { });
-
-hlConsumer.setOffset('topic', 0, 0);
-
-hlConsumer.pause();
-hlConsumer.resume();
-
-hlConsumer.close(true, () => { });
-hlConsumer.close(() => { });
-
-/**
  * KAFKA CONSUMER GROUP
  */
 const ackBatchOptions = { noAckBatchSize: 1024, noAckBatchAge: 10 };
 const cgOptions: kafka.ConsumerGroupOptions = {
-  host: 'localhost:2181',
+  kafkaHost: 'localhost:9092',
   batch: ackBatchOptions,
   groupId: 'groupID',
   id: 'consumerID',
@@ -177,7 +128,7 @@ consumerGroup.on('error', (err) => { });
 consumerGroup.on('message', (msg) => { });
 consumerGroup.close(true, (err: Error) => { });
 
-const offset = new kafka.Offset(basicClient);
+const offset = new kafka.Offset(basicKafkaClient);
 
 offset.on('ready', () => { });
 

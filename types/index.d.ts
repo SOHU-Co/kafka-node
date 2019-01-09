@@ -1,7 +1,8 @@
 import { Readable, Writable } from 'stream';
+import { EventEmitter } from 'events';
 
-export class Client {
-  constructor (connectionString: string, clientId?: string, options?: ZKOptions, noBatchOptions?: AckBatchOptions, sslOptions?: any);
+export class KafkaClient extends EventEmitter {
+  constructor (options?: KafkaClientOptions);
 
   close (cb?: () => void): void;
 
@@ -14,16 +15,12 @@ export class Client {
   // Note: socket_error is currently KafkaClient only, and zkReconnect is currently Client only.
   on (eventName: 'brokersChanged' | 'close' | 'connect' | 'ready' | 'reconnect' | 'zkReconnect', cb: () => any): this;
   on (eventName: 'error' | 'socket_error', cb: (error: any) => any): this;
-}
-
-export class KafkaClient extends Client {
-  constructor (options?: KafkaClientOptions);
 
   connect (): void;
 }
 
 export class Producer {
-  constructor (client: Client, options?: ProducerOptions, customPartitioner?: CustomPartitioner);
+  constructor (client: KafkaClient, options?: ProducerOptions, customPartitioner?: CustomPartitioner);
 
   on (eventName: 'ready', cb: () => any): void;
   on (eventName: 'error', cb: (error: any) => any): void;
@@ -40,9 +37,9 @@ export class HighLevelProducer extends Producer {
 }
 
 export class Consumer {
-  client: Client;
+  client: KafkaClient;
 
-  constructor (client: Client, fetchRequests: Array<OffsetFetchRequest | string>, options: ConsumerOptions);
+  constructor (client: KafkaClient, fetchRequests: Array<OffsetFetchRequest | string>, options: ConsumerOptions);
 
   on (eventName: 'message', cb: (message: Message) => any): void;
   on (eventName: 'error' | 'offsetOutOfRange', cb: (error: any) => any): void;
@@ -69,22 +66,27 @@ export class Consumer {
 }
 
 export class ConsumerGroupStream extends Readable {
-  client: Client;
+  client: KafkaClient;
   consumerGroup: ConsumerGroup;
 
   constructor (options: ConsumerGroupStreamOptions, topics: string | string[]);
 
   commit (message: Message, force?: boolean, cb?: (error: any, data: any) => any): void;
 
-  transmitMessages(): void;
+  transmitMessages (): void;
 
   close (cb: () => any): void;
 }
 
-export class HighLevelConsumer {
-  client: Client;
+export class ConsumerGroup {
+  generationId: number;
+  memberId: string;
+  client: KafkaClient;
 
-  constructor (client: Client, payloads: Topic[], options: HighLevelConsumerOptions);
+  constructor (options: ConsumerGroupOptions, topics: string[] | string);
+
+  close (force: boolean, cb: (error: Error) => any): void;
+  close (cb: (error: Error) => any): void;
 
   on (eventName: 'message', cb: (message: Message) => any): void;
   on (eventName: 'error' | 'offsetOutOfRange', cb: (error: any) => any): void;
@@ -104,24 +106,10 @@ export class HighLevelConsumer {
   pause (): void;
 
   resume (): void;
-
-  close (force: boolean, cb: () => any): void;
-  close (cb: () => any): void;
-}
-
-export class ConsumerGroup extends HighLevelConsumer {
-  generationId: number;
-  memberId: string;
-  client: KafkaClient & Client;
-
-  constructor (options: ConsumerGroupOptions, topics: string[] | string);
-
-  close (force: boolean, cb: (error: Error) => any): void;
-  close (cb: (error: Error) => any): void;
 }
 
 export class Offset {
-  constructor (client: Client);
+  constructor (client: KafkaClient);
 
   on (eventName: 'ready' | 'connect', cb: () => any): void;
   on (eventName: 'error', cb: (error: any) => any): void;
@@ -199,12 +187,6 @@ export interface AckBatchOptions {
   noAckBatchAge: number | null;
 }
 
-export interface ZKOptions {
-  sessionTimeout?: number;
-  spinDelay?: number;
-  retries?: number;
-}
-
 export interface ProduceRequest {
   topic: string;
   messages: any; // string[] | Array<KeyedMessage> | string | KeyedMessage
@@ -225,13 +207,6 @@ export interface ConsumerOptions {
   keyEncoding?: 'buffer' | 'utf8';
 }
 
-export interface HighLevelConsumerOptions extends ConsumerOptions {
-  id?: string;
-  maxNumSegments?: number;
-  maxTickMessages?: number;
-  rebalanceRetry?: RetryOptions;
-}
-
 export interface CustomPartitionAssignmentProtocol {
   name: string;
   version: number;
@@ -242,8 +217,6 @@ export interface CustomPartitionAssignmentProtocol {
 
 export interface ConsumerGroupOptions {
   kafkaHost?: string;
-  host?: string;
-  zk?: ZKOptions;
   batch?: AckBatchOptions;
   ssl?: boolean;
   sslOptions?: any;
