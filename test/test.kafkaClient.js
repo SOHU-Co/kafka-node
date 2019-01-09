@@ -221,12 +221,6 @@ describe('Kafka Client', function () {
 
   describe('Versions', function () {
     let client;
-    before(function () {
-      if (process.env.KAFKA_VERSION === '0.8') {
-        this.skip();
-      }
-    });
-
     afterEach(function (done) {
       client.close(done);
     });
@@ -977,19 +971,6 @@ describe('Kafka Client', function () {
   describe('#getListGroups', function () {
     let client;
 
-    before(function () {
-      if (process.env.KAFKA_VERSION === '0.8') {
-        this.skip();
-      }
-    });
-
-    beforeEach(function (done) {
-      client = new Client({
-        kafkaHost: 'localhost:9092'
-      });
-      client.once('ready', done);
-    });
-
     afterEach(function (done) {
       client.close(done);
     });
@@ -1010,11 +991,13 @@ describe('Kafka Client', function () {
   describe('#createTopics', function () {
     let client;
 
-    beforeEach(function (done) {
+    before(function () {
       if (process.env.KAFKA_VERSION === '0.9' || process.env.KAFKA_VERSION === '0.10') {
         return this.skip();
       }
+    });
 
+    beforeEach(function (done) {
       client = new Client({
         kafkaHost: 'localhost:9092'
       });

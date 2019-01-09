@@ -14,15 +14,14 @@ describe('Admin', function () {
     const groupId = 'test-group-id';
 
     before(function (done) {
-      if (process.env.KAFKA_VERSION === '0.8') {
-        this.skip();
-      }
-
       createTopic(topic, 1, 1).then(function () {
-        consumer = new ConsumerGroup({
-          kafkaHost: 'localhost:9092',
-          groupId: groupId
-        }, topic);
+        consumer = new ConsumerGroup(
+          {
+            kafkaHost: 'localhost:9092',
+            groupId: groupId
+          },
+          topic
+        );
         consumer.once('connect', function () {
           done();
         });
@@ -50,15 +49,14 @@ describe('Admin', function () {
     const groupId = 'test-group-id';
 
     before(function (done) {
-      if (process.env.KAFKA_VERSION === '0.8') {
-        this.skip();
-      }
-
       createTopic(topic, 1, 1).then(function () {
-        consumer = new ConsumerGroup({
-          kafkaHost: 'localhost:9092',
-          groupId: groupId
-        }, topic);
+        consumer = new ConsumerGroup(
+          {
+            kafkaHost: 'localhost:9092',
+            groupId: groupId
+          },
+          topic
+        );
         consumer.once('connect', function () {
           done();
         });
@@ -97,12 +95,12 @@ describe('Admin', function () {
     const topicName = uuid.v4();
 
     before(function (done) {
-      if (['0.8', '0.9', '0.10'].includes(process.env.KAFKA_VERSION)) {
+      if (['0.9', '0.10'].includes(process.env.KAFKA_VERSION)) {
         this.skip();
       }
 
       createTopic(topicName, 1, 1).then(function () {
-        client = new KafkaClient({kafkaHost: 'localhost:9092'});
+        client = new KafkaClient({ kafkaHost: 'localhost:9092' });
         admin = new Admin(client);
         admin.once('ready', done);
       });
