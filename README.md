@@ -936,6 +936,67 @@ Result:
 }
 ```
 
+### listTopics(cb)
+
+List the topics managed by the kafka cluster.
+
+* `cb`: **Function**, the callback
+
+Example:
+
+```js
+const client = new kafka.KafkaClient();
+const admin = new kafka.Admin(client);
+admin.listTopics((err, res) => {
+  console.log('topics', res);
+});
+```
+
+Result:
+
+```js
+[
+  {
+    "1001": {
+      "nodeId": 1001,
+      "host": "127.0.0.1",
+      "port": 9092
+    }
+  },
+  {
+    "metadata": {
+      "my-test-topic": {
+        "0": {
+          "topic": "my-test-topic",
+          "partition": 0,
+          "leader": 1001,
+          "replicas": [
+            1001
+          ],
+          "isr": [
+            1001
+          ]
+        },
+        "1": {
+          "topic": "my-test-topic",
+          "partition": 1,
+          "leader": 1001,
+          "replicas": [
+            1001
+          ],
+          "isr": [
+            1001
+          ]
+        }
+      }
+    },
+    "clusterMetadata": {
+      "controllerId": 1001
+    }
+  }
+]
+```
+
 ### createTopics(topics, cb)
 
 ```js
@@ -1051,21 +1112,6 @@ This module uses the [debug module](https://github.com/visionmedia/debug) so you
 
 ```bash
 export DEBUG=kafka-node:*
-```
-
-## How do I get a list of all topics?
-
-Call `client.loadMetadataForTopics` with a blank topic array to get the entire list of available topics (and available brokers).
-
-```js
-client.once('connect', function () {
-	client.loadMetadataForTopics([], function (error, results) {
-	  if (error) {
-	  	return console.error(error);
-	  }
-	  console.log('%j', _.get(results, '1.metadata'));
-	});
-});
 ```
 
 ## For a new consumer how do I start consuming from the latest message in a partition?
