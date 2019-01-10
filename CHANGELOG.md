@@ -8,7 +8,7 @@
 * Fixed issue where closed broker can be used to send metadata requests [#1160](https://github.com/SOHU-Co/kafka-node/pull/1160)
 * Unsupported message format (Record Batch) now throws an error instead of failing silently [#1151](https://github.com/SOHU-Co/kafka-node/pull/1151)
 * Adds support for DescribeConfigs protocol to `Admin` [#1081](https://github.com/SOHU-Co/kafka-node/pull/1081)
-* Updated TypeScript definition [#1101](https://github.com/SOHU-Co/kafka-node/pull/1101)
+* Updated TypeScript definition [#1101](https://github.com/SOHU-Co/kafka-node/pull/1101) [#1079](https://github.com/SOHU-Co/kafka-node/pull/1079)
 * List all topics method added to Admin [#1100](https://github.com/SOHU-Co/kafka-node/pull/1100)
 
 ### BREAKING CHANGES
