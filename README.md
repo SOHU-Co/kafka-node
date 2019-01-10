@@ -548,8 +548,7 @@ Similar API as `Consumer` with some exceptions. Methods like `pause` and `resume
 ```js
 var options = {
   kafkaHost: 'broker:9092', // connect directly to kafka broker (instantiates a KafkaClient)
-  zk : undefined,   // put client zk settings if you need them (see Client)
-  batch: undefined, // put client batch settings if you need them (see Client)
+  batch: undefined, // put client batch settings if you need them
   ssl: true, // optional (defaults to false) or tls options hash
   groupId: 'ExampleTestGroup',
   sessionTimeout: 15000,
@@ -696,6 +695,19 @@ consumer.on('message', function (message) {
 ### on('error', function (err) {})
 
 ### on('offsetOutOfRange', function (err) {})
+
+### commit(force, cb)
+Commit offset of the current topics manually, this method should be called when a consumer leaves
+
+* `force`: **Boolean**, force a commit even if there's a pending commit, default false (optional)
+* `cb`: **Function**, the callback
+
+Example:
+
+``` js
+consumer.commit(function(err, data) {
+});
+```
 
 ### pause()
 Pause the consumer. ***Calling `pause` does not automatically stop messages from being emitted.*** This is because pause just stops the kafka consumer fetch loop. Each iteration of the fetch loop can obtain a batch of messages (limited by `fetchMaxBytes`).
