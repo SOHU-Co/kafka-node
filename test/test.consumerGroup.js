@@ -75,6 +75,20 @@ describe('ConsumerGroup', function () {
         });
       });
     });
+
+    it('should throw assertion error if using empty topic array', function () {
+      should.throws(() => {
+        // eslint-disable-next-line no-new
+        new ConsumerGroup({}, []);
+      });
+    });
+
+    it('should not throw assertion error if using valid topic array', function () {
+      should.doesNotThrow(() => {
+        // eslint-disable-next-line no-new
+        new ConsumerGroup({}, ['test']);
+      });
+    });
   });
 
   describe('Topic partition change detection', function () {
