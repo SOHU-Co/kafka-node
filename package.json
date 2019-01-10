@@ -1,6 +1,6 @@
 {
   "name": "kafka-node",
-  "description": "Client for Apache Kafka v0.8.1+, v0.9.x, and v0.10.x",
+  "description": "Client for Apache Kafka v0.9.x, v0.10.x and v0.11.x",
   "keywords": [
     "kafka",
     "consumer",
@@ -14,7 +14,7 @@
     "types"
   ],
   "bugs": "https://github.com/SOHU-co/kafka-node/issues",
-  "version": "3.0.1",
+  "version": "4.0.0",
   "main": "kafka.js",
   "types": "types/index.d.ts",
   "license": "MIT",

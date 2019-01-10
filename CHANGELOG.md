@@ -1,5 +1,26 @@
 # kafka-node CHANGELOG
 
+## 2019-01-10, Version 4.0.0
+* Pending timers from connect, and waitUntilReady are cleared when `KafkaClient` is closed [#1163](https://github.com/SOHU-Co/kafka-node/pull/1163)
+* ConsumerGroup commit timer should not hold node process open [#797](https://github.com/SOHU-Co/kafka-node/pull/797)
+* Validation for empty topic for ConsumerGroup [#1166](https://github.com/SOHU-Co/kafka-node/pull/1166)
+* Adds support for providing config entries and explicit replica assignment when creating new topics. [#1157](https://github.com/SOHU-Co/kafka-node/pull/1157)
+* Fixed issue where closed broker can be used to send metadata requests [#1160](https://github.com/SOHU-Co/kafka-node/pull/1160)
+* Unsupported message format (Record Batch) now throws an error instead of failing silently [#1151](https://github.com/SOHU-Co/kafka-node/pull/1151)
+* Adds support for DescribeConfigs protocol to `Admin` [#1081](https://github.com/SOHU-Co/kafka-node/pull/1081)
+* Updated TypeScript definition [#1101](https://github.com/SOHU-Co/kafka-node/pull/1101) [#1079](https://github.com/SOHU-Co/kafka-node/pull/1079)
+* List all topics method added to Admin [#1100](https://github.com/SOHU-Co/kafka-node/pull/1100)
+
+### BREAKING CHANGES
+
+* Messages are now emitted asynchronously to fix issues with message ordering for compressed messages [#1072](https://github.com/SOHU-Co/kafka-node/pull/1072)
+* Removed zookeeper based APIs [#1163](https://github.com/SOHU-Co/kafka-node/pull/1163)
+	*  Removed `Client`
+	*  Removed `HighLevelConsumer`
+	*  Removed `ConsumerGroup` rolling migration feature from HLC based consumer. If you need to migrate use older version of kafka-node
+	*  Offset `fetchCommits` is implementation of `fetchCommitsV1` which deals with ConsumerGroup instead of HLC
+	*  Zookeeper based events will no longer be emitted
+
 ## 2018-09-11, Version 3.0.1
 * Fixed issue with new topic/partition detection when topic contains dots [#1076](https://github.com/SOHU-Co/kafka-node/pull/1076)
 * Using double ended queue for message buffer in `ConsumerGroupStream` and `ConsumerStream` [#1067](https://github.com/SOHU-Co/kafka-node/pull/1067)
