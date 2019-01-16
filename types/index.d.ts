@@ -17,6 +17,10 @@ export class KafkaClient extends EventEmitter {
   on (eventName: 'error' | 'socket_error', cb: (error: any) => any): this;
 
   connect (): void;
+
+  createTopics (topics: CreateTopicRequest[], callback: (error: any, result: CreateTopicResponse[]) => any): void;
+
+  loadMetadataForTopics (topics: string[], callback: (error: any, result: MetadataResponse) => any): void;
 }
 
 export class Producer {
@@ -293,3 +297,52 @@ export class TopicsNotExistError extends Error {
 }
 
 export type CustomPartitioner = (partitions: number[], key: string | Buffer) => number;
+
+export interface CreateTopicRequest {
+  topic: string;
+  partitions: number;
+  replicationFactor: number;
+  configEntries?: {
+    name: string;
+    value: string;
+  }[];
+  replicaAssignment?: {
+    partition: number;
+    replicas: number[];
+  }[];
+}
+
+export interface CreateTopicResponse {
+  topic: string;
+  error: string;
+}
+
+export interface BrokerMetadataResponse {
+  [id: number]: {
+    host: string;
+    nodeId: number;
+    port: number;
+  };
+}
+
+export interface ClusterMetadataResponse {
+  clusterMetadata: {
+    controllerId: number;
+  };
+  metadata: {
+    [topic: string]: {
+      [partition: number]: {
+        leader: number;
+        partition: number;
+        topic: string;
+        replicas: number[];
+        isr: number[];
+      };
+    };
+  };
+}
+
+export interface MetadataResponse extends Array<BrokerMetadataResponse|ClusterMetadataResponse> {
+  0: BrokerMetadataResponse;
+  1: ClusterMetadataResponse;
+}
