@@ -1392,6 +1392,36 @@ describe('Kafka Client', function () {
     });
   });
 
+  describe('#getController', function () {
+    it('should use cached controller details even if controllerId is 0', function (done) {
+      const client = new Client({ autoConnect: false });
+
+      client.brokerMetadata = {
+        '0': {
+          host: 'fake-host',
+          port: 1234
+        }
+      };
+
+      client.clusterMetadata = {
+        controllerId: 0
+      };
+
+      const broker = uuid.v4();
+
+      sinon.stub(client, 'getBroker').withArgs('fake-host', 1234).returns(broker);
+
+      const loadMetadataStub = sinon.stub(client, 'loadMetadata').yieldsAsync(null, [{}, {}]);
+
+      client.getController(function (error, broker, controllerId) {
+        sinon.assert.notCalled(loadMetadataStub);
+        sinon.assert.calledOnce(client.getBroker);
+        broker.should.be.eql(broker);
+        done(error);
+      });
+    });
+  });
+
   describe('#sendControllerRequest', function () {
     let client, sandbox;
 
