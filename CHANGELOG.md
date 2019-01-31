@@ -1,5 +1,9 @@
 # kafka-node CHANGELOG
 
+## 2019-01-31, Version 4.0.1
+* Fixed issue when KafkaClient.getController wasn't using cached details when controller id is 0 [#1176](https://github.com/SOHU-Co/kafka-node/pull/1176)
+* Update TS typings [#1174](https://github.com/SOHU-Co/kafka-node/pull/1174) and [#1099](https://github.com/SOHU-Co/kafka-node/pull/1099) 
+
 ## 2019-01-10, Version 4.0.0
 * Pending timers from connect, and waitUntilReady are cleared when `KafkaClient` is closed [#1163](https://github.com/SOHU-Co/kafka-node/pull/1163)
 * ConsumerGroup commit timer should not hold node process open [#797](https://github.com/SOHU-Co/kafka-node/pull/797)
