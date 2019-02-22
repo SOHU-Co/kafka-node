@@ -1,5 +1,9 @@
 # kafka-node CHANGELOG
 
+## 2019-02-22, Version 4.0.2
+* Fix blocked `ConsumerGroup` fetch loop when fetch request yields an error [#1194](https://github.com/SOHU-Co/kafka-node/pull/1194)
+* Fix topic partition check not being scheduled when call to loadMetadataForTopic fail [#1195](https://github.com/SOHU-Co/kafka-node/pull/1195)
+
 ## 2019-01-31, Version 4.0.1
 * Fixed issue when KafkaClient.getController wasn't using cached details when controller id is 0 [#1176](https://github.com/SOHU-Co/kafka-node/pull/1176)
 * Update TS typings [#1174](https://github.com/SOHU-Co/kafka-node/pull/1174) and [#1099](https://github.com/SOHU-Co/kafka-node/pull/1099) 
