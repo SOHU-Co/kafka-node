@@ -12,6 +12,7 @@ const uuid = require('uuid');
 const async = require('async');
 const BrokerWrapper = require('../lib/wrapper/BrokerWrapper');
 const FakeSocket = require('./mocks/mockSocket');
+const { BrokerNotAvailableError } = require('../lib/errors');
 
 describe('ConsumerGroup', function () {
   describe('#constructor', function () {
@@ -1092,6 +1093,74 @@ describe('ConsumerGroup', function () {
           sendMessage(testMessage, newTopic, () => {});
         });
       });
+    });
+  });
+
+  describe('#fetch', function () {
+    let consumerGroup;
+
+    afterEach(function (done) {
+      consumerGroup.close(done);
+    });
+
+    it('should reset fetch pending state if fetch request fails', function () {
+      const topic = uuid.v4();
+      consumerGroup = new ConsumerGroup(
+        {
+          connectOnReady: false,
+          groupId: uuid.v4(),
+          autoCommit: false
+        },
+        [topic]
+      );
+
+      consumerGroup.ready = true;
+      consumerGroup.paused = false;
+      consumerGroup._isFetchPending = false;
+
+      const clientMock = sinon.mock(consumerGroup.client);
+
+      clientMock
+        .expects('sendFetchRequest')
+        .once()
+        .yields(new BrokerNotAvailableError('Test Error'));
+
+      const cgMock = sinon.mock(consumerGroup);
+      cgMock.expects('_resetFetchState').once();
+
+      consumerGroup.fetch();
+      clientMock.verify();
+      cgMock.verify();
+    });
+
+    it('should not reset fetch pending state if fetch request was successful', function () {
+      const topic = uuid.v4();
+      consumerGroup = new ConsumerGroup(
+        {
+          connectOnReady: false,
+          groupId: uuid.v4(),
+          autoCommit: false
+        },
+        [topic]
+      );
+
+      consumerGroup.ready = true;
+      consumerGroup.paused = false;
+      consumerGroup._isFetchPending = false;
+
+      const clientMock = sinon.mock(consumerGroup.client);
+
+      clientMock
+        .expects('sendFetchRequest')
+        .once()
+        .yields(null);
+
+      const cgMock = sinon.mock(consumerGroup);
+      cgMock.expects('_resetFetchState').never();
+
+      consumerGroup.fetch();
+      clientMock.verify();
+      cgMock.verify();
     });
   });
 
