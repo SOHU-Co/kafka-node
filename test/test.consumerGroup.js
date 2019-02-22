@@ -129,6 +129,62 @@ describe('ConsumerGroup', function () {
         clock = sandbox.useFakeTimers();
       });
 
+      it('should not schedule check if consumer is closed', function () {
+        const cgMock = sandbox.mock(consumerGroup);
+
+        consumerGroup.closed = true;
+        consumerGroup.isLeader = true;
+
+        cgMock.expects('_checkTopicPartitionChange').never();
+        cgMock.expects('commit').never();
+        cgMock.expects('leaveGroup').never();
+        cgMock.expects('connect').never();
+        consumerGroup.scheduleTopicPartitionCheck();
+        clock.tick(30000);
+
+        cgMock.verify();
+      });
+
+      it('should not run check if consumer is closed and scheduled', function () {
+        const cgMock = sandbox.mock(consumerGroup);
+
+        consumerGroup.closed = false;
+        consumerGroup.isLeader = true;
+
+        cgMock.expects('_checkTopicPartitionChange').never();
+        cgMock.expects('commit').never();
+        cgMock.expects('leaveGroup').never();
+        cgMock.expects('connect').never();
+        consumerGroup.scheduleTopicPartitionCheck();
+        consumerGroup.closed = true;
+        clock.tick(30000);
+
+        cgMock.verify();
+      });
+
+      it('should still schedule check if topicPartitionChange errors', function () {
+        const cgMock = sandbox.mock(consumerGroup);
+        consumerGroup.isLeader = true;
+        cgMock
+          .expects('_checkTopicPartitionChange')
+          .once()
+          .yields(new Error('something bad'));
+
+        cgMock.expects('commit').never();
+        cgMock.expects('leaveGroup').never();
+        cgMock.expects('connect').never();
+
+        consumerGroup.on('error', function () {});
+
+        consumerGroup.scheduleTopicPartitionCheck();
+        sandbox.spy(consumerGroup, 'scheduleTopicPartitionCheck');
+
+        clock.tick(30000);
+
+        cgMock.verify();
+        sinon.assert.calledOnce(consumerGroup.scheduleTopicPartitionCheck);
+      });
+
       it('should only have one schedule pending', function () {
         const cgMock = sandbox.mock(consumerGroup);
         consumerGroup.isLeader = true;
