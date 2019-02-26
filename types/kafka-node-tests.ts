@@ -125,6 +125,7 @@ const cgOptions: kafka.ConsumerGroupOptions = {
 
 const consumerGroup = new kafka.ConsumerGroup(cgOptions, ['topic1']);
 consumerGroup.on('error', (err) => { });
+consumerGroup.on('connect', () => { });
 consumerGroup.on('message', (msg) => { });
 consumerGroup.close(true, (err: Error) => { });
 
