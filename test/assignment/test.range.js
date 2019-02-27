@@ -6,34 +6,20 @@ const should = require('should');
 
 describe('Range Assignment', function () {
   const topicPartition = {
-    'RebalanceTopic': [
-      '0',
-      '1',
-      '2'
-    ],
-    'RebalanceTest': [
-      '0',
-      '1',
-      '2'
-    ]
+    RebalanceTopic: ['0', '1', '2'],
+    RebalanceTest: ['0', '1', '2']
   };
 
   const groupMembers = [
     {
-      'subscription': [
-        'RebalanceTopic',
-        'RebalanceTest'
-      ],
-      'version': 0,
-      'id': 'consumer1'
+      subscription: ['RebalanceTopic', 'RebalanceTest'],
+      version: 0,
+      id: 'consumer1'
     },
     {
-      'subscription': [
-        'RebalanceTopic',
-        'RebalanceTest'
-      ],
-      'version': 0,
-      'id': 'consumer2'
+      subscription: ['RebalanceTopic', 'RebalanceTest'],
+      version: 0,
+      id: 'consumer2'
     }
   ];
 
@@ -65,12 +51,9 @@ describe('Range Assignment', function () {
   it('should partition two topics of three partitions between three consumers', function (done) {
     const gm = groupMembers.slice(0);
     gm.push({
-      'subscription': [
-        'RebalanceTopic',
-        'RebalanceTest'
-      ],
-      'version': 0,
-      'id': 'consumer3'
+      subscription: ['RebalanceTopic', 'RebalanceTest'],
+      version: 0,
+      id: 'consumer3'
     });
 
     range.assign(topicPartition, gm, function (error, result) {
@@ -99,21 +82,16 @@ describe('Range Assignment', function () {
 
   it('should partition two topics of three partitions between four consumers', function (done) {
     const gm = groupMembers.slice(0);
-    gm.push({
-      'subscription': [
-        'RebalanceTopic',
-        'RebalanceTest'
-      ],
-      'version': 0,
-      'id': 'consumer3'
-    },
+    gm.push(
       {
-        'subscription': [
-          'RebalanceTopic',
-          'RebalanceTest'
-        ],
-        'version': 0,
-        'id': 'consumer4'
+        subscription: ['RebalanceTopic', 'RebalanceTest'],
+        version: 0,
+        id: 'consumer3'
+      },
+      {
+        subscription: ['RebalanceTopic', 'RebalanceTest'],
+        version: 0,
+        id: 'consumer4'
       }
     );
 
