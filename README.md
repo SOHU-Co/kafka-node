@@ -31,13 +31,13 @@ Kafka-node is a Node.js client for Apache Kafka 0.9 and later.
 - [Troubleshooting / FAQ](#troubleshooting--faq)
   - [HighLevelProducer with KeyedPartitioner errors on first send](#highlevelproducer-with-keyedpartitioner-errors-on-first-send)
   - [How do I debug an issue?](#how-do-i-debug-an-issue)
-  - [How do I get a list of all topics?](#how-do-i-get-a-list-of-all-topics)
   - [For a new consumer how do I start consuming from the latest message in a partition?](#for-a-new-consumer-how-do-i-start-consuming-from-the-latest-message-in-a-partition)
   - [ConsumerGroup does not consume on all partitions](#consumergroup-does-not-consume-on-all-partitions)
   - [How to throttle messages / control the concurrency of processing messages](#how-to-throttle-messages--control-the-concurrency-of-processing-messages)
   - [How do I produce and consume binary data?](#how-do-i-produce-and-consume-binary-data)
   - [What are these node-gyp and snappy errors?](#what-are-these-node-gyp-and-snappy-errors)
   - [How do I configure the log output?](#how-do-i-configure-the-log-output)
+  - [Error: Not a message set. Magic byte is 2](#error-not-a-message-set-magic-byte-is-2)
 - [Running Tests](#running-tests)
 - [LICENSE - "MIT"](#license---mit)
 
@@ -1198,6 +1198,11 @@ kafkaLogging.setLoggerProvider(consoleLoggerProvider);
 // then require kafka-node and continue as normal
 const kafka = require('kafka-node');
 ```
+
+## Error: Not a message set. Magic byte is 2
+
+If you are receiving this error in your consumer double check the `fetchMaxBytes` configuration. If set too low the broker could start sending fetch responses in RecordBatch format instead of MessageSet.
+
 
 # Running Tests
 
