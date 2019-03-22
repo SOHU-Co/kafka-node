@@ -1,5 +1,6 @@
 'use strict';
 
+const proxyquire = require('proxyquire');
 const kafka = require('..');
 const Client = kafka.KafkaClient;
 const sinon = require('sinon');
@@ -156,6 +157,44 @@ describe('Kafka Client', function () {
           port: '9094'
         }
       ]);
+    });
+  });
+
+  describe('#createBroker', function () {
+    let sandbox, Client, mockSocket;
+    beforeEach(function () {
+      sandbox = sinon.sandbox.create();
+      mockSocket = new FakeSocket();
+      Client = proxyquire('../lib/kafkaClient', {
+        net: {
+          createConnection () {
+            return mockSocket;
+          }
+        }
+      });
+    });
+
+    afterEach(function () {
+      sandbox.restore();
+    });
+
+    it('should schedule refresh of metadata when socket is closed', function (done) {
+      const client = new Client({ autoConnect: false });
+      sandbox.stub(client, 'refreshBrokerMetadata').callsFake(done);
+      client.createBroker('fakehost', 9092, true);
+      mockSocket.emit('close', false);
+    });
+
+    it('should not schedule refresh of metadata when client is initalizing', function (done) {
+      const client = new Client({ autoConnect: false });
+      client.connecting = true;
+      sandbox.stub(client, 'refreshBrokerMetadata');
+      client.createBroker('fakehost', 9092, true);
+      mockSocket.emit('close', false);
+      setImmediate(function () {
+        sinon.assert.notCalled(client.refreshBrokerMetadata);
+        done();
+      });
     });
   });
 
