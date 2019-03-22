@@ -178,6 +178,32 @@ describe('Kafka Client', function () {
       sandbox.restore();
     });
 
+    it('should not emit connect event when fails to initializeBroker', function () {
+      const client = new Client({ autoConnect: false });
+      sandbox.stub(client, 'initializeBroker').yields(new Error('fake error'));
+      sandbox.spy(client, 'emit');
+
+      client.createBroker('fakehost', 9092, true);
+
+      mockSocket.emit('connect');
+      sinon.assert.calledOnce(client.initializeBroker);
+      sinon.assert.notCalled(client.emit);
+    });
+
+    it('should not emit reconnect event when fails to initializeBroker', function () {
+      const client = new Client({ autoConnect: false });
+      sandbox.stub(client, 'initializeBroker').yields(new Error('fake error'));
+      sandbox.spy(client, 'emit');
+
+      client.createBroker('fakehost', 9092, true);
+
+      mockSocket.error = new Error('some socket error');
+
+      mockSocket.emit('connect');
+      sinon.assert.calledOnce(client.initializeBroker);
+      sinon.assert.notCalled(client.emit);
+    });
+
     it('should schedule refresh of metadata when socket is closed', function (done) {
       const client = new Client({ autoConnect: false });
       sandbox.stub(client, 'refreshBrokerMetadata').callsFake(done);
@@ -1448,7 +1474,10 @@ describe('Kafka Client', function () {
 
       const broker = uuid.v4();
 
-      sinon.stub(client, 'getBroker').withArgs('fake-host', 1234).returns(broker);
+      sinon
+        .stub(client, 'getBroker')
+        .withArgs('fake-host', 1234)
+        .returns(broker);
 
       const loadMetadataStub = sinon.stub(client, 'loadMetadata').yieldsAsync(null, [{}, {}]);
 
