@@ -1,5 +1,12 @@
 # kafka-node CHANGELOG
 
+## 2019-03-25, Version 4.0.3
+* Fixed issue where broker socket close event did not schedule a refresh of internal metadata which can lead to lag during kafka deploys
+* Fixed reconnect and connect events can be incorrectly emitted after broker initialization fails.
+* Added a metadata refresh when controller request fails [#1214](https://github.com/SOHU-Co/kafka-node/pull/1214)
+* Updated dependencies [#1204](https://github.com/SOHU-Co/kafka-node/pull/1204)
+* Add events to types [#1201](https://github.com/SOHU-Co/kafka-node/pull/1201)
+
 ## 2019-02-22, Version 4.0.2
 * Fix blocked `ConsumerGroup` fetch loop when fetch request yields an error [#1194](https://github.com/SOHU-Co/kafka-node/pull/1194)
 * Fix topic partition check not being scheduled when call to loadMetadataForTopic fail [#1195](https://github.com/SOHU-Co/kafka-node/pull/1195)
