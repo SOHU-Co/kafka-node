@@ -222,6 +222,19 @@ describe('Kafka Client', function () {
         done();
       });
     });
+
+    it('should not schedule metadata refresh when broker is closed due to being idle', function () {
+      const client = new Client({ autoConnect: false });
+      const brokerWrapper = client.createBroker('fakehost', 9092, true);
+
+      sandbox.stub(brokerWrapper, 'isIdle').returns(true);
+      sandbox.stub(client, 'refreshBrokerMetadata');
+      sandbox.useFakeTimers();
+
+      mockSocket.emit('close', false);
+      sandbox.clock.tick();
+      sinon.assert.notCalled(client.refreshBrokerMetadata);
+    });
   });
 
   describe('#sendRequest', function () {
