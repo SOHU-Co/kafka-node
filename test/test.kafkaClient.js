@@ -241,12 +241,12 @@ describe('Kafka Client', function () {
       const brokerWrapper = client.createBroker('fakehost', 9092, true);
 
       sandbox.stub(brokerWrapper, 'isIdle').returns(true);
-      sandbox.stub(client, 'connect');
+      sandbox.stub(client, 'reconnectBroker');
       sandbox.useFakeTimers();
 
       mockSocket.emit('close', false);
       sandbox.clock.tick();
-      sinon.assert.called(client.connect);
+      sinon.assert.called(client.reconnectBroker);
     });
   });
 
