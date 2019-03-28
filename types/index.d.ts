@@ -176,6 +176,7 @@ export interface KafkaClientOptions {
   sslOptions?: any;
   clientId?: string;
   idleConnection?: number;
+  reconnectOnIdle?: boolean;
   maxAsyncRequests?: number;
   sasl?: any;
 }
