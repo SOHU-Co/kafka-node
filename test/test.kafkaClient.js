@@ -245,7 +245,7 @@ describe('Kafka Client', function () {
       sandbox.useFakeTimers();
 
       mockSocket.emit('close', false);
-      sandbox.clock.tick();
+      sandbox.clock.tick(1001);
       sinon.assert.called(client.reconnectBroker);
     });
   });
