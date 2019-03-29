@@ -1,5 +1,9 @@
 # kafka-node CHANGELOG
 
+## 2019-03-28, Version 4.0.4
+* Fixed unnecessary metadata refresh when socket is closed from being idle [#1216](https://github.com/SOHU-Co/kafka-node/pull/1216)
+* Prevent broker socket auto reconnect attempts to brokers that are no longer valid [#1217](https://github.com/SOHU-Co/kafka-node/pull/1217)
+
 ## 2019-03-25, Version 4.0.3
 * Fixed issue where broker socket close event did not schedule a refresh of internal metadata which can lead to lag during kafka deploys
 * Fixed reconnect and connect events can be incorrectly emitted after broker initialization fails.

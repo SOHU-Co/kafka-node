@@ -204,6 +204,38 @@ describe('Kafka Client', function () {
       sinon.assert.notCalled(client.emit);
     });
 
+    it('should not reconnect when broker is no longer valid', function () {
+      sandbox.useFakeTimers();
+      const client = new Client({ autoConnect: false });
+      client.brokerMetadata = {
+        '1001': {
+          host: 'localhost',
+          port: 9092
+        },
+        '1002': {
+          host: 'kafkaServer',
+          port: 9092
+        }
+      };
+      sandbox.stub(client, 'reconnectBroker');
+      client.createBroker('fakehost', 9092, true);
+      mockSocket.emit('end');
+      sandbox.clock.tick(1000);
+      sinon.assert.notCalled(client.reconnectBroker);
+    });
+
+    it('should try reconnecting when client is initializing', function () {
+      sandbox.useFakeTimers();
+      const client = new Client({ autoConnect: false });
+      client.connecting = true;
+      client.brokerMetadata = {};
+      sandbox.stub(client, 'reconnectBroker');
+      client.createBroker('fakehost', 9092, true);
+      mockSocket.emit('end');
+      sandbox.clock.tick(1000);
+      sinon.assert.calledOnce(client.reconnectBroker);
+    });
+
     it('should schedule refresh of metadata when socket is closed', function (done) {
       const client = new Client({ autoConnect: false });
       sandbox.stub(client, 'refreshBrokerMetadata').callsFake(done);
