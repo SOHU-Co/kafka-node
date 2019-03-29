@@ -273,6 +273,7 @@ describe('Kafka Client', function () {
       const brokerWrapper = client.createBroker('fakehost', 9092, true);
 
       sandbox.stub(brokerWrapper, 'isIdle').returns(true);
+      sandbox.stub(brokerWrapper, 'isValidBroker').returns(true);
       sandbox.stub(client, 'reconnectBroker');
       sandbox.useFakeTimers();
 
