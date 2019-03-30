@@ -279,7 +279,7 @@ describe('Kafka Client', function () {
 
       mockSocket.emit('close', false);
       sandbox.clock.tick(1001);
-      sinon.assert.called(client.reconnectBroker);
+      sinon.assert.calledWithExactly(client.reconnectBroker, mockSocket);
     });
   });
 
