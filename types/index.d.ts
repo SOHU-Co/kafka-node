@@ -23,11 +23,11 @@ export class KafkaClient extends EventEmitter {
   loadMetadataForTopics (topics: string[], callback: (error: any, result: MetadataResponse) => any): void;
 }
 
-export class Producer {
+export class Producer extends EventEmitter {
   constructor (client: KafkaClient, options?: ProducerOptions, customPartitioner?: CustomPartitioner);
 
-  on (eventName: 'ready', cb: () => any): void;
-  on (eventName: 'error', cb: (error: any) => any): void;
+  on (eventName: 'ready', cb: () => any): this;
+  on (eventName: 'error', cb: (error: any) => any): this;
 
   send (payloads: ProduceRequest[], cb: (error: any, data: any) => any): void;
 
@@ -40,13 +40,13 @@ export class Producer {
 export class HighLevelProducer extends Producer {
 }
 
-export class Consumer {
+export class Consumer extends EventEmitter {
   client: KafkaClient;
 
   constructor (client: KafkaClient, fetchRequests: Array<OffsetFetchRequest | string>, options: ConsumerOptions);
 
-  on (eventName: 'message', cb: (message: Message) => any): void;
-  on (eventName: 'error' | 'offsetOutOfRange', cb: (error: any) => any): void;
+  on (eventName: 'message', cb: (message: Message) => any): this;
+  on (eventName: 'error' | 'offsetOutOfRange', cb: (error: any) => any): this;
 
   addTopics<T extends string[] | Topic[]> (topics: T, cb: (error: any, added: T) => any, fromOffset?: boolean): void;
 
