@@ -11,6 +11,10 @@ var TopicsNotExistError = require(libPath + 'errors').TopicsNotExistError;
 var FakeClient = require('./mocks/mockClient');
 var InvalidConfigError = require('../lib/errors/InvalidConfigError');
 
+const createTopic = require('../docker/createTopic');
+const sendMessage = require('./helpers/sendMessage');
+const _ = require('lodash');
+
 var client, producer, offset;
 
 var TOPIC_POSTFIX = '_test_' + Date.now();
@@ -127,6 +131,47 @@ describe('Consumer', function () {
           partition: 0
         }
       ]);
+    });
+  });
+
+  describe('Compression', function () {
+    let topic, messages;
+
+    before(function () {
+      if (process.env.KAFKA_VERSION === '0.9') {
+        this.skip();
+      }
+
+      topic = uuid.v4();
+      messages = _.times(10, uuid.v4);
+      return createTopic(topic, 1, 1, 'compression.type=gzip').then(function () {
+        return new Promise(function (resolve, reject) {
+          sendMessage(messages, topic, function (error) {
+            if (error) {
+              return reject(error);
+            }
+            resolve();
+          });
+        });
+      });
+    });
+
+    it('should not throw offsetOutOfRange error', function (done) {
+      const client = new Client({ kafkaHost: '127.0.0.1:9092' });
+      const consumer = new Consumer(client, [
+        {
+          topic,
+          partition: 0
+        }
+      ]);
+      consumer.on('offsetOutOfRange', done);
+      consumer.on('message', function (message) {
+        if (_.pull(messages, message.value).length === 0) {
+          setTimeout(function () {
+            consumer.close(done);
+          }, 50);
+        }
+      });
     });
   });
 
