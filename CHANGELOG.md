@@ -1,5 +1,10 @@
 # kafka-node CHANGELOG
 
+## 2019-04-07, Version 4.1.0
+* Fixed wrong offset being assigned to compressed messages [#1226](https://github.com/SOHU-Co/kafka-node/pull/1226)
+* Update producer and consumer types as EventEmitters [#1223](https://github.com/SOHU-Co/kafka-node/pull/1223)
+* Add setting to control auto-reconnect when closed due to being idle [#1218](https://github.com/SOHU-Co/kafka-node/pull/1218)
+
 ## 2019-03-28, Version 4.0.4
 * Fixed unnecessary metadata refresh when socket is closed from being idle [#1216](https://github.com/SOHU-Co/kafka-node/pull/1216)
 * Prevent broker socket auto reconnect attempts to brokers that are no longer valid [#1217](https://github.com/SOHU-Co/kafka-node/pull/1217)
