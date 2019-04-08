@@ -13,6 +13,7 @@ var InvalidConfigError = require('../lib/errors/InvalidConfigError');
 
 const createTopic = require('../docker/createTopic');
 const sendMessage = require('./helpers/sendMessage');
+const sendMessageEach = require('./helpers/sendMessageEach');
 const _ = require('lodash');
 
 var client, producer, offset;
@@ -135,42 +136,93 @@ describe('Consumer', function () {
   });
 
   describe('Compression', function () {
-    let topic, messages;
+    describe('by topic', function () {
+      let topic, messages;
+      before(function () {
+        if (process.env.KAFKA_VERSION === '0.9') {
+          this.skip();
+        }
 
-    before(function () {
-      if (process.env.KAFKA_VERSION === '0.9') {
-        this.skip();
-      }
-
-      topic = uuid.v4();
-      messages = _.times(10, uuid.v4);
-      return createTopic(topic, 1, 1, 'compression.type=gzip').then(function () {
-        return new Promise(function (resolve, reject) {
-          sendMessage(messages, topic, function (error) {
-            if (error) {
-              return reject(error);
-            }
-            resolve();
+        topic = uuid.v4();
+        messages = _.times(10, function () {
+          return new Array(100).join(Math.random().toString(36));
+        });
+        return createTopic(topic, 1, 1, 'compression.type=gzip').then(function () {
+          return new Promise(function (resolve, reject) {
+            sendMessage(messages, topic, function (error) {
+              if (error) {
+                return reject(error);
+              }
+              resolve();
+            });
           });
+        });
+      });
+
+      it('should not throw offsetOutOfRange error', function (done) {
+        const client = new Client({ kafkaHost: '127.0.0.1:9092' });
+        const consumer = new Consumer(client, [
+          {
+            topic,
+            partition: 0
+          }
+        ]);
+        let verifyOffset = 0;
+        consumer.on('offsetOutOfRange', done);
+        consumer.on('message', function (message) {
+          message.offset.should.be.equal(verifyOffset++);
+          message.partition.should.be.equal(0);
+          if (_.pull(messages, message.value).length === 0) {
+            setTimeout(function () {
+              consumer.close(done);
+            }, 50);
+          }
         });
       });
     });
 
-    it('should not throw offsetOutOfRange error', function (done) {
-      const client = new Client({ kafkaHost: '127.0.0.1:9092' });
-      const consumer = new Consumer(client, [
-        {
-          topic,
-          partition: 0
+    describe('by message', function () {
+      let topic, messages;
+      before(function () {
+        if (process.env.KAFKA_VERSION === '0.9') {
+          this.skip();
         }
-      ]);
-      consumer.on('offsetOutOfRange', done);
-      consumer.on('message', function (message) {
-        if (_.pull(messages, message.value).length === 0) {
-          setTimeout(function () {
-            consumer.close(done);
-          }, 50);
-        }
+
+        topic = uuid.v4();
+        messages = _.times(10, function () {
+          return new Array(100).join(Math.random().toString(36));
+        });
+        return createTopic(topic, 1, 1).then(function () {
+          return new Promise(function (resolve, reject) {
+            sendMessageEach(messages, topic, function (error) {
+              if (error) {
+                return reject(error);
+              }
+              resolve();
+            });
+          });
+        });
+      });
+
+      it('should not throw offsetOutOfRange error', function (done) {
+        const client = new Client({ kafkaHost: '127.0.0.1:9092' });
+        const consumer = new Consumer(client, [
+          {
+            topic,
+            partition: 0
+          }
+        ]);
+        let verifyOffset = 0;
+        consumer.on('offsetOutOfRange', done);
+        consumer.on('message', function (message) {
+          message.offset.should.be.equal(verifyOffset++);
+          message.partition.should.be.equal(0);
+          if (_.pull(messages, message.value).length === 0) {
+            setTimeout(function () {
+              consumer.close(done);
+            }, 50);
+          }
+        });
       });
     });
   });
