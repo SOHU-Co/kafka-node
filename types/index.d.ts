@@ -233,6 +233,7 @@ export interface ConsumerGroupOptions {
   batch?: AckBatchOptions;
   ssl?: boolean;
   sslOptions?: any;
+  sasl?: any;
   id?: string;
   groupId: string;
   sessionTimeout?: number;
