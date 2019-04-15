@@ -4,10 +4,11 @@ const sinon = require('sinon');
 const should = require('should');
 const ConsumerGroup = require('../lib/consumerGroup');
 const sendMessage = require('./helpers/sendMessage');
+const sendMessageEach = require('./helpers/sendMessageEach');
 const _ = require('lodash');
 const proxyquire = require('proxyquire').noCallThru();
 const EventEmitter = require('events').EventEmitter;
-
+const createTopic = require('../docker/createTopic');
 const uuid = require('uuid');
 const async = require('async');
 const BrokerWrapper = require('../lib/wrapper/BrokerWrapper');
@@ -88,6 +89,84 @@ describe('ConsumerGroup', function () {
       should.doesNotThrow(() => {
         // eslint-disable-next-line no-new
         new ConsumerGroup({}, ['test']);
+      });
+    });
+  });
+
+  describe('Compression', function () {
+    function verifyMessagesAndOffsets (topic, messages, done) {
+      const consumer = new ConsumerGroup(
+        { kafkaHost: '127.0.0.1:9092', groupId: uuid.v4(), fromOffset: 'earliest' },
+        topic
+      );
+      let verifyOffset = 0;
+      const allMessages = messages.slice(0);
+      consumer.on('offsetOutOfRange', done);
+      consumer.on('message', function (message) {
+        message.offset.should.be.equal(verifyOffset++);
+        message.partition.should.be.equal(0);
+        message.value.should.be.equal(allMessages[message.offset]);
+        if (_.pull(messages, message.value).length === 0) {
+          setTimeout(function () {
+            consumer.close(done);
+          }, 50);
+        }
+      });
+    }
+
+    describe('with topic config enabled send batch', function () {
+      let topic, messages;
+      before(function () {
+        if (process.env.KAFKA_VERSION === '0.9') {
+          this.skip();
+        }
+
+        topic = uuid.v4();
+        messages = _.times(25, function () {
+          return new Array(100).join(Math.random().toString(36));
+        });
+        return createTopic(topic, 1, 1, 'compression.type=gzip').then(function () {
+          return new Promise(function (resolve, reject) {
+            sendMessage(messages, topic, function (error) {
+              if (error) {
+                return reject(error);
+              }
+              resolve();
+            });
+          });
+        });
+      });
+
+      it('should not throw offsetOutOfRange error', function (done) {
+        verifyMessagesAndOffsets(topic, messages, done);
+      });
+    });
+
+    describe('with topic config enabled send each', function () {
+      let topic, messages;
+      before(function () {
+        if (process.env.KAFKA_VERSION === '0.9') {
+          this.skip();
+        }
+
+        topic = uuid.v4();
+        messages = _.times(25, function () {
+          return new Array(100).join(Math.random().toString(36));
+        });
+        return createTopic(topic, 1, 1, 'compression.type=gzip').then(function () {
+          return new Promise(function (resolve, reject) {
+            sendMessageEach(messages, topic, function (error) {
+              if (error) {
+                return reject(error);
+              }
+              resolve();
+            });
+          });
+        });
+      });
+
+      it('should not throw offsetOutOfRange error', function (done) {
+        verifyMessagesAndOffsets(topic, messages, done);
       });
     });
   });
