@@ -34,7 +34,7 @@
     "uuid": "^3.0.0"
   },
   "engines": {
-    "node": ">=6.4.0"
+    "node": ">=8.5.1"
   },
   "optionalDependencies": {
     "snappy": "^6.0.1"
