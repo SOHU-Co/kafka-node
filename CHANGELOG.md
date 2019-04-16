@@ -1,5 +1,9 @@
 # kafka-node CHANGELOG
 
+## 2019-04-16, Version 4.1.1
+* Fix ConsumerGroup receiving wrong offsets for compressed messages [#1236](https://github.com/SOHU-Co/kafka-node/pull/1236)
+* Add missing sasl property to consumergroup type [#1234](https://github.com/SOHU-Co/kafka-node/pull/1234)
+
 ## 2019-04-07, Version 4.1.0
 * Fixed wrong offset being assigned to compressed messages [#1226](https://github.com/SOHU-Co/kafka-node/pull/1226)
 * Update producer and consumer types as EventEmitters [#1223](https://github.com/SOHU-Co/kafka-node/pull/1223)
