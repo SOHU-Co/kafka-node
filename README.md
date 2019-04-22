@@ -156,7 +156,6 @@ producer.on('ready', function () {
 
 producer.on('error', function (err) {})
 ```
-> ⚠️**WARNING**: Batch multiple messages of the same topic/partition together as an array on the `messages` attribute otherwise you may lose messages!
 
 ### createTopics(topics, cb)
 This method is used to create topics on the Kafka server. It requires Kafka 0.10+.
@@ -268,7 +267,6 @@ producer.on('ready', function () {
     });
 });
 ```
-> ⚠️**WARNING**: Batch multiple messages of the same topic/partition together as an array on the `messages` attribute otherwise you may lose messages!
 
 ### createTopics(topics, async, cb)
 This method is used to create topics on the Kafka server. It only work when `auto.create.topics.enable`, on the Kafka server, is set to true. Our client simply sends a metadata request to the server which will auto create topics. When `async` is set to false, this method does not return until all topics are created, otherwise it returns immediately.
