@@ -133,7 +133,7 @@ describe('Kafka Client', function () {
       client.initialHosts.should.not.be.empty;
       client.initialHosts.length.should.be.eql(1);
       client.initialHosts[0].host.should.be.eql('localhost');
-      client.initialHosts[0].port.should.be.eql('9092');
+      client.initialHosts[0].port.should.be.eql(9092);
     });
 
     it('initial hosts should be parsed if multiple hosts are provided', function () {
@@ -146,15 +146,15 @@ describe('Kafka Client', function () {
       client.initialHosts.should.be.eql([
         {
           host: 'localhost',
-          port: '9092'
+          port: 9092
         },
         {
           host: '127.0.0.1',
-          port: '9093'
+          port: 9093
         },
         {
           host: '192.168.1.0',
-          port: '9094'
+          port: 9094
         }
       ]);
     });
