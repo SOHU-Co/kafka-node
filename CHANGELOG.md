@@ -1,5 +1,8 @@
 # kafka-node CHANGELOG
 
+## 2019-04-30, Version 4.1.3
+* Fix parseHost returning a string port instead of a number [#1257](https://github.com/SOHU-Co/kafka-node/pull/1257)
+
 ## 2019-04-30, Version 4.1.2
 * Fix getController not returning controller Id [#1247](https://github.com/SOHU-Co/kafka-node/pull/1247)
 
