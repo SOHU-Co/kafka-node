@@ -627,17 +627,23 @@ describe('Consumer', function () {
             consumer.payloads.map(normalize).should.eql([{ topic: topic2, partition: 1 }]);
 
             consumer.resumeTopics([{ topic: topic1, partition: 0 }]);
-            consumer.payloads
-              .map(normalize)
-              .sort(compare)
-              .should.eql([{ topic: topic1, partition: 0 }, { topic: topic2, partition: 1 }]);
+
+            const actual = consumer.payloads.map(normalize).sort(compare);
+            const expected = [{ topic: topic2, partition: 1 }, { topic: topic1, partition: 0 }].sort(compare);
+
+            actual.should.eql(expected);
+
             consumer.pausedPayloads
               .map(normalize)
               .sort(compare)
               .should.eql([{ topic: topic1, partition: 1 }, { topic: topic2, partition: 0 }]);
 
             consumer.resumeTopics([topic1, topic2]);
-            consumer.payloads.sort(compare).should.eql(topics);
+
+            for (const tp of topics) {
+              consumer.payloads.should.containEql(tp);
+            }
+
             consumer.pausedPayloads.should.eql([]);
             consumer.once('message', function () {
               consumer.close(true, done);
