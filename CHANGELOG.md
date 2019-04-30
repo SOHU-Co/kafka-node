@@ -1,5 +1,8 @@
 # kafka-node CHANGELOG
 
+## 2019-04-30, Version 4.1.2
+* Fix getController not returning controller Id [#1247](https://github.com/SOHU-Co/kafka-node/pull/1247)
+
 ## 2019-04-16, Version 4.1.1
 * Fix ConsumerGroup receiving wrong offsets for compressed messages [#1236](https://github.com/SOHU-Co/kafka-node/pull/1236)
 * Add missing sasl property to consumergroup type [#1234](https://github.com/SOHU-Co/kafka-node/pull/1234)
