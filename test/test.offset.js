@@ -14,7 +14,7 @@ describe('Offset', function () {
     client = new Client();
     producer = new Producer(client);
     producer.on('ready', function () {
-      producer.createTopics(['_exist_topic_3_test'], true, function (err) {
+      producer.createTopics(['_exist_topic_3_test', '_exist_topic_4_test'], true, function (err) {
         done(err);
       });
     });
@@ -34,6 +34,20 @@ describe('Offset', function () {
         var offsets = data[topic][0];
         offsets.should.be.an.instanceOf(Array);
         offsets.length.should.equal(1);
+        done(err);
+      });
+    });
+
+    it('should return empty offsets list by old timestamp', function (done) {
+      var firstTopic = '_exist_topic_3_test';
+      var secondTopic = '_exist_topic_4_test';
+      var fakeTime = new Date('2019-05-16').getTime();
+      var topics = [{ topic: firstTopic, time: fakeTime }, { topic: secondTopic, time: fakeTime }];
+      offset.fetch(topics, function (err, data) {
+        var firstOffsets = data[firstTopic][0];
+        var secondOffsets = data[secondTopic][0];
+        firstOffsets.should.be.an.instanceOf(Array);
+        secondOffsets.should.be.an.instanceOf(Array);
         done(err);
       });
     });
