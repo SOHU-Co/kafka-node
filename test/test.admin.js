@@ -188,7 +188,7 @@ describe('Admin', function () {
       };
       admin.describeConfigs(payload, function (error, res) {
         should.not.exist(res);
-        error.should.have.property('message').and.containEql('Unexpected broker id');
+        error.should.have.property('message').and.containEql('No broker with id ' + brokerId);
         done();
       });
     });
