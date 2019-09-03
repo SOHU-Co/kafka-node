@@ -243,7 +243,6 @@ export interface ConsumerGroupOptions {
   fromOffset?: 'earliest' | 'latest' | 'none';
   outOfRangeOffset?: 'earliest' | 'latest' | 'none';
   migrateHLC?: boolean;
-  migrateRolling?: boolean;
   autoCommit?: boolean;
   autoCommitIntervalMs?: number;
   fetchMaxWaitMs?: number;
