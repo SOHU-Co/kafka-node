@@ -256,7 +256,8 @@ export interface ConsumerGroupOptions {
   retryMinTimeout?: number;
   connectOnReady?: boolean;
   heartbeatInterval?: number;
-  onRebalance?: () => Promise<void>;
+  topicPartitionCheckInterval?: number;
+  onRebalance?: (isMember: boolean, callback: (err?: Error) => void) => void;
 }
 
 export interface ConsumerGroupStreamOptions extends ConsumerGroupOptions {
@@ -344,7 +345,7 @@ export interface ClusterMetadataResponse {
   };
 }
 
-export interface MetadataResponse extends Array<BrokerMetadataResponse|ClusterMetadataResponse> {
+export interface MetadataResponse extends Array<BrokerMetadataResponse | ClusterMetadataResponse> {
   0: BrokerMetadataResponse;
   1: ClusterMetadataResponse;
 }
