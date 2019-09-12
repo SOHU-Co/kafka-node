@@ -145,6 +145,18 @@ export class ProducerStream extends Writable {
   _writev (chunks: Chunk[], cb: (error: any, data: any) => any): void;
 }
 
+export class Admin extends EventEmitter {
+  constructor (kafkaClient: KafkaClient);
+
+  listTopics (cb?: () => void): void;
+
+  listGroups (cb?: () => void): void;
+
+  describeGroups (consumerGroups: ConsumerGroup[], cb?: () => void): void;
+
+  createTopics (topics: string[], cb?: () => void): void;
+}
+
 // # Interfaces
 
 export interface Message {
