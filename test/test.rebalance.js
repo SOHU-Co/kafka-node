@@ -1,32 +1,21 @@
 'use strict';
 
 var kafka = require('..');
-var Client = kafka.Client;
+var Client = kafka.KafkaClient;
 var Producer = kafka.Producer;
 var async = require('async');
 var debug = require('debug')('kafka-node:Test-Rebalance');
 var Childrearer = require('./helpers/Childrearer');
 var uuid = require('uuid');
 var _ = require('lodash');
-var host = process.env['KAFKA_TEST_HOST'] || '';
-const retry = require('retry');
 
 describe('Integrated Reblance', function () {
-  describe('HLC', function () {
-    this.retries(5);
-    testRebalance('test/helpers/child-hlc', true);
-  });
-
-  describe('ConsumerGroup', function () {
-    testRebalance('test/helpers/child-cg', false);
-  });
-
   describe('ConsumerGroup using Kafka Client', function () {
-    testRebalance('test/helpers/child-cg-kafka-client', false);
+    testRebalance('test/helpers/child-cg-kafka-client');
   });
 });
 
-function testRebalance (forkPath, checkZkTopic) {
+function testRebalance (forkPath) {
   var producer;
   var topic = 'RebalanceTopic';
   var rearer;
@@ -36,11 +25,11 @@ function testRebalance (forkPath, checkZkTopic) {
     if (process.env.TRAVIS) {
       return this.skip();
     }
-    var client = new Client(host);
+    var client = new Client();
     producer = new Producer(client);
     client.on('ready', function () {
       client.refreshMetadata([topic], function (data) {
-        client.topicPartitions[topic].should.be.length(3);
+        // client.topicPartitions[topic].should.be.length(3);
         done();
       });
     });
@@ -48,46 +37,7 @@ function testRebalance (forkPath, checkZkTopic) {
 
   beforeEach(function (done) {
     rearer = new Childrearer(forkPath);
-
-    if (checkZkTopic) {
-      const operation = retry.operation({
-        minTimeout: 200,
-        factor: 1.5
-      });
-
-      operation.attempt(function (attempt) {
-        // make sure there are no other consumers on this topic before starting test
-        producer.client.zk.getConsumersPerTopic(groupId, function (error, data) {
-          if (error && error.name === 'NO_NODE') {
-            return done();
-          }
-
-          if (operation.retry(error)) {
-            return;
-          }
-
-          if (error) {
-            return done(operation.mainError());
-          }
-
-          if (data) {
-            try {
-              data.consumerTopicMap.should.be.empty;
-              data.topicConsumerMap.should.be.empty;
-              data.topicPartitionMap.should.be.empty;
-            } catch (err) {
-              if (operation.retry(err)) {
-                return;
-              }
-              done(err);
-            }
-          }
-          done();
-        });
-      });
-    } else {
-      done();
-    }
+    done();
   });
 
   afterEach(function (done) {
@@ -196,9 +146,7 @@ function testRebalance (forkPath, checkZkTopic) {
     sendMessages(messages, done);
   });
 
-  it('verify one consumer consumes all messages on all partitions after one out of the two consumer is killed', function (
-    done
-  ) {
+  it('verify one consumer consumes all messages on all partitions after one out of the two consumer is killed', function (done) {
     var messages = generateMessages(4, 'verify 1 c 1 killed');
     var verify = getConsumerVerifier(messages, 3, 1, done);
 
@@ -214,9 +162,7 @@ function testRebalance (forkPath, checkZkTopic) {
     );
   });
 
-  it('verify two consumer consumes all messages on all partitions after two out of the four consumers are killed right away', function (
-    done
-  ) {
+  it('verify two consumer consumes all messages on all partitions after two out of the four consumers are killed right away', function (done) {
     var messages = generateMessages(3, 'verify 4 c 2 killed');
     var verify = getConsumerVerifier(messages, 3, 2, done);
 
@@ -228,9 +174,7 @@ function testRebalance (forkPath, checkZkTopic) {
     });
   });
 
-  it('verify three consumer consumes all messages on all partitions after one that is unassigned is killed', function (
-    done
-  ) {
+  it('verify three consumer consumes all messages on all partitions after one that is unassigned is killed', function (done) {
     var messages = generateMessages(3, 'verify 2 c 2 killed');
     var verify = getConsumerVerifier(messages, 3, 2, done);
 
@@ -260,9 +204,7 @@ function testRebalance (forkPath, checkZkTopic) {
     );
   });
 
-  it('verify two consumer consumes all messages on all partitions after two out of the four consumers are killed', function (
-    done
-  ) {
+  it('verify two consumer consumes all messages on all partitions after two out of the four consumers are killed', function (done) {
     var messages = generateMessages(3, 'verify 2 c 2 killed');
     var verify = getConsumerVerifier(messages, 3, 2, done);
 
@@ -278,9 +220,7 @@ function testRebalance (forkPath, checkZkTopic) {
     );
   });
 
-  it('verify three consumer consumes all messages on all partitions after three out of the six consumers are killed', function (
-    done
-  ) {
+  it('verify three consumer consumes all messages on all partitions after three out of the six consumers are killed', function (done) {
     var messages = generateMessages(3, 'verify 3 c 3 killed');
     var verify = getConsumerVerifier(messages, 3, 2, done);
 

@@ -1,7 +1,8 @@
 import { Readable, Writable } from 'stream';
+import { EventEmitter } from 'events';
 
-export class Client {
-  constructor (connectionString: string, clientId?: string, options?: ZKOptions, noBatchOptions?: AckBatchOptions, sslOptions?: any);
+export class KafkaClient extends EventEmitter {
+  constructor (options?: KafkaClientOptions);
 
   close (cb?: () => void): void;
 
@@ -14,19 +15,19 @@ export class Client {
   // Note: socket_error is currently KafkaClient only, and zkReconnect is currently Client only.
   on (eventName: 'brokersChanged' | 'close' | 'connect' | 'ready' | 'reconnect' | 'zkReconnect', cb: () => any): this;
   on (eventName: 'error' | 'socket_error', cb: (error: any) => any): this;
-}
-
-export class KafkaClient extends Client {
-  constructor (options?: KafkaClientOptions);
 
   connect (): void;
+
+  createTopics (topics: CreateTopicRequest[], callback: (error: any, result: CreateTopicResponse[]) => any): void;
+
+  loadMetadataForTopics (topics: string[], callback: (error: any, result: MetadataResponse) => any): void;
 }
 
-export class Producer {
-  constructor (client: Client, options?: ProducerOptions, customPartitioner?: CustomPartitioner);
+export class Producer extends EventEmitter {
+  constructor (client: KafkaClient, options?: ProducerOptions, customPartitioner?: CustomPartitioner);
 
-  on (eventName: 'ready', cb: () => any): void;
-  on (eventName: 'error', cb: (error: any) => any): void;
+  on (eventName: 'ready', cb: () => any): this;
+  on (eventName: 'error', cb: (error: any) => any): this;
 
   send (payloads: ProduceRequest[], cb: (error: any, data: any) => any): void;
 
@@ -39,15 +40,15 @@ export class Producer {
 export class HighLevelProducer extends Producer {
 }
 
-export class Consumer {
-  client: Client;
+export class Consumer extends EventEmitter {
+  client: KafkaClient;
 
-  constructor (client: Client, fetchRequests: Array<OffsetFetchRequest | string>, options: ConsumerOptions);
+  constructor (client: KafkaClient, fetchRequests: Array<OffsetFetchRequest | string>, options: ConsumerOptions);
 
-  on (eventName: 'message', cb: (message: Message) => any): void;
-  on (eventName: 'error' | 'offsetOutOfRange', cb: (error: any) => any): void;
+  on (eventName: 'message', cb: (message: Message) => any): this;
+  on (eventName: 'error' | 'offsetOutOfRange', cb: (error: any) => any): this;
 
-  addTopics (topics: string[] | Topic[], cb: (error: any, added: string[] | Topic[]) => any, fromOffset?: boolean): void;
+  addTopics<T extends string[] | Topic[]> (topics: T, cb: (error: any, added: T) => any, fromOffset?: boolean): void;
 
   removeTopics (topics: string | string[], cb: (error: any, removed: number) => any): void;
 
@@ -69,26 +70,31 @@ export class Consumer {
 }
 
 export class ConsumerGroupStream extends Readable {
-  client: Client;
+  client: KafkaClient;
   consumerGroup: ConsumerGroup;
 
   constructor (options: ConsumerGroupStreamOptions, topics: string | string[]);
 
   commit (message: Message, force?: boolean, cb?: (error: any, data: any) => any): void;
 
-  transmitMessages(): void;
+  transmitMessages (): void;
 
   close (cb: () => any): void;
 }
 
-export class HighLevelConsumer {
-  client: Client;
+export class ConsumerGroup {
+  generationId: number;
+  memberId: string;
+  client: KafkaClient;
 
-  constructor (client: Client, payloads: Topic[], options: HighLevelConsumerOptions);
+  constructor (options: ConsumerGroupOptions, topics: string[] | string);
+
+  close (force: boolean, cb: (error: Error) => any): void;
+  close (cb: (error: Error) => any): void;
 
   on (eventName: 'message', cb: (message: Message) => any): void;
   on (eventName: 'error' | 'offsetOutOfRange', cb: (error: any) => any): void;
-  on (eventName: 'rebalancing' | 'rebalanced', cb: () => any): void;
+  on (eventName: 'rebalancing' | 'rebalanced' | 'connect', cb: () => any): void;
 
   addTopics (topics: string[] | Topic[], cb?: (error: any, added: string[] | Topic[]) => any): void;
 
@@ -104,24 +110,10 @@ export class HighLevelConsumer {
   pause (): void;
 
   resume (): void;
-
-  close (force: boolean, cb: () => any): void;
-  close (cb: () => any): void;
-}
-
-export class ConsumerGroup extends HighLevelConsumer {
-  generationId: number;
-  memberId: string;
-  client: KafkaClient & Client;
-
-  constructor (options: ConsumerGroupOptions, topics: string[] | string);
-
-  close (force: boolean, cb: (error: Error) => any): void;
-  close (cb: (error: Error) => any): void;
 }
 
 export class Offset {
-  constructor (client: Client);
+  constructor (client: KafkaClient);
 
   on (eventName: 'ready' | 'connect', cb: () => any): void;
   on (eventName: 'error', cb: (error: any) => any): void;
@@ -138,7 +130,7 @@ export class Offset {
 }
 
 export class KeyedMessage {
-  constructor (key: string, value: string | Buffer);
+  constructor (key: string | Buffer, value: string | Buffer);
 }
 
 export class ProducerStream extends Writable {
@@ -161,7 +153,12 @@ export interface Message {
   offset?: number;
   partition?: number;
   highWaterOffset?: number;
-  key?: string;
+  key?: string | Buffer;
+}
+
+export interface KeyedMessage {
+  key: string | Buffer;
+  value: string | Buffer;
 }
 
 export interface ProducerOptions {
@@ -178,6 +175,10 @@ export interface KafkaClientOptions {
   connectRetryOptions?: RetryOptions;
   sslOptions?: any;
   clientId?: string;
+  idleConnection?: number;
+  reconnectOnIdle?: boolean;
+  maxAsyncRequests?: number;
+  sasl?: any;
 }
 
 export interface ProducerStreamOptions {
@@ -199,16 +200,10 @@ export interface AckBatchOptions {
   noAckBatchAge: number | null;
 }
 
-export interface ZKOptions {
-  sessionTimeout?: number;
-  spinDelay?: number;
-  retries?: number;
-}
-
 export interface ProduceRequest {
   topic: string;
   messages: any; // string[] | Array<KeyedMessage> | string | KeyedMessage
-  key?: string;
+  key?: string | Buffer;
   partition?: number;
   attributes?: number;
 }
@@ -225,25 +220,6 @@ export interface ConsumerOptions {
   keyEncoding?: 'buffer' | 'utf8';
 }
 
-export interface HighLevelConsumerOptions extends ConsumerOptions {
-  id?: string;
-  maxNumSegments?: number;
-  maxTickMessages?: number;
-  rebalanceRetry?: RetryOptions;
-}
-
-export interface ConsumerGroupStreamOptions extends ConsumerOptions {
-  groupId: string,
-  kafkaHost: string,
-  id?: string;
-  onRebalance?: () => Promise<void>,
-  sessionTimeout?: number,
-  protocol?: any,
-  heartbeatInterval?: number,
-  highWaterMark?: number,
-}
-
-
 export interface CustomPartitionAssignmentProtocol {
   name: string;
   version: number;
@@ -254,10 +230,10 @@ export interface CustomPartitionAssignmentProtocol {
 
 export interface ConsumerGroupOptions {
   kafkaHost?: string;
-  host?: string;
-  zk?: ZKOptions;
   batch?: AckBatchOptions;
   ssl?: boolean;
+  sslOptions?: any;
+  sasl?: any;
   id?: string;
   groupId: string;
   sessionTimeout?: number;
@@ -279,6 +255,12 @@ export interface ConsumerGroupOptions {
   retryFactor?: number;
   retryMinTimeout?: number;
   connectOnReady?: boolean;
+  heartbeatInterval?: number;
+  onRebalance?: () => Promise<void>;
+}
+
+export interface ConsumerGroupStreamOptions extends ConsumerGroupOptions {
+  highWaterMark?: number;
 }
 
 export interface Topic {
@@ -316,4 +298,53 @@ export class TopicsNotExistError extends Error {
   topics: string | string[];
 }
 
-export type CustomPartitioner = (partitions: number[], key: any) => number;
+export type CustomPartitioner = (partitions: number[], key: string | Buffer) => number;
+
+export interface CreateTopicRequest {
+  topic: string;
+  partitions: number;
+  replicationFactor: number;
+  configEntries?: {
+    name: string;
+    value: string;
+  }[];
+  replicaAssignment?: {
+    partition: number;
+    replicas: number[];
+  }[];
+}
+
+export interface CreateTopicResponse {
+  topic: string;
+  error: string;
+}
+
+export interface BrokerMetadataResponse {
+  [id: number]: {
+    host: string;
+    nodeId: number;
+    port: number;
+  };
+}
+
+export interface ClusterMetadataResponse {
+  clusterMetadata: {
+    controllerId: number;
+  };
+  metadata: {
+    [topic: string]: {
+      [partition: number]: {
+        leader: number;
+        partition: number;
+        topic: string;
+        replicas: number[];
+        isr: number[];
+      };
+    };
+  };
+}
+
+export interface MetadataResponse extends Array<BrokerMetadataResponse|ClusterMetadataResponse> {
+  0: BrokerMetadataResponse;
+  1: ClusterMetadataResponse;
+}

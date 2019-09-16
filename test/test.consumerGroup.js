@@ -4,15 +4,16 @@ const sinon = require('sinon');
 const should = require('should');
 const ConsumerGroup = require('../lib/consumerGroup');
 const sendMessage = require('./helpers/sendMessage');
+const sendMessageEach = require('./helpers/sendMessageEach');
 const _ = require('lodash');
-const host = process.env['KAFKA_TEST_HOST'] || '';
 const proxyquire = require('proxyquire').noCallThru();
 const EventEmitter = require('events').EventEmitter;
-
+const createTopic = require('../docker/createTopic');
 const uuid = require('uuid');
 const async = require('async');
 const BrokerWrapper = require('../lib/wrapper/BrokerWrapper');
 const FakeSocket = require('./mocks/mockSocket');
+const { BrokerNotAvailableError } = require('../lib/errors');
 
 describe('ConsumerGroup', function () {
   describe('#constructor', function () {
@@ -21,75 +22,8 @@ describe('ConsumerGroup', function () {
 
     beforeEach(function () {
       ConsumerGroup = proxyquire('../lib/consumerGroup', {
-        './client': fakeClient
+        './kafkaClient': fakeClient
       });
-    });
-
-    it('should pass batch ConsumerGroup option to Client', function () {
-      const batch = {
-        noAckBatchAge: 10000
-      };
-
-      // eslint-disable-next-line no-new
-      new ConsumerGroup(
-        {
-          host: 'myhost',
-          id: 'myClientId',
-          batch: batch,
-          connectOnReady: false
-        },
-        'SampleTopic'
-      );
-
-      sinon.assert.calledWithExactly(fakeClient, 'myhost', 'myClientId', undefined, batch, undefined);
-    });
-
-    it('should pass zookeeper ConsumerGroup option to Client', function () {
-      const zkOptions = {
-        sessionTimeout: 10000
-      };
-
-      // eslint-disable-next-line no-new
-      new ConsumerGroup(
-        {
-          host: 'myhost',
-          id: 'myClientId',
-          zk: zkOptions,
-          connectOnReady: false
-        },
-        'SampleTopic'
-      );
-
-      sinon.assert.calledWithExactly(fakeClient, 'myhost', 'myClientId', zkOptions, undefined, undefined);
-    });
-
-    it('should setup SSL ConsumerGroup option ssl is true', function () {
-      // eslint-disable-next-line no-new
-      new ConsumerGroup(
-        {
-          host: 'myhost',
-          id: 'myClientId',
-          ssl: true,
-          connectOnReady: false
-        },
-        'SampleTopic'
-      );
-      sinon.assert.calledWithExactly(fakeClient, 'myhost', 'myClientId', undefined, undefined, {});
-    });
-
-    it('should pass SSL client options through ConsumerGroup option', function () {
-      const ssl = { rejectUnauthorized: false };
-      // eslint-disable-next-line no-new
-      new ConsumerGroup(
-        {
-          host: 'myhost',
-          id: 'myClientId',
-          ssl: ssl,
-          connectOnReady: false
-        },
-        'SampleTopic'
-      );
-      sinon.assert.calledWithExactly(fakeClient, 'myhost', 'myClientId', undefined, undefined, ssl);
     });
 
     it('should throw an error if using an invalid outOfRangeOffset', function () {
@@ -143,6 +77,301 @@ describe('ConsumerGroup', function () {
         });
       });
     });
+
+    it('should throw assertion error if using empty topic array', function () {
+      should.throws(() => {
+        // eslint-disable-next-line no-new
+        new ConsumerGroup({}, []);
+      });
+    });
+
+    it('should not throw assertion error if using valid topic array', function () {
+      should.doesNotThrow(() => {
+        // eslint-disable-next-line no-new
+        new ConsumerGroup({}, ['test']);
+      });
+    });
+  });
+
+  describe('Compression', function () {
+    function verifyMessagesAndOffsets (topic, messages, done) {
+      const consumer = new ConsumerGroup(
+        { kafkaHost: '127.0.0.1:9092', groupId: uuid.v4(), fromOffset: 'earliest' },
+        topic
+      );
+      let verifyOffset = 0;
+      const allMessages = messages.slice(0);
+      consumer.on('offsetOutOfRange', done);
+      consumer.on('message', function (message) {
+        message.offset.should.be.equal(verifyOffset++);
+        message.partition.should.be.equal(0);
+        message.value.should.be.equal(allMessages[message.offset]);
+        if (_.pull(messages, message.value).length === 0) {
+          setTimeout(function () {
+            consumer.close(done);
+          }, 50);
+        }
+      });
+    }
+
+    describe('with topic config enabled send batch', function () {
+      let topic, messages;
+      before(function () {
+        if (process.env.KAFKA_VERSION === '0.9') {
+          this.skip();
+        }
+
+        topic = uuid.v4();
+        messages = _.times(25, function () {
+          return new Array(100).join(Math.random().toString(36));
+        });
+        return createTopic(topic, 1, 1, 'compression.type=gzip').then(function () {
+          return new Promise(function (resolve, reject) {
+            sendMessage(messages, topic, function (error) {
+              if (error) {
+                return reject(error);
+              }
+              resolve();
+            });
+          });
+        });
+      });
+
+      it('should not throw offsetOutOfRange error', function (done) {
+        verifyMessagesAndOffsets(topic, messages, done);
+      });
+    });
+
+    describe('with topic config enabled send each', function () {
+      let topic, messages;
+      before(function () {
+        if (process.env.KAFKA_VERSION === '0.9') {
+          this.skip();
+        }
+
+        topic = uuid.v4();
+        messages = _.times(25, function () {
+          return new Array(100).join(Math.random().toString(36));
+        });
+        return createTopic(topic, 1, 1, 'compression.type=gzip').then(function () {
+          return new Promise(function (resolve, reject) {
+            sendMessageEach(messages, topic, function (error) {
+              if (error) {
+                return reject(error);
+              }
+              resolve();
+            });
+          });
+        });
+      });
+
+      it('should not throw offsetOutOfRange error', function (done) {
+        verifyMessagesAndOffsets(topic, messages, done);
+      });
+    });
+  });
+
+  describe('Topic partition change detection', function () {
+    let ConsumerGroup = null;
+    let consumerGroup = null;
+    let sandbox = null;
+
+    const fakeClient = new EventEmitter();
+    fakeClient.loadMetadataForTopics = function () {};
+
+    const FakeClient = function () {
+      return fakeClient;
+    };
+
+    beforeEach(function () {
+      sandbox = sinon.sandbox.create();
+      ConsumerGroup = proxyquire('../lib/consumerGroup', {
+        './kafkaClient': FakeClient
+      });
+
+      consumerGroup = new ConsumerGroup(
+        {
+          host: 'gibberish',
+          connectOnReady: false
+        },
+        'TestTopic'
+      );
+    });
+
+    afterEach(function () {
+      sandbox.restore();
+    });
+
+    describe('#scheduleTopicPartitionCheck', function () {
+      let clock;
+      beforeEach(function () {
+        clock = sandbox.useFakeTimers();
+      });
+
+      it('should not schedule check if consumer is closed', function () {
+        const cgMock = sandbox.mock(consumerGroup);
+
+        consumerGroup.closed = true;
+        consumerGroup.isLeader = true;
+
+        cgMock.expects('_checkTopicPartitionChange').never();
+        cgMock.expects('commit').never();
+        cgMock.expects('leaveGroup').never();
+        cgMock.expects('connect').never();
+        consumerGroup.scheduleTopicPartitionCheck();
+        clock.tick(30000);
+
+        cgMock.verify();
+      });
+
+      it('should not run check if consumer is closed and scheduled', function () {
+        const cgMock = sandbox.mock(consumerGroup);
+
+        consumerGroup.closed = false;
+        consumerGroup.isLeader = true;
+
+        cgMock.expects('_checkTopicPartitionChange').never();
+        cgMock.expects('commit').never();
+        cgMock.expects('leaveGroup').never();
+        cgMock.expects('connect').never();
+        consumerGroup.scheduleTopicPartitionCheck();
+        consumerGroup.closed = true;
+        clock.tick(30000);
+
+        cgMock.verify();
+      });
+
+      it('should still schedule check if topicPartitionChange errors', function () {
+        const cgMock = sandbox.mock(consumerGroup);
+        consumerGroup.isLeader = true;
+        cgMock
+          .expects('_checkTopicPartitionChange')
+          .once()
+          .yields(new Error('something bad'));
+
+        cgMock.expects('commit').never();
+        cgMock.expects('leaveGroup').never();
+        cgMock.expects('connect').never();
+
+        consumerGroup.on('error', function () {});
+
+        consumerGroup.scheduleTopicPartitionCheck();
+        sandbox.spy(consumerGroup, 'scheduleTopicPartitionCheck');
+
+        clock.tick(30000);
+
+        cgMock.verify();
+        sinon.assert.calledOnce(consumerGroup.scheduleTopicPartitionCheck);
+      });
+
+      it('should only have one schedule pending', function () {
+        const cgMock = sandbox.mock(consumerGroup);
+        consumerGroup.isLeader = true;
+        cgMock
+          .expects('_checkTopicPartitionChange')
+          .once()
+          .yields(null, true);
+        cgMock.expects('commit').never();
+        cgMock
+          .expects('leaveGroup')
+          .once()
+          .yields(null);
+        cgMock.expects('connect').once();
+
+        consumerGroup.scheduleTopicPartitionCheck();
+        consumerGroup.scheduleTopicPartitionCheck();
+
+        clock.tick(30000);
+
+        cgMock.verify();
+      });
+
+      it('should only schedule a check if consumer is a leader', function () {
+        const cgMock = sandbox.mock(consumerGroup);
+
+        consumerGroup.isLeader = false;
+
+        cgMock.expects('_checkTopicPartitionChange').never();
+        cgMock.expects('leaveGroup').never();
+        cgMock.expects('connect').never();
+        cgMock.expects('commit').never();
+
+        consumerGroup.scheduleTopicPartitionCheck();
+        clock.tick(30000);
+        cgMock.verify();
+      });
+    });
+
+    describe('#_checkTopicPartitionChange', function () {
+      it('should yield false when the topic/partition length are the same', function (done) {
+        sandbox.stub(consumerGroup.client, 'loadMetadataForTopics').yields(null, [
+          0,
+          {
+            metadata: {
+              aTopic: {
+                '0': {},
+                '1': {}
+              },
+              'foo.bar.topic': {
+                '0': {},
+                '1': {}
+              },
+              existingTopic: {
+                '0': {},
+                '1': {},
+                '2': {}
+              }
+            }
+          }
+        ]);
+
+        consumerGroup.topicPartitionLength = {
+          aTopic: 2,
+          'foo.bar.topic': 2,
+          existingTopic: 3
+        };
+
+        consumerGroup.topics = ['aTopic', 'existingTopic', 'foo.bar.topic'];
+
+        consumerGroup._checkTopicPartitionChange(function (error, changed) {
+          sinon.assert.calledOnce(consumerGroup.client.loadMetadataForTopics);
+          should(changed).be.false;
+          done(error);
+        });
+      });
+
+      it('should yield true when the topic/partition length are different', function (done) {
+        sandbox.stub(consumerGroup.client, 'loadMetadataForTopics').yields(null, [
+          0,
+          {
+            metadata: {
+              'non.existant.topic': {
+                '0': {},
+                '1': {}
+              },
+              existingTopic: {
+                '0': {},
+                '1': {},
+                '2': {}
+              }
+            }
+          }
+        ]);
+
+        consumerGroup.topicPartitionLength = {
+          'non.existant.topic': 0,
+          existingTopic: 3
+        };
+
+        consumerGroup.topics = ['existingTopic', 'non.existant.topic'];
+
+        consumerGroup._checkTopicPartitionChange(function (error, changed) {
+          sinon.assert.calledOnce(consumerGroup.client.loadMetadataForTopics);
+          should(changed).be.true;
+          done(error);
+        });
+      });
+    });
   });
 
   describe('Broker offline recovery', function () {
@@ -158,12 +387,12 @@ describe('ConsumerGroup', function () {
 
     before(function () {
       ConsumerGroup = proxyquire('../lib/consumerGroup', {
-        './client': fakeClient
+        './kafkaClient': fakeClient
       });
 
       consumerGroup = new ConsumerGroup(
         {
-          host: 'gibberish',
+          kafkaHost: 'gibberish',
           connectOnReady: false
         },
         'TestTopic'
@@ -252,12 +481,11 @@ describe('ConsumerGroup', function () {
       fakeClient = sandbox.stub().returns(new EventEmitter());
 
       ConsumerGroup = proxyquire('../lib/consumerGroup', {
-        './client': fakeClient
+        './kafkaClient': fakeClient
       });
 
       consumerGroup = new ConsumerGroup(
         {
-          host: host,
           connectOnReady: false,
           sessionTimeout: 8000,
           heartbeatInterval: 250,
@@ -479,7 +707,6 @@ describe('ConsumerGroup', function () {
       sandbox = sinon.sandbox.create();
       consumerGroup = new ConsumerGroup(
         {
-          host: host,
           connectOnReady: false,
           sessionTimeout: 8000,
           heartbeatInterval: 250,
@@ -525,7 +752,6 @@ describe('ConsumerGroup', function () {
     beforeEach(function (done) {
       consumerGroup = new ConsumerGroup(
         {
-          host: host,
           groupId: 'longFetchSimulation'
         },
         'TestTopic'
@@ -553,7 +779,6 @@ describe('ConsumerGroup', function () {
     beforeEach(function () {
       consumerGroup = new ConsumerGroup(
         {
-          host: host,
           connectOnReady: false
         },
         'TestTopic'
@@ -566,8 +791,9 @@ describe('ConsumerGroup', function () {
       sandbox.useFakeTimers();
     });
 
-    afterEach(function () {
+    afterEach(function (done) {
       sandbox.restore();
+      consumerGroup.close(done);
     });
 
     it('throws exception if consumerGroup is not ready', function () {
@@ -624,7 +850,6 @@ describe('ConsumerGroup', function () {
     beforeEach(function () {
       consumerGroup = new ConsumerGroup(
         {
-          host: host,
           connectOnReady: false
         },
         'TestTopic'
@@ -632,111 +857,9 @@ describe('ConsumerGroup', function () {
       sandbox = sinon.sandbox.create();
     });
 
-    afterEach(function () {
+    afterEach(function (done) {
       sandbox.restore();
-    });
-
-    describe('HLC Migrator', function () {
-      it('should not fetch from migrator or latestOffset if all offsets have saved previously', function (done) {
-        consumerGroup.options.fromOffset = 'latest';
-        consumerGroup.migrator = {
-          saveHighLevelConsumerOffsets: sandbox.stub()
-        };
-
-        const syncGroupResponse = {
-          partitions: {
-            TestTopic: [0, 2, 3, 4]
-          }
-        };
-
-        const fetchOffsetResponse = {
-          TestTopic: {
-            0: 10,
-            2: 0,
-            3: 9,
-            4: 6
-          }
-        };
-
-        sandbox.stub(consumerGroup, 'fetchOffset').yields(null, fetchOffsetResponse);
-        sandbox.stub(consumerGroup, 'saveDefaultOffsets').yields(null);
-
-        consumerGroup.handleSyncGroup(syncGroupResponse, function (error, ownsPartitions) {
-          ownsPartitions.should.be.true;
-          sinon.assert.calledWith(consumerGroup.fetchOffset, syncGroupResponse.partitions);
-
-          sinon.assert.notCalled(consumerGroup.saveDefaultOffsets);
-          sinon.assert.notCalled(consumerGroup.migrator.saveHighLevelConsumerOffsets);
-
-          const topicPayloads = _(consumerGroup.topicPayloads);
-
-          topicPayloads.find({ topic: 'TestTopic', partition: 0 }).offset.should.be.eql(10);
-          topicPayloads.find({ topic: 'TestTopic', partition: 2 }).offset.should.be.eql(0);
-          topicPayloads.find({ topic: 'TestTopic', partition: 3 }).offset.should.be.eql(9);
-          topicPayloads.find({ topic: 'TestTopic', partition: 4 }).offset.should.be.eql(6);
-          done(error);
-        });
-      });
-
-      it('should fetch from migrator and latestOffset if some offsets have not been saved previously', function (done) {
-        const ConsumerGroupMigrator = require('../lib/consumerGroupMigrator');
-        consumerGroup.options.fromOffset = 'latest';
-        consumerGroup.migrator = new ConsumerGroupMigrator(consumerGroup);
-
-        sandbox.stub(consumerGroup.migrator, 'saveHighLevelConsumerOffsets').yields(null);
-
-        const syncGroupResponse = {
-          partitions: {
-            TestTopic: [0, 2, 3, 4]
-          }
-        };
-
-        const defaultOffsets = {
-          TestTopic: {
-            0: 10,
-            2: 20,
-            4: 5000
-          }
-        };
-
-        const migrateOffsets = {
-          TestTopic: {
-            0: 10,
-            2: 20,
-            4: 5000
-          }
-        };
-
-        const fetchOffsetResponse = {
-          TestTopic: {
-            0: 10,
-            2: -1,
-            3: 9,
-            4: -1
-          }
-        };
-
-        consumerGroup.defaultOffsets = defaultOffsets;
-        consumerGroup.migrator.offsets = migrateOffsets;
-        sandbox.stub(consumerGroup, 'fetchOffset').yields(null, fetchOffsetResponse);
-        sandbox.stub(consumerGroup, 'saveDefaultOffsets').yields(null);
-
-        consumerGroup.handleSyncGroup(syncGroupResponse, function (error, ownsPartitions) {
-          ownsPartitions.should.be.true;
-          sinon.assert.calledWith(consumerGroup.fetchOffset, syncGroupResponse.partitions);
-
-          sinon.assert.calledOnce(consumerGroup.saveDefaultOffsets);
-          sinon.assert.calledOnce(consumerGroup.migrator.saveHighLevelConsumerOffsets);
-
-          const topicPayloads = _(consumerGroup.topicPayloads);
-
-          topicPayloads.find({ topic: 'TestTopic', partition: 0 }).offset.should.be.eql(10);
-          topicPayloads.find({ topic: 'TestTopic', partition: 2 }).offset.should.be.eql(20);
-          topicPayloads.find({ topic: 'TestTopic', partition: 3 }).offset.should.be.eql(9);
-          topicPayloads.find({ topic: 'TestTopic', partition: 4 }).offset.should.be.eql(5000);
-          done(error);
-        });
-      });
+      consumerGroup.close(done);
     });
 
     describe('options.fromOffset is "none"', function () {
@@ -870,7 +993,9 @@ describe('ConsumerGroup', function () {
         new ConsumerGroup(
           {
             kafkaHost: 'localhost:9092',
-            migrateHLC: true
+            migrateHLC: true,
+            connectOnReady: false,
+            autoConnect: false
           },
           'TestTopic'
         );
@@ -926,7 +1051,6 @@ describe('ConsumerGroup', function () {
     beforeEach(function () {
       consumerGroup = new ConsumerGroup(
         {
-          host: host,
           connectOnReady: false
         },
         'TestTopic'
@@ -936,8 +1060,9 @@ describe('ConsumerGroup', function () {
       sandbox.stub(consumerGroup, 'connect');
     });
 
-    afterEach(function () {
+    afterEach(function (done) {
       sandbox.restore();
+      consumerGroup.close(done);
     });
 
     it('should throw an exception if passed in a empty timeout', function () {
@@ -988,17 +1113,21 @@ describe('ConsumerGroup', function () {
       return uuid.v4();
     });
 
-    function addMessages (done) {
-      const Client = require('../lib/client');
-      const Producer = require('../lib/producer');
+    const createTopic = require('../docker/createTopic');
 
-      const client = new Client(host);
+    function addMessages (done) {
+      const Producer = require('../lib/producer');
+      const KafkaClient = require('../lib/kafkaClient');
+
+      const client = new KafkaClient();
       const producer = new Producer(client);
 
       async.series(
         [
           function (callback) {
-            client.createTopics([topic], true, callback);
+            createTopic(topic, 1, 1).then(function () {
+              callback(null);
+            }, callback);
           },
           function (callback) {
             if (producer.ready) {
@@ -1058,10 +1187,12 @@ describe('ConsumerGroup', function () {
       topic = uuid.v4();
       newTopic = uuid.v4();
       testMessage = uuid.v4();
-      consumerGroup = new ConsumerGroup({
-        kafkaHost: host + ':9092',
-        groupId: uuid.v4()
-      }, topic);
+      consumerGroup = new ConsumerGroup(
+        {
+          groupId: uuid.v4()
+        },
+        topic
+      );
       consumerGroup.once('connect', () => {
         consumerGroup.client.createTopics([topic, newTopic], done);
       });
@@ -1095,6 +1226,122 @@ describe('ConsumerGroup', function () {
         consumerGroup.once('connect', () => {
           sendMessage(testMessage, topic, () => {});
           sendMessage(testMessage, newTopic, () => {});
+        });
+      });
+    });
+  });
+
+  describe('#fetch', function () {
+    let consumerGroup;
+
+    afterEach(function (done) {
+      consumerGroup.close(done);
+    });
+
+    it('should reset fetch pending state if fetch request fails', function () {
+      const topic = uuid.v4();
+      consumerGroup = new ConsumerGroup(
+        {
+          connectOnReady: false,
+          groupId: uuid.v4(),
+          autoCommit: false
+        },
+        [topic]
+      );
+
+      consumerGroup.ready = true;
+      consumerGroup.paused = false;
+      consumerGroup._isFetchPending = false;
+
+      const clientMock = sinon.mock(consumerGroup.client);
+
+      clientMock
+        .expects('sendFetchRequest')
+        .once()
+        .yields(new BrokerNotAvailableError('Test Error'));
+
+      const cgMock = sinon.mock(consumerGroup);
+      cgMock.expects('_resetFetchState').once();
+
+      consumerGroup.fetch();
+      clientMock.verify();
+      cgMock.verify();
+    });
+
+    it('should not reset fetch pending state if fetch request was successful', function () {
+      const topic = uuid.v4();
+      consumerGroup = new ConsumerGroup(
+        {
+          connectOnReady: false,
+          groupId: uuid.v4(),
+          autoCommit: false
+        },
+        [topic]
+      );
+
+      consumerGroup.ready = true;
+      consumerGroup.paused = false;
+      consumerGroup._isFetchPending = false;
+
+      const clientMock = sinon.mock(consumerGroup.client);
+
+      clientMock
+        .expects('sendFetchRequest')
+        .once()
+        .yields(null);
+
+      const cgMock = sinon.mock(consumerGroup);
+      cgMock.expects('_resetFetchState').never();
+
+      consumerGroup.fetch();
+      clientMock.verify();
+      cgMock.verify();
+    });
+  });
+
+  describe('#removeTopics', function () {
+    let topic, newTopic, testMessage, consumerGroup;
+
+    before('create the topics', done => {
+      topic = uuid.v4();
+      newTopic = uuid.v4();
+      testMessage = uuid.v4();
+      consumerGroup = new ConsumerGroup(
+        {
+          groupId: uuid.v4(),
+          autoCommit: false
+        },
+        [topic, newTopic]
+      );
+      consumerGroup.once('connect', () => {
+        consumerGroup.client.createTopics([topic, newTopic], done);
+      });
+    });
+
+    after('close consumer group', done => {
+      consumerGroup.close(done);
+    });
+
+    it('should not fetch messages from the topic removed', done => {
+      let messages = [];
+      consumerGroup.on('message', message => {
+        messages.push(message);
+        if (messages.length === 1) {
+          messages.should.containDeep([
+            {
+              topic: topic,
+              value: testMessage
+            }
+          ]);
+          done();
+        }
+      });
+      consumerGroup.removeTopics([newTopic], (error, result) => {
+        should(error).be.null;
+        result.should.be.eql(`Remove Topics ${newTopic} Successfully`);
+        consumerGroup.once('connect', () => {
+          sendMessage(testMessage, newTopic, () => {});
+          sendMessage(testMessage, topic, () => {});
         });
       });
     });

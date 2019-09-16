@@ -1,9 +1,8 @@
 {
   "name": "kafka-node",
-  "description": "Client for Apache Kafka v0.8.1+, v0.9.x, and v0.10.x",
+  "description": "Client for Apache Kafka v0.9.x, v0.10.x and v0.11.x",
   "keywords": [
     "kafka",
-    "zookeeper",
     "consumer",
     "producer",
     "broker"
@@ -15,53 +14,52 @@
     "types"
   ],
   "bugs": "https://github.com/SOHU-co/kafka-node/issues",
-  "version": "2.6.1",
+  "version": "4.1.2",
   "main": "kafka.js",
   "types": "types/index.d.ts",
   "license": "MIT",
   "dependencies": {
-    "async": "^2.5.0",
+    "async": "^2.6.2",
     "binary": "~0.3.0",
-    "bl": "^1.2.0",
+    "bl": "^2.2.0",
     "buffer-crc32": "~0.2.5",
     "buffermaker": "~1.2.0",
     "debug": "^2.1.3",
+    "denque": "^1.3.0",
     "lodash": "^4.17.4",
     "minimatch": "^3.0.2",
     "nested-error-stacks": "^2.0.0",
-    "node-zookeeper-client": "~0.2.2",
     "optional": "^0.1.3",
     "retry": "^0.10.1",
     "uuid": "^3.0.0"
   },
   "engines": {
-    "node": ">=6.4.0"
+    "node": ">=8.5.1"
   },
   "optionalDependencies": {
     "snappy": "^6.0.1"
   },
   "devDependencies": {
-    "@types/node": "^10.5.2",
+    "@types/node": "^10.12.27",
     "coveralls": "^2.11.12",
     "doctoc": "^1.2.0",
-    "eslint": "^3.17.1",
-    "eslint-config-semistandard": "^11.0.0",
-    "eslint-config-standard": "^10.2.1",
+    "eslint": "^5.14.1",
+    "eslint-config-semistandard": "^13.0.0",
+    "eslint-config-standard": "^12.0.0",
     "eslint-plugin-dependencies": "^2.2.0",
-    "eslint-plugin-import": "^2.2.0",
-    "eslint-plugin-node": "^4.2.2",
-    "eslint-plugin-promise": "^3.4.0",
-    "eslint-plugin-standard": "^3.0.1",
+    "eslint-plugin-import": "^2.16.0",
+    "eslint-plugin-node": "^8.0.1",
+    "eslint-plugin-promise": "^4.0.1",
+    "eslint-plugin-standard": "^4.0.0",
     "execa": "^0.6.1",
     "istanbul": "^0.4.4",
     "mocha": "^3.1.0",
-    "nsp": "^2.6.2",
     "optimist": "^0.6.1",
     "proxyquire": "^1.7.10",
     "should": "^6.0.0",
     "sinon": "^2.0.0",
     "through2": "^2.0.3",
-    "tslint": "^5.10.0",
+    "tslint": "^5.13.0",
     "tslint-config-semistandard": "^7.0.0",
     "typescript": "^2.8.3"
   },
@@ -71,7 +69,7 @@
   },
   "scripts": {
     "test:ts": "tslint --project ./types/tsconfig.json --config ./types/tslint.json && tsc --project types",
-    "test": "eslint . && npm run test:ts && ./run-tests.sh && nsp check",
+    "test": "eslint . && npm run test:ts && ./run-tests.sh",
     "startDocker": "./start-docker.sh",
     "stopDocker": "docker-compose down",
     "updateToc": "doctoc README.md --maxlevel 2 --notitle"

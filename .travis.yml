@@ -3,9 +3,9 @@ cache:
   directories:
     - node_modules
 node_js:
-  - "9"
+  - "12"
+  - "10"
   - "8"
-  - "6"
 sudo: required
 services:
   - docker
@@ -16,6 +16,7 @@ env:
     - KAFKA_VERSION=0.11
     - KAFKA_VERSION=1.0
     - KAFKA_VERSION=1.1
+    - KAFKA_VERSION=2.0
   global:
     # - DEBUG=kafka-node:*
     - KAFKA_ADVERTISED_HOST_NAME=127.0.0.1

@@ -3,13 +3,11 @@
 var kafka = require('..');
 var Producer = kafka.Producer;
 var uuid = require('uuid');
-var Client = kafka.Client;
+var Client = kafka.KafkaClient;
 var KeyedMessage = kafka.KeyedMessage;
 const async = require('async');
 
 var client, producer, noAckProducer, producerKeyed;
-
-var host = process.env['KAFKA_TEST_HOST'] || '';
 
 [
   {
@@ -30,13 +28,14 @@ var host = process.env['KAFKA_TEST_HOST'] || '';
   var suiteTimeout = testParameters.suiteTimeout;
   var suiteName = testParameters.name;
 
+  const kafkaHost = '127.0.0.1:' + (sslOptions == null ? '9092' : '9093');
+
   describe(suiteName, function () {
     before(function (done) {
       if (suiteTimeout) {
         this.timeout(suiteTimeout);
       }
-      var clientId = 'kafka-node-client-' + uuid.v4();
-      client = new Client(host, clientId, undefined, undefined, sslOptions);
+      client = new Client({ kafkaHost, sslOptions });
       producer = new Producer(client);
       noAckProducer = new Producer(client, { requireAcks: 0 });
       producerKeyed = new Producer(client, { partitionerType: Producer.PARTITIONER_TYPES.keyed });
@@ -56,32 +55,6 @@ var host = process.env['KAFKA_TEST_HOST'] || '';
 
     after(function (done) {
       producer.close(done);
-    });
-
-    describe(suiteName + ' socket recovery', function () {
-      var emptyFn = function () {};
-      var recoveryClient;
-      var recoveryProducer;
-
-      before(function (done) {
-        var clientId = 'kafka-node-client-' + uuid.v4();
-        recoveryClient = new Client(host, clientId, undefined, undefined, sslOptions);
-        recoveryProducer = new Producer(recoveryClient);
-        recoveryProducer.on('ready', done);
-        // make sure uncaught errors do not fail the test
-        recoveryProducer.on('error', emptyFn);
-      });
-
-      after(function (done) {
-        recoveryProducer.close(done);
-      });
-
-      it('should recover from a socket issue', function (done) {
-        var broker = recoveryClient.brokers[Object.keys(recoveryClient.brokers)[0]];
-        recoveryClient.on('reconnect', done);
-        broker.socket.emit('error', new Error('Mock error'));
-        broker.socket.end();
-      });
     });
 
     describe('#send', function () {
@@ -198,9 +171,7 @@ var host = process.env['KAFKA_TEST_HOST'] || '';
         );
       });
 
-      it('should send message to specified partition even when producer configured with keyed partitioner', function (
-        done
-      ) {
+      it('should send message to specified partition even when producer configured with keyed partitioner', function (done) {
         producerKeyed.send([{ key: '12345', partition: 0, topic: EXISTS_TOPIC_3, messages: 'hello kafka' }], function (
           err,
           message
@@ -217,12 +188,11 @@ var host = process.env['KAFKA_TEST_HOST'] || '';
         let client, keyed;
 
         before(function () {
-          var clientId = 'kafka-node-client-' + uuid.v4();
           return createTopic(topicWithTwoPartitions, 2, 1).then(function () {
             return new Promise(function (resolve, reject) {
-              client = new Client(host, clientId, undefined, undefined, sslOptions);
+              client = new Client({ kafkaHost, sslOptions });
               keyed = new Producer(client, { partitionerType: Producer.PARTITIONER_TYPES.keyed });
-              client.once('connect', function () {
+              client.once('ready', function () {
                 client.refreshMetadata([topicWithTwoPartitions], function (error) {
                   if (error) {
                     return reject(error);
@@ -234,12 +204,15 @@ var host = process.env['KAFKA_TEST_HOST'] || '';
           });
         });
 
+        after(function (done) {
+          keyed.close(done);
+        });
+
         it('should send message to partition determined by keyed partitioner', function (done) {
           keyed.send([{ key: '12345', topic: topicWithTwoPartitions, messages: 'hello kafka' }], function (
             err,
             message
           ) {
-            console.log(message);
             message.should.be.ok;
             message[topicWithTwoPartitions].should.have.property('1', 0);
             done(err);
@@ -252,7 +225,7 @@ var host = process.env['KAFKA_TEST_HOST'] || '';
       var client, producer;
 
       before(function (done) {
-        client = new Client(host);
+        client = new Client();
         producer = new Producer(client);
         producer.on('ready', done);
       });

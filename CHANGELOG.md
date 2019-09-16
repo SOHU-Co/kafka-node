@@ -1,5 +1,82 @@
 # kafka-node CHANGELOG
 
+## 2019-04-30, Version 4.1.2
+* Fix getController not returning controller Id [#1247](https://github.com/SOHU-Co/kafka-node/pull/1247)
+
+## 2019-04-16, Version 4.1.1
+* Fix ConsumerGroup receiving wrong offsets for compressed messages [#1236](https://github.com/SOHU-Co/kafka-node/pull/1236)
+* Add missing sasl property to consumergroup type [#1234](https://github.com/SOHU-Co/kafka-node/pull/1234)
+
+## 2019-04-07, Version 4.1.0
+* Fixed wrong offset being assigned to compressed messages [#1226](https://github.com/SOHU-Co/kafka-node/pull/1226)
+* Update producer and consumer types as EventEmitters [#1223](https://github.com/SOHU-Co/kafka-node/pull/1223)
+* Add setting to control auto-reconnect when closed due to being idle [#1218](https://github.com/SOHU-Co/kafka-node/pull/1218)
+
+## 2019-03-28, Version 4.0.4
+* Fixed unnecessary metadata refresh when socket is closed from being idle [#1216](https://github.com/SOHU-Co/kafka-node/pull/1216)
+* Prevent broker socket auto reconnect attempts to brokers that are no longer valid [#1217](https://github.com/SOHU-Co/kafka-node/pull/1217)
+
+## 2019-03-25, Version 4.0.3
+* Fixed issue where broker socket close event did not schedule a refresh of internal metadata which can lead to lag during kafka deploys
+* Fixed reconnect and connect events can be incorrectly emitted after broker initialization fails.
+* Added a metadata refresh when controller request fails [#1214](https://github.com/SOHU-Co/kafka-node/pull/1214)
+* Updated dependencies [#1204](https://github.com/SOHU-Co/kafka-node/pull/1204)
+* Add events to types [#1201](https://github.com/SOHU-Co/kafka-node/pull/1201)
+
+## 2019-02-22, Version 4.0.2
+* Fix blocked `ConsumerGroup` fetch loop when fetch request yields an error [#1194](https://github.com/SOHU-Co/kafka-node/pull/1194)
+* Fix topic partition check not being scheduled when call to loadMetadataForTopic fail [#1195](https://github.com/SOHU-Co/kafka-node/pull/1195)
+
+## 2019-01-31, Version 4.0.1
+* Fixed issue when KafkaClient.getController wasn't using cached details when controller id is 0 [#1176](https://github.com/SOHU-Co/kafka-node/pull/1176)
+* Update TS typings [#1174](https://github.com/SOHU-Co/kafka-node/pull/1174) and [#1099](https://github.com/SOHU-Co/kafka-node/pull/1099) 
+
+## 2019-01-10, Version 4.0.0
+* Pending timers from connect, and waitUntilReady are cleared when `KafkaClient` is closed [#1163](https://github.com/SOHU-Co/kafka-node/pull/1163)
+* ConsumerGroup commit timer should not hold node process open [#797](https://github.com/SOHU-Co/kafka-node/pull/797)
+* Validation for empty topic for ConsumerGroup [#1166](https://github.com/SOHU-Co/kafka-node/pull/1166)
+* Adds support for providing config entries and explicit replica assignment when creating new topics. [#1157](https://github.com/SOHU-Co/kafka-node/pull/1157)
+* Fixed issue where closed broker can be used to send metadata requests [#1160](https://github.com/SOHU-Co/kafka-node/pull/1160)
+* Unsupported message format (Record Batch) now throws an error instead of failing silently [#1151](https://github.com/SOHU-Co/kafka-node/pull/1151)
+* Adds support for DescribeConfigs protocol to `Admin` [#1081](https://github.com/SOHU-Co/kafka-node/pull/1081)
+* Updated TypeScript definition [#1101](https://github.com/SOHU-Co/kafka-node/pull/1101) [#1079](https://github.com/SOHU-Co/kafka-node/pull/1079)
+* List all topics method added to Admin [#1100](https://github.com/SOHU-Co/kafka-node/pull/1100)
+
+### BREAKING CHANGES
+
+* Messages are now emitted asynchronously to fix issues with message ordering for compressed messages [#1072](https://github.com/SOHU-Co/kafka-node/pull/1072)
+* Removed zookeeper based APIs [#1163](https://github.com/SOHU-Co/kafka-node/pull/1163)
+	*  Removed `Client`
+	*  Removed `HighLevelConsumer`
+	*  Removed `ConsumerGroup` rolling migration feature from HLC based consumer. If you need to migrate use older version of kafka-node
+	*  Offset `fetchCommits` is implementation of `fetchCommitsV1` which deals with ConsumerGroup instead of HLC
+	*  Zookeeper based events will no longer be emitted
+
+## 2018-09-11, Version 3.0.1
+* Fixed issue with new topic/partition detection when topic contains dots [#1076](https://github.com/SOHU-Co/kafka-node/pull/1076)
+* Using double ended queue for message buffer in `ConsumerGroupStream` and `ConsumerStream` [#1067](https://github.com/SOHU-Co/kafka-node/pull/1067)
+* Fixed issue in `ConsumerGroupStream` where forcing a commit breaks auto commit. [#1066](https://github.com/SOHU-Co/kafka-node/pull/1066)
+
+## 2018-09-05, Version 3.0.0
+* Added TS definitions [#959](https://github.com/SOHU-Co/kafka-node/pull/959) [#965](https://github.com/SOHU-Co/kafka-node/pull/965) [#1022](https://github.com/SOHU-Co/kafka-node/pull/959) [#965](https://github.com/SOHU-Co/kafka-node/pull/1022) [#1049](https://github.com/SOHU-Co/kafka-node/pull/959) [#965](https://github.com/SOHU-Co/kafka-node/pull/1049)
+* Fixed issue where ConsumerGroup refresh metadata errors weren't being correctly emitted as 'error' [#971](https://github.com/SOHU-Co/kafka-node/pull/971)
+* Fixed issue where HighLevelConsumer throw `FailedToRebalanceConsumerError: NODE_EXISTS` when rebalancing [#981](https://github.com/SOHU-Co/kafka-node/pull/981)
+* Fixed Admin.listGroups error handling [#985](https://github.com/SOHU-Co/kafka-node/pull/985)
+* Added support to create topics (specifying partitions and replication) using the Admin API (supported in Kafka v0.10 only) [#958](https://github.com/SOHU-Co/kafka-node/pull/958)
+* Updated client to remove unnecessary zookeeper reconnect [#1011](https://github.com/SOHU-Co/kafka-node/pull/1011)
+* Remove noisy debug logs [#1009](https://github.com/SOHU-Co/kafka-node/pull/1009) [#1033](https://github.com/SOHU-Co/kafka-node/pull/1033)
+* Added SASL/PLAIN Authentication [#923](https://github.com/SOHU-Co/kafka-node/pull/1009) [#1033](https://github.com/SOHU-Co/kafka-node/pull/923)
+* Fixed issue where closing a client can still `refreshBrokerMetadata` [#1048](https://github.com/SOHU-Co/kafka-node/pull/1048)
+* Fixed empty messages caused by decoding partial messages from 2.0 broker [#1050](https://github.com/SOHU-Co/kafka-node/pull/1050)
+* Fix consumerGroup `removeTopics` not able to remove topics [#1012](https://github.com/SOHU-Co/kafka-node/pull/1012)
+* Added more descriptive errors as to why broker is not available [#1023](https://github.com/SOHU-Co/kafka-node/pull/1023)
+* Fix Admin API describe groups error handling [#1010](https://github.com/SOHU-Co/kafka-node/pull/1010)
+* ConsumerGroup leader will now monitors metadata for new topics/partitions. Once change has been detected it will leave and join the group to trigger a rebalance. This interval is controlled by `topicPartitionCheckInterval` option (defaults to every 30 seconds) [#1057](https://github.com/SOHU-Co/kafka-node/pull/1057)
+
+### BREAKING CHANGES
+* Dropped support for node 4
+* KafkaClient `createTopics` method drops the second async parameter since it uses the Admin API to create Topics
+
 ## 2018-04-27, Version 2.6.1
 * Fix issue where duplicate messages are received when connecting to multiple brokers (restored dedicated consumer socket) [#956](https://github.com/SOHU-Co/kafka-node/pull/956)
 

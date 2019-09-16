@@ -1,5 +1,6 @@
 'use strict';
 
+const proxyquire = require('proxyquire');
 const kafka = require('..');
 const Client = kafka.KafkaClient;
 const sinon = require('sinon');
@@ -12,8 +13,116 @@ const FakeSocket = require('./mocks/mockSocket');
 const should = require('should');
 const _ = require('lodash');
 const uuid = require('uuid');
+const BufferList = require('bl');
+const retry = require('retry');
 
 describe('Kafka Client', function () {
+  describe('Discover Group Coordinator', function () {
+    let client;
+    beforeEach(function (done) {
+      client = new Client();
+      client.once('connect', done);
+    });
+
+    afterEach(function (done) {
+      client.close(done);
+    });
+
+    it('#sendGroupCoordinatorRequest', function (done) {
+      var operation = retry.operation();
+      operation.attempt(function () {
+        client.sendGroupCoordinatorRequest('ExampleTopic', function (error, response) {
+          if (operation.retry(error)) {
+            return;
+          }
+          should(error).be.null;
+          response.coordinatorPort.should.be.eql(9092);
+          response.coordinatorHost.should.be.eql('127.0.0.1');
+          done();
+        });
+      });
+    });
+  });
+
+  describe('#handleReceivedData', function () {
+    let socket;
+
+    beforeEach(function () {
+      socket = {
+        buffer: new BufferList()
+      };
+    });
+
+    it('should always consume entire response even if handlers are missing', function () {
+      const fakeClient = {
+        invokeResponseCallback: sinon.stub().returns(null)
+      };
+
+      sinon.spy(socket.buffer, 'consume');
+      sinon
+        .stub(socket.buffer, 'readUInt32BE')
+        .onFirstCall()
+        .returns(0);
+      sinon.stub(socket.buffer, 'shallowSlice').returns({
+        readUInt32BE: sinon.stub().returns(25)
+      });
+
+      socket.buffer.append(Uint8Array.from([0, 0, 0, 0]));
+      Client.prototype.handleReceivedData.call(fakeClient, socket);
+      sinon.assert.calledOnce(socket.buffer.shallowSlice);
+      sinon.assert.calledOnce(socket.buffer.consume);
+      sinon.assert.calledOnce(fakeClient.invokeResponseCallback);
+      should(socket.waiting).be.empty;
+    });
+
+    it('should consume entire response if handlers are missing and set waiting to false for longpolling sockets', function () {
+      const fakeClient = {
+        invokeResponseCallback: sinon.stub().returns(null)
+      };
+
+      sinon.spy(socket.buffer, 'consume');
+      sinon
+        .stub(socket.buffer, 'readUInt32BE')
+        .onFirstCall()
+        .returns(0);
+      sinon.stub(socket.buffer, 'shallowSlice').returns({
+        readUInt32BE: sinon.stub().returns(25)
+      });
+
+      socket.longpolling = true;
+      socket.waiting = true;
+
+      socket.buffer.append(Uint8Array.from([0, 0, 0, 0]));
+      Client.prototype.handleReceivedData.call(fakeClient, socket);
+      sinon.assert.calledOnce(socket.buffer.shallowSlice);
+      sinon.assert.calledOnce(socket.buffer.consume);
+      sinon.assert.calledOnce(fakeClient.invokeResponseCallback);
+      socket.waiting.should.be.false;
+    });
+
+    it('should early return when buffer is beyond offset', function () {
+      const fakeClient = {
+        invokeResponseCallback: function () {}
+      };
+
+      socket.buffer.append(Uint8Array.from([0, 0, 0]));
+
+      const readSpy = sinon.spy(socket.buffer, 'readUInt32BE');
+      Client.prototype.handleReceivedData.call(fakeClient, socket);
+      sinon.assert.notCalled(readSpy);
+    });
+
+    it('should early return when buffer is empty', function () {
+      const fakeClient = {
+        invokeResponseCallback: function () {}
+      };
+
+      const readSpy = sinon.spy(socket.buffer, 'readUInt32BE');
+      Client.prototype.handleReceivedData.call(fakeClient, socket);
+      sinon.assert.notCalled(readSpy);
+    });
+  });
+
   describe('#parseHostList', function () {
     it('initial hosts should be parsed if single host is provided', function () {
       const client = new Client({
@@ -24,7 +133,7 @@ describe('Kafka Client', function () {
       client.initialHosts.should.not.be.empty;
       client.initialHosts.length.should.be.eql(1);
       client.initialHosts[0].host.should.be.eql('localhost');
-      client.initialHosts[0].port.should.be.eql('9092');
+      client.initialHosts[0].port.should.be.eql(9092);
     });
 
     it('initial hosts should be parsed if multiple hosts are provided', function () {
@@ -37,17 +146,140 @@ describe('Kafka Client', function () {
       client.initialHosts.should.be.eql([
         {
           host: 'localhost',
-          port: '9092'
+          port: 9092
         },
         {
           host: '127.0.0.1',
-          port: '9093'
+          port: 9093
         },
         {
           host: '192.168.1.0',
-          port: '9094'
+          port: 9094
         }
       ]);
+    });
+  });
+
+  describe('#createBroker', function () {
+    let sandbox, Client, mockSocket;
+    beforeEach(function () {
+      sandbox = sinon.sandbox.create();
+      mockSocket = new FakeSocket();
+      Client = proxyquire('../lib/kafkaClient', {
+        net: {
+          createConnection () {
+            return mockSocket;
+          }
+        }
+      });
+    });
+
+    afterEach(function () {
+      sandbox.restore();
+    });
+
+    it('should not emit connect event when fails to initializeBroker', function () {
+      const client = new Client({ autoConnect: false });
+      sandbox.stub(client, 'initializeBroker').yields(new Error('fake error'));
+      sandbox.spy(client, 'emit');
+
+      client.createBroker('fakehost', 9092, true);
+
+      mockSocket.emit('connect');
+      sinon.assert.calledOnce(client.initializeBroker);
+      sinon.assert.notCalled(client.emit);
+    });
+
+    it('should not emit reconnect event when fails to initializeBroker', function () {
+      const client = new Client({ autoConnect: false });
+      sandbox.stub(client, 'initializeBroker').yields(new Error('fake error'));
+      sandbox.spy(client, 'emit');
+
+      client.createBroker('fakehost', 9092, true);
+
+      mockSocket.error = new Error('some socket error');
+
+      mockSocket.emit('connect');
+      sinon.assert.calledOnce(client.initializeBroker);
+      sinon.assert.notCalled(client.emit);
+    });
+
+    it('should not reconnect when broker is no longer valid', function () {
+      sandbox.useFakeTimers();
+      const client = new Client({ autoConnect: false });
+      client.brokerMetadata = {
+        '1001': {
+          host: 'localhost',
+          port: 9092
+        },
+        '1002': {
+          host: 'kafkaServer',
+          port: 9092
+        }
+      };
+      sandbox.stub(client, 'reconnectBroker');
+      client.createBroker('fakehost', 9092, true);
+      mockSocket.emit('end');
+      sandbox.clock.tick(1000);
+      sinon.assert.notCalled(client.reconnectBroker);
+    });
+
+    it('should try reconnecting when client is initializing', function () {
+      sandbox.useFakeTimers();
+      const client = new Client({ autoConnect: false });
+      client.connecting = true;
+      client.brokerMetadata = {};
+      sandbox.stub(client, 'reconnectBroker');
+      client.createBroker('fakehost', 9092, true);
+      mockSocket.emit('end');
+      sandbox.clock.tick(1000);
+      sinon.assert.calledOnce(client.reconnectBroker);
+    });
+
+    it('should schedule refresh of metadata when socket is closed', function (done) {
+      const client = new Client({ autoConnect: false });
+      sandbox.stub(client, 'refreshBrokerMetadata').callsFake(done);
+      client.createBroker('fakehost', 9092, true);
+      mockSocket.emit('close', false);
+    });
+
+    it('should not schedule refresh of metadata when client is initalizing', function (done) {
+      const client = new Client({ autoConnect: false });
+      client.connecting = true;
+      sandbox.stub(client, 'refreshBrokerMetadata');
+      client.createBroker('fakehost', 9092, true);
+      mockSocket.emit('close', false);
+      setImmediate(function () {
+        sinon.assert.notCalled(client.refreshBrokerMetadata);
+        done();
+      });
+    });
+
+    it('should not schedule metadata refresh when broker is closed due to being idle', function () {
+      const client = new Client({ autoConnect: false });
+      const brokerWrapper = client.createBroker('fakehost', 9092, true);
+
+      sandbox.stub(brokerWrapper, 'isIdle').returns(true);
+      sandbox.stub(client, 'refreshBrokerMetadata');
+      sandbox.useFakeTimers();
+
+      mockSocket.emit('close', false);
+      sandbox.clock.tick();
+      sinon.assert.notCalled(client.refreshBrokerMetadata);
+    });
+
+    it('should reconnect when broker is closed due to being idle', function () {
+      const client = new Client({ autoConnect: false, reconnectOnIdle: true });
+      const brokerWrapper = client.createBroker('fakehost', 9092, true);
+
+      sandbox.stub(brokerWrapper, 'isIdle').returns(true);
+      sandbox.stub(client, 'isValidBroker').returns(true);
+      sandbox.stub(client, 'reconnectBroker');
+      sandbox.useFakeTimers();
+
+      mockSocket.emit('close', false);
+      sandbox.clock.tick(1001);
+      sinon.assert.calledWithExactly(client.reconnectBroker, mockSocket);
     });
   });
 
@@ -113,12 +345,6 @@ describe('Kafka Client', function () {
 
   describe('Versions', function () {
     let client;
-    before(function () {
-      if (process.env.KAFKA_VERSION === '0.8') {
-        this.skip();
-      }
-    });
-
     afterEach(function (done) {
       client.close(done);
     });
@@ -500,9 +726,7 @@ describe('Kafka Client', function () {
       before(function () {
         // these tests should not run again Kafka 0.8 & 0.9
         const supportsSaslPlain =
-          !process.env.KAFKA_VERSION ||
-          (process.env.KAFKA_VERSION !== '0.8' &&
-           process.env.KAFKA_VERSION !== '0.9');
+          !process.env.KAFKA_VERSION || (process.env.KAFKA_VERSION !== '0.8' && process.env.KAFKA_VERSION !== '0.9');
         if (!supportsSaslPlain) {
           this.skip();
         }
@@ -871,19 +1095,6 @@ describe('Kafka Client', function () {
   describe('#getListGroups', function () {
     let client;
 
-    before(function () {
-      if (process.env.KAFKA_VERSION === '0.8') {
-        this.skip();
-      }
-    });
-
-    beforeEach(function (done) {
-      client = new Client({
-        kafkaHost: 'localhost:9092'
-      });
-      client.once('ready', done);
-    });
-
     afterEach(function (done) {
       client.close(done);
     });
@@ -904,11 +1115,13 @@ describe('Kafka Client', function () {
   describe('#createTopics', function () {
     let client;
 
-    beforeEach(function (done) {
-      if (process.env.KAFKA_VERSION === '0.9') {
+    before(function () {
+      if (process.env.KAFKA_VERSION === '0.9' || process.env.KAFKA_VERSION === '0.10') {
         return this.skip();
       }
+    });
 
+    beforeEach(function (done) {
       client = new Client({
         kafkaHost: 'localhost:9092'
       });
@@ -927,36 +1140,39 @@ describe('Kafka Client', function () {
       const topic2ReplicationFactor = 1;
       const topic2Partitions = 1;
 
-      client.createTopics([
-        {
-          topic: topic1,
-          partitions: topic1Partitions,
-          replicationFactor: topic1ReplicationFactor
-        },
-        {
-          topic: topic2,
-          partitions: topic2Partitions,
-          replicationFactor: topic2ReplicationFactor
-        }
-      ], (error, result) => {
-        should.not.exist(error);
-        result.should.be.empty;
-
-        // Verify topics were properly created with partitions + replication factor by fetching metadata again
-        const verifyPartitions = (topicMetadata, expectedPartitionCount, expectedReplicatonfactor) => {
-          for (let i = 0; i < expectedPartitionCount; i++) {
-            topicMetadata[i].partition.should.be.exactly(i);
-            topicMetadata[i].replicas.length.should.be.exactly(expectedReplicatonfactor);
+      client.createTopics(
+        [
+          {
+            topic: topic1,
+            partitions: topic1Partitions,
+            replicationFactor: topic1ReplicationFactor
+          },
+          {
+            topic: topic2,
+            partitions: topic2Partitions,
+            replicationFactor: topic2ReplicationFactor
           }
-        };
-
-        client.loadMetadataForTopics([topic1, topic2], (error, result) => {
+        ],
+        (error, result) => {
           should.not.exist(error);
-          verifyPartitions(result[1].metadata[topic1], topic1Partitions, topic1ReplicationFactor);
-          verifyPartitions(result[1].metadata[topic2], topic2Partitions, topic2ReplicationFactor);
-          done();
-        });
-      });
+          result.should.be.empty;
+
+          // Verify topics were properly created with partitions + replication factor by fetching metadata again
+          const verifyPartitions = (topicMetadata, expectedPartitionCount, expectedReplicatonfactor) => {
+            for (let i = 0; i < expectedPartitionCount; i++) {
+              topicMetadata[i].partition.should.be.exactly(i);
+              topicMetadata[i].replicas.length.should.be.exactly(expectedReplicatonfactor);
+            }
+          };
+
+          client.loadMetadataForTopics([topic1, topic2], (error, result) => {
+            should.not.exist(error);
+            verifyPartitions(result[1].metadata[topic1], topic1Partitions, topic1ReplicationFactor);
+            verifyPartitions(result[1].metadata[topic2], topic2Partitions, topic2ReplicationFactor);
+            done();
+          });
+        }
+      );
     });
 
     it('should return topic creation errors', function (done) {
@@ -965,19 +1181,187 @@ describe('Kafka Client', function () {
       const topicReplicationFactor = 2;
       const topicPartitions = 5;
 
-      client.createTopics([
-        {
-          topic: topic,
-          partitions: topicPartitions,
-          replicationFactor: topicReplicationFactor
+      client.createTopics(
+        [
+          {
+            topic: topic,
+            partitions: topicPartitions,
+            replicationFactor: topicReplicationFactor
+          }
+        ],
+        (error, result) => {
+          should.not.exist(error);
+          result.should.have.length(1);
+          result[0].topic.should.be.exactly(topic);
+          result[0].error.toLowerCase().should.startWith('replication factor: 2 larger than available brokers: 1');
+          done();
         }
-      ], (error, result) => {
-        should.not.exist(error);
-        result.should.have.length(1);
-        result[0].topic.should.be.exactly(topic);
-        result[0].error.toLowerCase().should.startWith('replication factor: 2 larger than available brokers: 1');
-        done();
-      });
+      );
+    });
+
+    it('should create topics with config entries', function (done) {
+      const topic1 = uuid.v4();
+      const topic1ReplicationFactor = 1;
+      const topic1Partitions = 5;
+
+      client.createTopics(
+        [
+          {
+            topic: topic1,
+            partitions: topic1Partitions,
+            replicationFactor: topic1ReplicationFactor,
+            configEntries: [
+              {
+                name: 'compression.type',
+                value: 'gzip'
+              },
+              {
+                name: 'min.compaction.lag.ms',
+                value: '50'
+              }
+            ]
+          }
+        ],
+        (error, result) => {
+          should.not.exist(error);
+          result.should.be.empty;
+
+          const resource = {
+            resourceType: 'topic',
+            resourceName: topic1,
+            configNames: []
+          };
+
+          const payload = {
+            resources: [resource]
+          };
+
+          client.describeConfigs(payload, (error, result) => {
+            should.not.exist(error);
+            result[0].resourceName.should.be.exactly(topic1);
+            result[0].configEntries
+              .filter(c => {
+                return c.configName === 'compression.type';
+              })[0]
+              .configValue.should.be.exactly('gzip');
+            result[0].configEntries
+              .filter(c => {
+                return c.configName === 'min.compaction.lag.ms';
+              })[0]
+              .configValue.should.be.exactly('50');
+            done();
+          });
+        }
+      );
+    });
+
+    it('should return topic creation errors with invalid config entries', function (done) {
+      const topic1 = uuid.v4();
+      const topic1ReplicationFactor = 1;
+      const topic1Partitions = 5;
+
+      client.createTopics(
+        [
+          {
+            topic: topic1,
+            partitions: topic1Partitions,
+            replicationFactor: topic1ReplicationFactor,
+            configEntries: [
+              {
+                name: 'compression.ty',
+                value: 'gzip'
+              }
+            ]
+          }
+        ],
+        (error, result) => {
+          should.not.exist(error);
+          result.should.have.length(1);
+          result[0].topic.should.be.exactly(topic1);
+          result[0].error.toLowerCase().should.startWith('unknown topic config name: compression.ty');
+          done();
+        }
+      );
+    });
+
+    it('should create topics with explicit replica assignments if both simple and explicit assignment is provided', function (done) {
+      const topic1 = uuid.v4();
+      const topic1ReplicationFactor = 1;
+      const topic1Partitions = 5;
+
+      client.createTopics(
+        [
+          {
+            topic: topic1,
+            partitions: topic1Partitions,
+            replicationFactor: topic1ReplicationFactor,
+            replicaAssignment: [
+              {
+                partition: 0,
+                replicas: [1001]
+              },
+              {
+                partition: 1,
+                replicas: [1001]
+              }
+            ]
+          }
+        ],
+        (error, result) => {
+          should.not.exist(error);
+          result.should.be.empty;
+
+          client.loadMetadataForTopics([topic1], (error, result) => {
+            should.not.exist(error);
+
+            const topicMetadata = result[1].metadata[topic1];
+            Object.keys(topicMetadata).should.have.length(2);
+            topicMetadata['0'].partition.should.be.exactly(0);
+            topicMetadata['0'].replicas.should.have.length(1);
+            topicMetadata['1'].partition.should.be.exactly(1);
+            topicMetadata['1'].replicas.should.have.length(1);
+            done();
+          });
+        }
+      );
+    });
+
+    it('should create topics with replica assignments if only explicit assignment is provided', function (done) {
+      const topic1 = uuid.v4();
+
+      client.createTopics(
+        [
+          {
+            topic: topic1,
+            replicaAssignment: [
+              {
+                partition: 0,
+                replicas: [1001]
+              },
+              {
+                partition: 1,
+                replicas: [1001]
+              }
+            ]
+          }
+        ],
+        (error, result) => {
+          should.not.exist(error);
+          result.should.be.empty;
+
+          client.loadMetadataForTopics([topic1], (error, result) => {
+            should.not.exist(error);
+
+            const topicMetadata = result[1].metadata[topic1];
+            Object.keys(topicMetadata).should.have.length(2);
+            topicMetadata['0'].partition.should.be.exactly(0);
+            topicMetadata['0'].replicas.should.have.length(1);
+            topicMetadata['1'].partition.should.be.exactly(1);
+            topicMetadata['1'].replicas.should.have.length(1);
+            done();
+          });
+        }
+      );
     });
   });
 
@@ -1004,8 +1388,8 @@ describe('Kafka Client', function () {
     it('should not wrap again if already wrapped', function () {
       const fn = _.noop;
 
-      const wrapped = client.wrapControllerCheckIfNeeded(_.noop, _.noop, [], fn);
-      const secondWrapped = client.wrapControllerCheckIfNeeded(_.noop, _.noop, [], wrapped);
+      const wrapped = client.wrapControllerCheckIfNeeded('', [], fn);
+      const secondWrapped = client.wrapControllerCheckIfNeeded('', [], wrapped);
 
       wrapped.should.be.exactly(secondWrapped);
     });
@@ -1020,7 +1404,8 @@ describe('Kafka Client', function () {
 
     it('should set controller id to null if NotControllerError was returned once', function () {
       const fn = _.noop;
-      const wrapped = client.wrapControllerCheckIfNeeded(_.noop, _.noop, [], fn);
+      const requestType = 'createTopics';
+      const wrapped = client.wrapControllerCheckIfNeeded(requestType, [], fn);
       const setControllerIdSpy = sandbox.spy(client, 'setControllerId');
       sandbox.stub(client, 'sendControllerRequest');
 
@@ -1031,11 +1416,10 @@ describe('Kafka Client', function () {
     });
 
     it('should send controller request again if NotControllerError was returned once', function () {
-      var encoder = () => undefined;
-      var decoder = () => undefined;
       var args = [];
+      const requestType = 'createTopics';
       const fn = _.noop;
-      const wrapped = client.wrapControllerCheckIfNeeded(encoder, decoder, args, fn);
+      const wrapped = client.wrapControllerCheckIfNeeded(requestType, args, fn);
       const setControllerIdSpy = sandbox.spy(client, 'setControllerId');
       const sendControllerRequestSpy = sandbox.stub(client, 'sendControllerRequest');
 
@@ -1044,12 +1428,13 @@ describe('Kafka Client', function () {
       sinon.assert.calledOnce(setControllerIdSpy);
       sinon.assert.alwaysCalledWithExactly(setControllerIdSpy, null);
       sinon.assert.calledOnce(sendControllerRequestSpy);
-      sinon.assert.alwaysCalledWithExactly(sendControllerRequestSpy, encoder, decoder, args, wrapped);
+      sinon.assert.alwaysCalledWithExactly(sendControllerRequestSpy, requestType, args, wrapped);
     });
 
     it('should set controller id to null and call original callback if NotControllerError was returned on second try', function () {
       const fnSpy = sandbox.spy();
-      const wrapped = client.wrapControllerCheckIfNeeded(_.noop, _.noop, [], fnSpy);
+      const requestType = 'createTopics';
+      const wrapped = client.wrapControllerCheckIfNeeded(requestType, [], fnSpy);
       const setControllerIdSpy = sandbox.spy(client, 'setControllerId');
       sandbox.stub(client, 'sendControllerRequest');
 
@@ -1063,7 +1448,8 @@ describe('Kafka Client', function () {
 
     it('should call original callback if another error was returned', function () {
       const fnSpy = sandbox.spy();
-      const wrapped = client.wrapControllerCheckIfNeeded(_.noop, _.noop, [], fnSpy);
+      const requestType = 'createTopics';
+      const wrapped = client.wrapControllerCheckIfNeeded(requestType, [], fnSpy);
       const setControllerIdSpy = sandbox.spy(client, 'setControllerId');
 
       wrapped(new TimeoutError('operation timed out'));
@@ -1074,7 +1460,8 @@ describe('Kafka Client', function () {
 
     it('should call original callback if no error was returned', function () {
       const fnSpy = sandbox.spy();
-      const wrapped = client.wrapControllerCheckIfNeeded(_.noop, _.noop, [], fnSpy);
+      const requestType = 'createTopics';
+      const wrapped = client.wrapControllerCheckIfNeeded(requestType, [], fnSpy);
       const setControllerIdSpy = sandbox.spy(client, 'setControllerId');
       const expectedResult = [];
 
@@ -1083,6 +1470,82 @@ describe('Kafka Client', function () {
       sinon.assert.notCalled(setControllerIdSpy);
       sinon.assert.calledOnce(fnSpy);
       sinon.assert.alwaysCalledWith(fnSpy, null, expectedResult);
+    });
+  });
+
+  describe('#loadMetadataForTopics', function () {
+    it('should request metadata from correct broker after ready', function (done) {
+      const client = new Client({ autoConnect: false });
+      const brokerAddr = uuid.v4();
+
+      const brokerForLeaderStub = sinon.stub(client, 'brokerForLeader');
+      sinon.spy(client, 'waitUntilReady');
+
+      const firstBroker = new BrokerWrapper(new FakeSocket());
+      const secondBroker = new BrokerWrapper(new FakeSocket());
+
+      firstBroker.socket.addr = brokerAddr;
+      secondBroker.socket.addr = brokerAddr;
+
+      brokerForLeaderStub.onFirstCall().returns(firstBroker);
+      brokerForLeaderStub.onSecondCall().returns(secondBroker);
+
+      client.connecting = true;
+      client.loadMetadataForTopics([], function (error, result) {
+        if (error) {
+          return done(error);
+        }
+        sinon.assert.calledTwice(brokerForLeaderStub);
+        done(null);
+      });
+
+      firstBroker.socket.destroyed = true;
+      secondBroker.apiSupport = {
+        metadata: {
+          usable: 0
+        }
+      };
+
+      sinon.stub(client, 'queueCallback').callsFake(function (socket, correlationId, coderAndCb) {
+        setImmediate(function () {
+          coderAndCb[1](null);
+        });
+      });
+
+      client.emit(firstBroker.getReadyEventName());
+    });
+  });
+
+  describe('#getController', function () {
+    it('should use cached controller details even if controllerId is 0', function (done) {
+      const client = new Client({ autoConnect: false });
+
+      client.brokerMetadata = {
+        '0': {
+          host: 'fake-host',
+          port: 1234
+        }
+      };
+
+      client.clusterMetadata = {
+        controllerId: 0
+      };
+
+      const broker = uuid.v4();
+
+      sinon
+        .stub(client, 'getBroker')
+        .withArgs('fake-host', 1234)
+        .returns(broker);
+
+      const loadMetadataStub = sinon.stub(client, 'loadMetadata').yieldsAsync(null, [{}, {}]);
+
+      client.getController(function (error, broker, controllerId) {
+        sinon.assert.notCalled(loadMetadataStub);
+        sinon.assert.calledOnce(client.getBroker);
+        broker.should.be.eql(broker);
+        done(error);
+      });
     });
   });
 
@@ -1107,52 +1570,53 @@ describe('Kafka Client', function () {
     });
 
     it('should wrap callback', function () {
+      const requestType = 'createTopics';
       const fakeBroker = new BrokerWrapper(new FakeSocket());
-      sandbox.stub(client, 'getController').yields(null, fakeBroker);
+      sandbox.stub(client, 'getController').yields(null, fakeBroker, 1);
       sandbox.stub(client, 'queueCallback');
       const wrapControllerSpy = sandbox.spy(client, 'wrapControllerCheckIfNeeded');
       const callbackSpy = sandbox.spy();
 
-      client.sendControllerRequest(_.noop, _.noop, [], callbackSpy);
+      client.sendControllerRequest(requestType, [], callbackSpy);
 
       sinon.assert.calledOnce(wrapControllerSpy);
     });
 
     it('should be called twice when NotController error was returned', function () {
+      const requestType = 'createTopics';
       const fakeBroker = new BrokerWrapper(new FakeSocket());
-      sandbox.stub(client, 'getController').yields(null, fakeBroker);
-      sandbox.stub(client, 'queueCallback').callsFake((socket, correlationId, args) => {
-        args[1](new NotControllerError('not controller'));
+      sandbox.stub(client, 'getController').yields(null, fakeBroker, 1);
+      sandbox.stub(client, 'sendRequestToBroker').callsFake((brokerId, requestType, args, callback) => {
+        callback(new NotControllerError('not controller'));
       });
       const callbackSpy = sandbox.spy();
       const sendControllerRequestSpy = sandbox.spy(client, 'sendControllerRequest');
 
-      client.sendControllerRequest(_.noop, _.noop, [], callbackSpy);
+      client.sendControllerRequest(requestType, [], callbackSpy);
 
       sinon.assert.calledTwice(sendControllerRequestSpy);
     });
 
-    it('should call encoder and queue callback', function () {
+    it('should send request to controller', function () {
+      const requestType = 'createTopics';
       const fakeBroker = new BrokerWrapper(new FakeSocket());
-      sandbox.stub(client, 'getController').yields(null, fakeBroker);
-      const queueCallbackSpy = sandbox.stub(client, 'queueCallback');
-      const encoder = sandbox.spy();
-      const decoder = _.noop;
+      sandbox.stub(client, 'getController').yields(null, fakeBroker, 1);
+      const sendRequestSpy = sandbox.stub(client, 'sendRequestToBroker');
       const args = [];
       const callback = _.noop;
 
-      client.sendControllerRequest(encoder, decoder, args, callback);
+      client.sendControllerRequest(requestType, args, callback);
 
-      sinon.assert.calledOnce(encoder);
-      sinon.assert.calledOnce(queueCallbackSpy);
+      sinon.assert.calledOnce(sendRequestSpy);
     });
 
     it('should return error if controller request fails', function () {
+      const requestType = 'createTopics';
       const error = new TimeoutError('operation timed out');
       sandbox.stub(client, 'getController').yields(error);
       const callbackSpy = sandbox.spy();
 
-      client.sendControllerRequest(null, null, null, callbackSpy);
+      client.sendControllerRequest(requestType, null, callbackSpy);
 
       sinon.assert.calledOnce(callbackSpy);
       sinon.assert.alwaysCalledWithExactly(callbackSpy, error);
