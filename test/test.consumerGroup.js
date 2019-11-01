@@ -402,7 +402,7 @@ describe('ConsumerGroup', function () {
     beforeEach(function () {
       sandbox = sinon.sandbox.create();
 
-      consumerGroup.client.refreshMetadata = sandbox.stub().yields(null);
+      consumerGroup.client.refreshBrokerMetadata = sandbox.stub().yields(null);
       clock = sandbox.useFakeTimers();
     });
 
@@ -410,7 +410,7 @@ describe('ConsumerGroup', function () {
       sandbox.restore();
     });
 
-    it('should refreshMetadata and connect when broker changes', function () {
+    it('should refreshBrokerMetadata and connect when broker changes', function () {
       sandbox.stub(consumerGroup, 'connect');
       sandbox.spy(consumerGroup, 'pause');
 
@@ -426,7 +426,7 @@ describe('ConsumerGroup', function () {
       clock.tick(200);
 
       sinon.assert.calledThrice(consumerGroup.pause);
-      sinon.assert.calledOnce(consumerGroup.client.refreshMetadata);
+      sinon.assert.calledOnce(consumerGroup.client.refreshBrokerMetadata);
       sinon.assert.calledOnce(consumerGroup.connect);
     });
 
@@ -445,7 +445,7 @@ describe('ConsumerGroup', function () {
       sinon.assert.notCalled(consumerGroup.connect);
       sinon.assert.calledOnce(consumerGroup.pause);
       sinon.assert.calledOnce(consumerGroup.fetch);
-      sinon.assert.calledOnce(consumerGroup.client.refreshMetadata);
+      sinon.assert.calledOnce(consumerGroup.client.refreshBrokerMetadata);
       consumerGroup.paused.should.be.false;
     });
 
