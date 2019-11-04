@@ -10,6 +10,33 @@ const async = require('async');
 const should = require('should');
 
 describe('BaseProducer', function () {
+  describe('ready event', function () {
+    const KAFKA_HOST = 'localhost:9092';
+    let client;
+    before(function () {
+      client = new KafkaClient({
+        kafkaHost: KAFKA_HOST
+      });
+    });
+
+    it('can listen on the ready event before the client is connected', function (done) {
+      const producer = new BaseProducer(client, {}, BaseProducer.PARTITIONER_TYPES.default);
+      producer.once('ready', function () {
+        should(producer.ready).be.true;
+        done();
+      });
+    });
+
+    it('can listen on the ready event after the client is connected', function (done) {
+      should(client.ready).be.true;
+      const producer = new BaseProducer(client, {}, BaseProducer.PARTITIONER_TYPES.default);
+      producer.once('ready', function () {
+        should(producer.ready).be.true;
+        done();
+      });
+    });
+  });
+
   describe('encoding and decoding key attribute', function () {
     const KAFKA_HOST = 'localhost:9092';
     let consumerGroup, topic, producer;
