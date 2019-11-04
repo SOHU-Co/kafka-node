@@ -1,5 +1,13 @@
 # kafka-node CHANGELOG
 
+## 2019-11-04, Version 5.0.0
+* Fix describe configs for multiple brokers  [#1280](https://github.com/SOHU-Co/kafka-node/pull/1280)
+* Fix requestTimeout bug [#1255](https://github.com/SOHU-Co/kafka-node/pull/1255)
+* Improve consumer recovering from stalling when cluster redeploys [#1345](https://github.com/SOHU-Co/kafka-node/pull/1345)
+
+### BREAKING CHANGE
+* Dropped support for node 6
+
 ## 2019-04-30, Version 4.1.3
 * Fix parseHost returning a string port instead of a number [#1257](https://github.com/SOHU-Co/kafka-node/pull/1257)
 
