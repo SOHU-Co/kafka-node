@@ -548,7 +548,7 @@ describe('Kafka Client', function () {
       sandbox = sinon.sandbox.create();
       clock = sandbox.useFakeTimers();
       client = {
-        unqueueCallback: sandbox.stub(),
+        unqueueCallback: sandbox.stub().returns(1),
         options: {
           requestTimeout: false
         }
