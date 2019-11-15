@@ -119,8 +119,7 @@ const cgOptions: kafka.ConsumerGroupOptions = {
   sessionTimeout: 15000,
   protocol: ['roundrobin'],
   fromOffset: 'latest',
-  migrateHLC: false,
-  migrateRolling: true
+  migrateHLC: false
 };
 
 const consumerGroup = new kafka.ConsumerGroup(cgOptions, ['topic1']);
