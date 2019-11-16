@@ -75,7 +75,7 @@ export class ConsumerGroupStream extends Readable {
 
   constructor (options: ConsumerGroupStreamOptions, topics: string | string[]);
 
-  commit (message: Message, force?: boolean, cb?: (error: any, data: any) => any): void;
+  commit (commits: OffsetCommitRequest, force?: boolean, cb?: (error: any, data: any) => any): void;
 
   transmitMessages (): void;
 
@@ -120,7 +120,7 @@ export class Offset {
 
   fetch (payloads: OffsetRequest[], cb: (error: any, data: any) => any): void;
 
-  commit (groupId: string, payloads: OffsetCommitRequest[], cb: (error: any, data: any) => any): void;
+  commit (groupId: string, commits: OffsetCommitRequest[], cb: (error: any, data: any) => any): void;
 
   fetchCommits (groupId: string, payloads: OffsetFetchRequest[], cb: (error: any, data: any) => any): void;
 
