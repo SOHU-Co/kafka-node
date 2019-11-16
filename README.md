@@ -78,6 +78,7 @@ New KafkaClient connects directly to Kafka brokers.
 * `maxAsyncRequests` : maximum async operations at a time toward the kafka cluster. default: 10
 * `sslOptions`: **Object**, options to be passed to the tls broker sockets, ex. `{ rejectUnauthorized: false }` (Kafka 0.9+)
 * `sasl`: **Object**, SASL authentication configuration (only SASL/PLAIN is currently supported), ex. `{ mechanism: 'plain', username: 'foo', password: 'bar' }` (Kafka 0.10+)
+* `noAckBatchOptions`: **Object**, batch buffer options for no ACK requirement producers, ex. `{ noAckBatchSize: 10000, noAckBatchAge: 1000}`
 
 ### Example
 
