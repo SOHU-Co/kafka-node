@@ -254,6 +254,7 @@ export interface ConsumerGroupOptions {
   retries?: number;
   retryFactor?: number;
   retryMinTimeout?: number;
+  retryMaxTimeout?: number;
   connectOnReady?: boolean;
   heartbeatInterval?: number;
   onRebalance?: () => Promise<void>;
