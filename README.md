@@ -1092,18 +1092,6 @@ Result:
 
 # Troubleshooting / FAQ
 
-## HighLevelProducer with KeyedPartitioner errors on first send
-
-Error:
-
-```
-BrokerNotAvailableError: Could not find the leader
-```
-
-Call `client.refreshMetadata()` before sending the first message. Reference issue [#354](https://github.com/SOHU-Co/kafka-node/issues/354)
-
-
-
 ## How do I debug an issue?
 This module uses the [debug module](https://github.com/visionmedia/debug) so you can just run below before starting your app.
 
