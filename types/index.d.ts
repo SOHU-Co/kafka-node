@@ -26,6 +26,8 @@ export class KafkaClient extends EventEmitter {
 export class Producer extends EventEmitter {
   constructor (client: KafkaClient, options?: ProducerOptions, customPartitioner?: CustomPartitioner);
 
+  static PARTITIONER_TYPES: PartitionerTypes;
+
   on (eventName: 'ready', cb: () => any): this;
   on (eventName: 'error', cb: (error: any) => any): this;
 
@@ -347,4 +349,12 @@ export interface ClusterMetadataResponse {
 export interface MetadataResponse extends Array<BrokerMetadataResponse|ClusterMetadataResponse> {
   0: BrokerMetadataResponse;
   1: ClusterMetadataResponse;
+}
+
+export interface PartitionerTypes {
+  default: 0,
+  random: 1,
+  cyclic: 2,
+  keyed: 3,
+  custom: 4
 }
