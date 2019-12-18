@@ -16,3 +16,4 @@ exports.CyclicPartitioner = require('./lib/partitioner').CyclicPartitioner;
 exports.RandomPartitioner = require('./lib/partitioner').RandomPartitioner;
 exports.KeyedPartitioner = require('./lib/partitioner').KeyedPartitioner;
 exports.CustomPartitioner = require('./lib/partitioner').CustomPartitioner;
+exports.Errors = require('./lib/errors');
