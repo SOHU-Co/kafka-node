@@ -14,7 +14,7 @@ describe('Offset', function () {
     client = new Client();
     producer = new Producer(client);
     producer.on('ready', function () {
-      producer.createTopics(['_exist_topic_3_test'], true, function (err) {
+      producer.createTopics(['_exist_topic_3_test'], false, function (err) {
         done(err);
       });
     });
