@@ -107,7 +107,6 @@ describe('BaseProducer', function () {
         );
 
         consumerGroup.on('message', function (message) {
-          console.log(message);
           message.key.should.be.exactly('myKeyIsHere');
           message.value.should.be.exactly(messageValue);
           should(message.timestamp.getTime()).be.exactly(time);

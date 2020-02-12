@@ -1234,6 +1234,8 @@ KAFKA_VERSION=1.0 npm test
 KAFKA_VERSION=1.1 npm test
 
 KAFKA_VERSION=2.0 npm test
+
+KAFKA_VERSION=2.3.1 npm test
 ```
 
 *See Docker hub [tags](https://hub.docker.com/r/wurstmeister/kafka/tags/) entry for which version is considered `latest`.
