@@ -154,6 +154,7 @@ export interface Message {
   partition?: number;
   highWaterOffset?: number;
   key?: string | Buffer;
+  timestamp?: Date
 }
 
 export interface KeyedMessage {
