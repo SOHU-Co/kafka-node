@@ -21,7 +21,7 @@ var client, producer, noAckProducer, producerKeyed;
     suiteTimeout: 30000
   }
 ].forEach(function (testParameters) {
-  var TOPIC_POSTFIX = '_test_' + Date.now();
+  var TOPIC_POSTFIX = '_test_' + uuid.v4();
   var EXISTS_TOPIC_3 = '_exists_3' + TOPIC_POSTFIX;
 
   var sslOptions = testParameters.sslOptions;

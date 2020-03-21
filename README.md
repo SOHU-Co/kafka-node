@@ -51,6 +51,7 @@ Kafka-node is a Node.js client for Apache Kafka 0.9 and later.
 * Manage topic Offsets
 * SSL connections to brokers (Kafka 0.9+)
 * SASL/PLAIN Authentication (Kafka 0.10+)
+* SASL/SCRAM-(256|512) AUthentication (Kafka .11+)
 * Consumer Groups managed by Kafka coordinator (Kafka 0.9+)
 * Connect directly to brokers (Kafka 0.9+)
 * Administrative APIs
