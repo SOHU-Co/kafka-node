@@ -778,6 +778,109 @@ describe('Kafka Client', function () {
         });
       });
     });
+
+    describe('using SASL SCRAM authentication', function () {
+      before(function () {
+        // these tests should not run again Kafka 0.8 & 0.9 & 0.10
+        const supportsSaslPlain =
+          !process.env.KAFKA_VERSION || (process.env.KAFKA_VERSION !== '0.8' && process.env.KAFKA_VERSION !== '0.9' && process.env.KAFKA_VERSION !== '0.10');
+        if (!supportsSaslPlain) {
+          this.skip();
+        }
+      });
+
+      it('should connect SASL/SCRAM-SHA-256', function (done) {
+        client = new Client({
+          kafkaHost: 'localhost:9094',
+          sasl: {
+            mechanism: 'SCRAM-SHA-256',
+            username: 'kafkanode',
+            password: 'kafkanode'
+          },
+          connectRetryOptions: {
+            retries: 0
+          }
+        });
+        client.once('error', done);
+        client.once('ready', function () {
+          client.ready.should.be.true;
+          client.brokerMetadata.should.not.be.empty;
+          done();
+        });
+      });
+
+      it('should connect SASL/SCRAM-SHA-512', function (done) {
+        client = new Client({
+          kafkaHost: 'localhost:9094',
+          sasl: {
+            mechanism: 'scram-sha-512',
+            username: 'kafkanode',
+            password: 'kafkanode'
+          },
+          connectRetryOptions: {
+            retries: 0
+          }
+        });
+        client.once('error', done);
+        client.once('ready', function () {
+          client.ready.should.be.true;
+          client.brokerMetadata.should.not.be.empty;
+          done();
+        });
+      });
+
+      it('should not connect SASL/SCRAM-SHA-256 with bad credentials', function (done) {
+        client = new Client({
+          kafkaHost: 'localhost:9094',
+          sasl: {
+            mechanism: 'scram-sha-256',
+            username: 'kafkanode',
+            password: 'badpasswd'
+          },
+          connectRetryOptions: {
+            retries: 0
+          }
+        });
+        client.once('error', function (err) {
+          if (err instanceof SaslAuthenticationError) {
+            // expected
+            done();
+          } else {
+            done(err);
+          }
+        });
+        client.once('ready', function () {
+          var err = new Error('expected error!');
+          done(err);
+        });
+      });
+
+      it('should not connect SASL/SCRAM-SHA-512 with bad credentials', function (done) {
+        client = new Client({
+          kafkaHost: 'localhost:9094',
+          sasl: {
+            mechanism: 'scram-sha-256',
+            username: 'kafkanode',
+            password: 'badpasswd'
+          },
+          connectRetryOptions: {
+            retries: 0
+          }
+        });
+        client.once('error', function (err) {
+          if (err instanceof SaslAuthenticationError) {
+            // expected
+            done();
+          } else {
+            done(err);
+          }
+        });
+        client.once('ready', function () {
+          var err = new Error('expected error!');
+          done(err);
+        });
+      });
+    });
   });
 
   describe('#updateMetadatas', function () {

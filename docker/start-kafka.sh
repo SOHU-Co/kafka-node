@@ -70,5 +70,6 @@ if [[ -n "$CUSTOM_INIT_SCRIPT" ]] ; then
   eval $CUSTOM_INIT_SCRIPT
 fi
 
+/opt/kafka/bin/kafka-configs.sh --zookeeper zookeeper:2181 --alter --add-config 'SCRAM-SHA-256=[password=kafkanode],SCRAM-SHA-512=[password=kafkanode]' --entity-type users --entity-name kafkanode &
 create-topics.sh &
 KAFKA_OPTS="$TEMP_KAFKA_OPTS" exec $KAFKA_HOME/bin/kafka-server-start.sh $KAFKA_HOME/config/server.properties
