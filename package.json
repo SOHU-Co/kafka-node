@@ -37,7 +37,7 @@
     "node": ">=8.5.1"
   },
   "optionalDependencies": {
-    "snappy": "^6.0.1"
+    "snappy": "git://github.com/segmentio/node-snappy.git#9333ac14e6b1ebb12ec797d2f433a5920e8f413e"
   },
   "devDependencies": {
     "@types/node": "^10.12.27",
