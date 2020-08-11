@@ -145,6 +145,20 @@ export class ProducerStream extends Writable {
   _writev (chunks: Chunk[], cb: (error: any, data: any) => any): void;
 }
 
+export class Admin extends EventEmitter {
+  constructor (kafkaClient: KafkaClient);
+
+  listTopics (cb?: () => void): void;
+
+  listGroups (cb?: () => void): void;
+
+  describeGroups (consumerGroups: ConsumerGroup[], cb?: () => void): void;
+
+  createTopics (topics: string[], cb?: () => void): void;
+
+  describeConfigs(payload: { resources: Resource[], includeSynonyms?: boolean }, cb?: () => void): void;
+}
+
 // # Interfaces
 
 export interface Message {
@@ -347,4 +361,15 @@ export interface ClusterMetadataResponse {
 export interface MetadataResponse extends Array<BrokerMetadataResponse|ClusterMetadataResponse> {
   0: BrokerMetadataResponse;
   1: ClusterMetadataResponse;
+}
+
+export enum RESOURCE_TYPES {
+  topic = 'topic',
+  broker = 'broker'
+}
+
+export interface Resource {
+  resourceType: RESOURCE_TYPES;
+  resourceName: string,
+  configNames: string[],
 }
