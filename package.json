@@ -21,7 +21,7 @@
   "dependencies": {
     "async": "^2.6.2",
     "binary": "~0.3.0",
-    "bl": "^2.2.0",
+    "bl": "^2.2.1",
     "buffer-crc32": "~0.2.5",
     "buffermaker": "~1.2.0",
     "debug": "^2.1.3",
