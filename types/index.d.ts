@@ -82,7 +82,7 @@ export class ConsumerGroupStream extends Readable {
   close (cb: () => any): void;
 }
 
-export class ConsumerGroup {
+export class ConsumerGroup extends EventEmitter{
   generationId: number;
   memberId: string;
   client: KafkaClient;
@@ -92,9 +92,9 @@ export class ConsumerGroup {
   close (force: boolean, cb: (error: Error) => any): void;
   close (cb: (error: Error) => any): void;
 
-  on (eventName: 'message', cb: (message: Message) => any): void;
-  on (eventName: 'error' | 'offsetOutOfRange', cb: (error: any) => any): void;
-  on (eventName: 'rebalancing' | 'rebalanced' | 'connect', cb: () => any): void;
+  on (eventName: 'message', cb: (message: Message) => any): this;
+  on (eventName: 'error' | 'offsetOutOfRange', cb: (error: any) => any): this;
+  on (eventName: 'rebalancing' | 'rebalanced' | 'connect', cb: () => any): this;
 
   addTopics (topics: string[] | Topic[], cb?: (error: any, added: string[] | Topic[]) => any): void;
 
@@ -112,11 +112,11 @@ export class ConsumerGroup {
   resume (): void;
 }
 
-export class Offset {
+export class Offset extends EventEmitter{
   constructor (client: KafkaClient);
 
-  on (eventName: 'ready' | 'connect', cb: () => any): void;
-  on (eventName: 'error', cb: (error: any) => any): void;
+  on (eventName: 'ready' | 'connect', cb: () => any): this;
+  on (eventName: 'error', cb: (error: any) => any): this;
 
   fetch (payloads: OffsetRequest[], cb: (error: any, data: any) => any): void;
 
@@ -143,6 +143,23 @@ export class ProducerStream extends Writable {
   _write (message: ProduceRequest, encoding: 'buffer' | 'utf8', cb: (error: any, data: any) => any): void;
 
   _writev (chunks: Chunk[], cb: (error: any, data: any) => any): void;
+}
+
+export class Admin extends EventEmitter {
+  constructor(kafkaClient: KafkaClient);
+
+  on (eventName: 'ready' | 'connect', cb: () => any): this;
+  on (eventName: 'error', cb: () => any): this;
+
+  listGroups (cb: (error: any, res: any) => any): void;
+
+  listTopics (cb: (error: any, res: any) => any): void;
+
+  describeGroups (consumerGroups: Array<string>, cb: (error: any, res: any) => any): void;
+
+  createTopics (topics: Array<CreateTopicRequest>, cb: (error: any, res: any) => any): void;
+
+  describeConfigs (payload: DescribeConfigsRequest, cb: (error: any, res: any) => any): void;
 }
 
 // # Interfaces
@@ -206,6 +223,7 @@ export interface ProduceRequest {
   key?: string | Buffer;
   partition?: number;
   attributes?: number;
+  timestamp?:number; //  defaults to Date.now() (only available with kafka v0.10+)
 }
 
 export interface ConsumerOptions {
@@ -347,4 +365,18 @@ export interface ClusterMetadataResponse {
 export interface MetadataResponse extends Array<BrokerMetadataResponse|ClusterMetadataResponse> {
   0: BrokerMetadataResponse;
   1: ClusterMetadataResponse;
+}
+
+export enum RESOURCE_TYPES {
+  topic = 'topic',
+  broker = 'broker'
+}
+
+export interface DescribeConfigsRequest {
+  resources: Array<{
+    resourceType: RESOURCE_TYPES,
+    resourceName: string,
+    configNames: Array<string>
+  }>,
+  includeSynonyms?: boolean
 }
