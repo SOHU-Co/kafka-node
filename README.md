@@ -88,15 +88,25 @@ const client = new kafka.KafkaClient({kafkaHost: '10.3.100.196:9092'});
 ## Producer
 ### Producer(KafkaClient, [options], [customPartitioner])
 * `client`: client which keeps a connection with the Kafka server.
-* `options`: options for producer,
+* `options`: options for producer
+  * `requireAcks`: Configuration for when to consider a message as acknowledged, default 1. Other values are:
+    * `0` = no acknowledgements
+    * `1` = only leader should acknowledge
+    * `-1` = all in-sync replicas should acknowledge (depends on cluster configuration [`min.insync.replicas`](https://kafka.apache.org/documentation/#brokerconfigs_min.insync.replicas))
+  * `ackTimeoutMs`: The amount of time in milliseconds to wait for all acks before considered, default 100ms
+  * `partitionerType`: Partitioner type, default 0. Other values are:
+    * `0` = default
+    * `1` = random
+    * `2` = cyclic
+    * `3` = keyed
+    * `4` = custom
+
+`options` example:
 
 ```js
 {
-    // Configuration for when to consider a message as acknowledged, default 1
     requireAcks: 1,
-    // The amount of time in milliseconds to wait for all acks before considered, default 100ms
     ackTimeoutMs: 100,
-    // Partitioner type (default = 0, random = 1, cyclic = 2, keyed = 3, custom = 4), default 0
     partitionerType: 2
 }
 ```
@@ -212,13 +222,17 @@ client.createTopics(topicsToCreate, (error, result) => {
 ## HighLevelProducer
 ### HighLevelProducer(KafkaClient, [options], [customPartitioner])
 * `client`: client which keeps a connection with the Kafka server. Round-robins produce requests to the available topic partitions
-* `options`: options for producer,
+* `options`: options for producer
+  * `requireAcks`: Configuration for when to consider a message as acknowledged, default 1. Other values are:
+    * `0` = no acknowledgements
+    * `1` = only leader should acknowledge
+    * `-1` = all in-sync replicas should acknowledge (depends on cluster configuration [`min.insync.replicas`](https://kafka.apache.org/documentation/#brokerconfigs_min.insync.replicas))
+  * `ackTimeoutMs`: The amount of time in milliseconds to wait for all acks before considered, default 100ms
 
+`options` example:
 ```js
 {
-    // Configuration for when to consider a message as acknowledged, default 1
     requireAcks: 1,
-    // The amount of time in milliseconds to wait for all acks before considered, default 100ms
     ackTimeoutMs: 100
 }
 ```
