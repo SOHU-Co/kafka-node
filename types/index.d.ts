@@ -43,7 +43,7 @@ export class HighLevelProducer extends Producer {
 export class Consumer extends EventEmitter {
   client: KafkaClient;
 
-  constructor (client: KafkaClient, fetchRequests: Array<OffsetFetchRequest | string>, options: ConsumerOptions);
+  constructor (client: KafkaClient, fetchRequests: Array<OffsetFetchRequest | string>, options?: ConsumerOptions);
 
   on (eventName: 'message', cb: (message: Message) => any): this;
   on (eventName: 'error' | 'offsetOutOfRange', cb: (error: any) => any): this;
