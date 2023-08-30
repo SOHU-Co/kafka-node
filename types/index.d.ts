@@ -182,6 +182,7 @@ export interface KafkaClientOptions {
 }
 
 export interface ProducerStreamOptions {
+  client?: KafkaClient;
   kafkaClient?: KafkaClientOptions;
   producer?: ProducerOptions;
   highWaterMark?: number;
@@ -229,6 +230,7 @@ export interface CustomPartitionAssignmentProtocol {
 }
 
 export interface ConsumerGroupOptions {
+  client?: KafkaClient;
   kafkaHost?: string;
   batch?: AckBatchOptions;
   ssl?: boolean;
